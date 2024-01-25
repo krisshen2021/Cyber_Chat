@@ -7,7 +7,7 @@ from tabbyAPI_class_pd import tabbyAPI
 from PIL import Image
 from yeelight import discover_bulbs, Bulb
 try:
-    bulb = Bulb("192.168.5.142", auto_on=True, effect="smooth", duration=1000)
+    bulb = Bulb(config_data["yeelight_url"], auto_on=True, effect="smooth", duration=1000)
     print(f"Bulb Power: {bulb.get_properties()['power']}")
 except Exception as e:
             print(f"Error during turn on Bulb: {e}")
@@ -17,11 +17,6 @@ except Exception as e:
                 def set_hsv(self,r,g,b)-> None:
                     pass
             bulb = bulb_null()
-# load server address from config.yml
-dir_path = os.path.dirname(os.path.realpath(__file__))
-config_path = os.path.join(dir_path, 'config', 'config.yml')
-with open(config_path, 'r') as file:
-            config_data = yaml.safe_load(file)
 
 image_payload = {
             "hr_scale" : 1.5,
