@@ -3,9 +3,9 @@
 **Features**
 ---
 - ***Endless Enviroment Experiences*** 
-Dynamically generate chat background and avatar base on character card and chatting emotions
+        Dynamically generate chat background and avatar base on character card and chatting emotions, you even can setup a Yeelight bulb to experience different emotion color base on character response
 - ***Immersive Chatting Excitments*** 
-Dynamically generate scene images base on character response, never repeat.(especially for ***NSFW*** !!!)
+        Dynamically generate scene images base on character response, never repeat.(especially for ***NSFW*** !!!)
 
 
 **1. Install Cyber Chat**

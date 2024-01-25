@@ -7,3 +7,4 @@ SDAPI_url: http://127.0.0.1:7860
 sd_model_checkpoint: realcartoon25D_v2.safetensors [1736b1efbe]
 sampler_name: Euler a
 hr_upscaler: Latent (nearest)
+yeelight_url: 192.168.5.142

@@ -6,6 +6,12 @@ from googlecloudtrans import googletransClass
 from tabbyAPI_class_pd import tabbyAPI
 from PIL import Image
 from yeelight import discover_bulbs, Bulb
+
+# load server address from config.yml
+dir_path = os.path.dirname(os.path.realpath(__file__))
+config_path = os.path.join(dir_path, 'config', 'config.yml')
+with open(config_path, 'r') as file:
+            config_data = yaml.safe_load(file)
 try:
     bulb = Bulb(config_data["yeelight_url"], auto_on=True, effect="smooth", duration=1000)
     print(f"Bulb Power: {bulb.get_properties()['power']}")
