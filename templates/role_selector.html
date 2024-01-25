@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" type="text/css" href="/static/css/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Philosopher&display=swap" rel="stylesheet">
+    <style>
+        
+        {% for item in roleslist -%}
+        .avatar_{{item}} { background-image: url('../static/images/avatar/{{item}}/none.png'); }
+        {% endfor %}
+       
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        // roleitems = JSON.parse('{{ roleslist | safe }}');
+        // for (var item of roleitems){
+        //     console.log(item)
+        // }
+        function deleteCookie(name) {
+            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';
+        }
+        deleteCookie('uid');
+        document.addEventListener("DOMContentLoaded", function () {
+            let airolelist = document.getElementsByName('ai_role_name');
+            airolelist[0].checked = true;
+            document.getElementById('ainame').value = airolelist[0].id;
+            airolelist.forEach((radio) => {
+                radio.addEventListener('change', (event) => {
+                    let id = event.target.id;
+                    let censor = event.target.getAttribute('data-uncensored');
+                    document.getElementById('ainame').value = id;
+                    document.getElementById('is_uncensored').value= censor;
+                    console.log(document.getElementById('ainame').value);
+                    console.log(document.getElementById('is_uncensored').value)
+                });
+            });
+            let roleboxList = document.querySelectorAll(".roleholder");
+            roleboxList.forEach((rolebox) => {
+                let roleAvatar = rolebox.querySelector(".avatarbk");
+                let radio = rolebox.querySelector("input[type='radio']");
+                roleAvatar.addEventListener("click", () => {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change'));
+                    roleboxList.forEach((rolebox) => {
+                        rolebox.classList.remove('roleholder_selected');
+                    });
+                    rolebox.classList.add('roleholder_selected');
+
+                });
+                roleAvatar.addEventListener('mouseover', () => {
+                    gsap.to(roleAvatar,{duration:0.3, backgroundSize:"130%", ease:"back"});
+                });
+                roleAvatar.addEventListener('mouseout', () => {
+                    gsap.to(roleAvatar,{duration:0.3, backgroundSize:"100%"});
+                });
+                
+            });
+            let inputarea = document.querySelector('.nameinput');
+            inputarea.addEventListener('click', () => {
+                inputarea.value = '';
+            });
+            function setSessionCookie(name, value) {
+                document.cookie = name + "=" + value + "; path=/";
+            }
+            function getCookie(name) {
+                var nameEQ = name + "=";
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+                }
+                return null;
+            }
+            var cookid = getCookie('uid');
+            if (!cookid) {
+                cookid = '{{cookid_server}}';
+                setSessionCookie('uid', cookid);
+            }
+            console.log(cookid);
+            document.getElementById("userid").value = cookid;
+            gsap.from(".headline",{duration:2, opacity:0, scale:0.3, ease:"back"});
+            gsap.from("#logindiv",{duration:1.5, opacity:0, scale:0.5, ease:"back"});
+            gsap.from(".roleholder",{duration:1.5, opacity:0, scale:0.3, ease:"elastic", stagger:0.2});
+        });
+    </script>
+    <meta charset="UTF-8">
+    <title>Socrates' Phaedrus</title>
+</head>
+
+<body>
+    <div id="role_selector">
+        <div class="blurlayer">
+            <li class="headline">Socrates' Phaedrus</li>
+            <div id="logindiv">
+                <form id="role_form" action="/enter_room" method="post">
+                    <div class="subtitle">Choose the charactor</div>
+                    <div class="rolelist">
+                        <!-- <div class="roleholder">
+                            <div class="avatarbk avatar_Doctor"></div>
+                            <div><input type="radio" id="option3" name="ai_role_name" value="Doctor" checked>Doctor</div>
+                           
+                        </div> -->
+                        {% for item in roleslist -%}
+                        {% if item != 'DarkFairy' -%}
+                        <div class="roleholder">
+                            <div class="avatarbk avatar_{{item}}"></div>
+                            <div><input type="radio" class="roleRadios" id="{{ ainamelist[loop.index0] }}" name="ai_role_name" value="{{item}}" data-uncensored="{{ censoredlist[loop.index0] }}">{{ ainamelist[loop.index0] }}</div>   
+                        </div>
+                        {% endif -%}
+                        {% endfor -%}
+                    </div>
+                    <div class="subtitle">Your Name</div>
+                    <input name="username" autocomplete="name" class="nameinput" value="Frank" required maxlength="20">
+                    <div class="subtitle">Your Gender</div>
+                    <div class="genderSelector">
+                        <input type="radio" id="option1" name="usergender" value="male" checked>
+                        <label for="option1">Male</label>
+                        <input type="radio" id="option2" name="usergender" value="female">
+                        <label for="option2">Female</label>
+                    </div>
+                    <button type="submit" class="submit_btn">Start Chat</button>
+                    <input type="hidden" name="conid" id="userid">
+                    <input type="hidden" name="ainame" id="ainame">
+                    <input type="hidden" name="is_uncensored" id="is_uncensored">
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

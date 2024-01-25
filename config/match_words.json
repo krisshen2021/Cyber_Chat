@@ -1,0 +1,12 @@
+{
+    "words": ["vagina", "cunt", "pussy", "erect", "ass ", "blowjob", "anus", " hole ", "breast", "nipples", "naked", "cock", "dick", "crotch", "womb", "cervix", "penis", "hard member", "thick member", "shaft", "manhood", " lick", "tongue", "strok", "moan", "thrust"],
+    "sex_results": ["No sex", "Explicit BDSM", "gaping anus", "gaping pussy", "extreme bodily harm", "blowjob", "Finger sex", "Vagina sex", "Anal sex", "Teasing", "handjob", "Foreplay", "Deep throat", "Footjob", "reverse cowgirl", "cowgirl", "missionary", "doggy style", "fold-up"],
+    "lora":{
+        "blowjob":"NSFW, <lora:PovBlowjob:0.8>, penis, hetero, fellatio, oral, solo focus, pov",
+        "cowgirl":"NSFW, <lora:PSCowgirl:0.8>, looking at viewer, pscow, blush, pussy, <lora:panties_pulled_aside_fuck.v1.0:0.6>, panties pulled aside fuck",
+        "deep throat":"NSFW, <lora:PovBlowjob:0.8>, deepthroat, penis, hetero, fellatio, oral, solo focus, pov",
+        "missionary":"NSFW, <lora:POVMissionary:0.8>, missionarypose, penis, deep penetration, looking from above, lie down, raised legs",
+        "doggy style":"NSFW, <lora:POVDoggy:0.8>, doggy, 1girl, anus, nude, looking back, penis, deep penetration",
+        "gaping pussy":"NSFW, <lora:LulublairMerge:0.12>, lay down, spread legs wide open and raised, gape pussy, spread pussy, <lora:edgOrgasm_v2:0.5>"
+    }
+}
