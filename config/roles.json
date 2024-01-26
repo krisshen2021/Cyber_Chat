@@ -17,6 +17,12 @@
     "ai_speaker": "zh-CN-YunyeNeural",
     "ai_speaker_en": "en-US-JasonNeural"
   },
+  "CyberBitch": {
+    "if_uncensored": "Yes",
+    "ai_name": "Cyber Cynthia",
+    "ai_speaker": "zh-CN-YunyeNeural",
+    "ai_speaker_en": "en-US-JasonNeural"
+  },
   "Coder": {
     "if_uncensored": "Yes",
     "ai_name": "CTO Dolphin",
