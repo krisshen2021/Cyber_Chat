@@ -1,3 +1,7 @@
+#Chat server Settings
+server_address: 127.0.0.1
+server_port: 5500
+debug_mode: True
 #TabbyAPI Configuration
 openai_api_chat_base: http://127.0.0.1:5001/v1
 openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional leave it is ok
@@ -9,3 +13,5 @@ sd_model_checkpoint: realcartoon25D_v2.safetensors [1736b1efbe]
 sampler_name: DPM++ 2M Karras
 hr_upscaler: Latent (nearest)
 yeelight_url: 192.168.5.142
+chroma_server_host: 192.168.5.236
+chroma_server_http_port: 8000

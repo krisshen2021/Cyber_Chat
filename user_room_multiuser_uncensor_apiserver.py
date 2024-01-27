@@ -81,9 +81,7 @@ with open(prompt_template_path, 'r') as file:
     instr_temp_list=[]
     for templates in prompts_templates.keys():
         instr_temp_list.append(templates)
-    print(f'>>>The instruction templates list: {instr_temp_list}')
-    # context_template = prompts_templates["Alpaca_RP"]
-    # context_template = prompts_templates[state["prompt_template"]]
+    # print(f'>>>The instruction templates list: {instr_temp_list}')
 
 myTrans = googletransClass()
 

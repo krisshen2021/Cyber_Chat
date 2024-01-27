@@ -2,14 +2,14 @@
 #link to server
 from openai import OpenAI
 from tabby_fastapi_server import tabby_fastapi
-import requests, json, os, tiktoken, yaml
+import requests, json, os, tiktoken, yaml, sys
 
 openai_api_key = "0764ee6f39280e8b485e9a18668f6a62"
 api_key = "0764ee6f39280e8b485e9a18668f6a62"
 admin_key = "f4b1a7dc92c8a576c918844f440ba90a"
 dir_path = os.path.dirname(os.path.realpath(__file__))
 #get models
-def get_model_name(api_base:str):
+def get_model_name(api_base:str,model_type:str):
     headers = {
         'accept': 'application/json',
         'x-api-key': api_key,
@@ -26,8 +26,9 @@ def get_model_name(api_base:str):
         else:
             print("请求失败，状态码：", response.status_code)
     except Exception as e:
-        print(f"Error to get model from {api_base}")
-        return "NONE"
+        print(f"Error to get model from {api_base}, \nPlease set up the {model_type} model address in config.yml before chatting")
+        # return "NONE"
+        sys.exit(1)
         
         
 
@@ -67,9 +68,9 @@ class tabbyAPI:
         self.state = state
         self.send_msg_websocket = send_msg_websocket
         self.image_payload = image_payload
-        self.chat_model = get_model_name(self.state['openai_api_chat_base'])       
-        self.funcall_model = get_model_name(self.state['openai_api_funcall_base'])
-        self.rephase_model = get_model_name(self.state['openai_api_rephase_base'])
+        self.chat_model = get_model_name(self.state['openai_api_chat_base'],"Chat")       
+        self.funcall_model = get_model_name(self.state['openai_api_funcall_base'],"Funcall")
+        self.rephase_model = get_model_name(self.state['openai_api_rephase_base'],"Rephase")
         print(f'Chat model: {self.chat_model} | Fun call model: {self.funcall_model} | Rephase model: {self.rephase_model}')
         self.vocabulary, self.sexresultslist, self.lora = load_vocabulary("match_words.json")
         self.restruct_prompt, self.summary_prompt, self.prmopt_fixed_prefix, self.prmopt_fixed_suffix, self.nagetive_prompt = load_prompts("prompts.yaml")

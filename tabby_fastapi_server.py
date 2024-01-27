@@ -88,17 +88,26 @@ class tabby_fastapi:
     def get_model(self):
         url = self.url+'/model'
         headers = self.headers
-        response = requests.get(url, headers=headers).json()
-        return response["id"]
+        try:
+            response = requests.get(url, headers=headers).json()
+            return response["id"]
+        except Exception as e:
+            print("Error on get current model: ", e)
+            return "None"
+            
 
     def get_model_list(self) -> list:
         url = self.url+'/models'
         headers = self.headers
-        response = requests.get(url, headers=headers).json()
-        models = []
-        for model in response["data"]:
-            models.append(model["id"])
-        return models
+        try:
+            response = requests.get(url, headers=headers).json()
+            models = []
+            for model in response["data"]:
+                models.append(model["id"])
+            return models
+        except Exception as e:
+            print("Error on get current model-list: ", e)
+            return []
 
     def unload_model(self):
         url = self.url+"/model/unload"

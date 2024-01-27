@@ -2,13 +2,16 @@ from gevent import monkey
 monkey.patch_all()
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
-import os, uuid, json, markdown
+import os, uuid, json, markdown,yaml
 from transformers import pipeline
 from user_room_multiuser import chatRoom
 from user_room_multiuser_uncensor_apiserver import chatRoom_unsensor
 from concurrent.futures import ThreadPoolExecutor
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+config_path = os.path.join(dir_path, 'config', 'config.yml')
+with open(config_path, 'r') as file:
+            config_data = yaml.safe_load(file)
 sentimodelpath = "touch20032003/xuyuan-trial-sentiment-bert-chinese"
 sentiment_pipeline = pipeline('sentiment-analysis', model=sentimodelpath, tokenizer=sentimodelpath)
 executor = ThreadPoolExecutor(max_workers=10)
@@ -268,4 +271,9 @@ def reply_user_query(client_msg):
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5500, debug=True)
+    host = config_data["server_address"]
+    port = config_data["server_port"]
+    debug = config_data["debug_mode"]
+    print(f"Cyber Chat Server is running on http://{host}:{port} , debug mode is {debug}")
+    socketio.run(app, host=host, port=port, debug=debug)
+    
