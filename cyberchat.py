@@ -7,6 +7,8 @@ from transformers import pipeline
 from user_room_multiuser import chatRoom
 from user_room_multiuser_uncensor_apiserver import chatRoom_unsensor
 from concurrent.futures import ThreadPoolExecutor
+from user_validation import Validation
+from sqliteclass import SQLiteDB
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 config_path = os.path.join(dir_path, 'config', 'config.yml')
@@ -17,6 +19,8 @@ sentiment_pipeline = pipeline('sentiment-analysis', model=sentimodelpath, tokeni
 executor = ThreadPoolExecutor(max_workers=10)
 
 chatRoomList = {} #create a chat room list , with conid and chatroom object that generated from chatRoom class.
+database = SQLiteDB()
+database.create_table()
 
 app = Flask(__name__)
 socketio = SocketIO(app, path="/chat", ping_interval=10, cors_allowed_origins="*", async_mode='gevent')
@@ -51,40 +55,96 @@ def index():
 @app.route('/enter_room', methods=['GET', 'POST'])
 def enter_room():
     if request.method == 'POST':
-        selected_username = request.form['username']
-        selected_usergender = request.form['usergender']
-        selected_ai_role_name = request.form['ai_role_name']
-        selected_ainame = request.form['ainame']
-        selected_is_uncensored = request.form['is_uncensored']
-        conid = request.form['conid']
-        return render_template('webhook_client_multiuser.html', conid=conid, selected_username=selected_username,
-                               selected_usergender=selected_usergender, selected_ai_role_name=selected_ai_role_name,
-                               selected_ainame=selected_ainame,selected_is_uncensored=selected_is_uncensored)
-# after selected role, enter chat room, and bring the connection id to the room, the conid is get from cookie of browser.
+        userdata = {
+        'username': request.form['username'],
+        'nickname': request.form['nickname'],
+        'gender': request.form['gender'],
+        'avatar': request.form['avatar'],
+        'facelooks': request.form['facelooks'],
+        'credits': request.form['credits'],
+        'ai_role_name': request.form['ai_role_name'],
+        'ainame': request.form['ainame'],
+        'is_uncensored': request.form.get('is_uncensored', "Yes"),  # 使用 .get() 以处理缺失的字段
+        'conid': request.form['conid'],
+        }
 
-# socket actions
+        return render_template('webhook_client_multiuser.html', **userdata)
+# after selected role, enter chat room, and bring the connection id to the room, the conid is get from cookie of browser.
+     
+    
+@socketio.on('client_signup')
+def client_signup(client_info):
+     if client_info["data"]["nickname"] == "":
+        client_info["data"]["nickname"] = client_info["data"]["username"]
+
+     username = client_info["data"]["username"]
+     nickname = client_info["data"]["nickname"]
+     email = client_info["data"]["email"]
+     password = client_info["data"]["password"]
+     gender = client_info["data"]["gender"]
+     facelooks = client_info["data"]["facelooks"]
+     conversation_id = client_info["data"]["socket_id"]
+     
+     vali_result = Validation.vali_data(client_info["data"])
+     if vali_result["validated"]:
+         avatar = "/static/images/avatar/profile_" + gender + ".png"
+         data_op_result = database.create_new_user(username=username,nickname=nickname,gender=gender,password=password,email=email,credits=1000, avatar=avatar, facelooks=facelooks)
+         if isinstance(data_op_result, str):
+              print(data_op_result)
+              send_status({"name":"signup_authorization","msg":{"status":"Fail","data":data_op_result}}, conversation_id)
+         else:
+              userdata = database.get_user(username,password)
+              userdata.pop("unique_id", None)
+              userdata.pop("password", None)
+              send_status({"name":"signup_authorization","msg":{"status":"Success","data":userdata}}, conversation_id)
+     else:
+          error = vali_result["data"]
+          send_status({"name":"signup_validation","msg":{"status":"Fail","data":error}}, conversation_id)
+     pass
+
+@socketio.on('client_login')
+def client_login(client_info):
+     username = client_info["data"]["username"]
+     password = client_info["data"]["password"]
+     conversation_id = client_info["data"]["socket_id"]
+     vali_result = Validation.vali_data(client_info["data"])
+     if vali_result["validated"]:
+          data_op_result = database.get_user(username, password)
+          if isinstance(data_op_result, str):
+               send_status({"name":"login_authorization","msg":{"status":"Fail","data":data_op_result}}, conversation_id)
+          else:
+               data_op_result.pop("unique_id", None)
+               data_op_result.pop("password", None)
+               send_status({"name":"login_authorization","msg":{"status":"Success","data":data_op_result}}, conversation_id)
+     else:
+          error = vali_result["data"]
+          send_status({"name":"login_validation","msg":{"status":"Fail","data":error}}, conversation_id)
+     pass
 
 @socketio.on('connect')
 def client_connect():
-    query_args = request.args
-    conid = query_args.get('conid')
-    username = query_args.get('username')
-    usergender = query_args.get('usergender')
-    ai_role_name = query_args.get('ai_role_name')
-    ai_is_uncensored = query_args.get('ai_is_uncensored')
-    conversation_id = request.sid #every time a client connect to server , it will generate a request sid, we use it to define a new conversation.
-    print(
-        f'server has been connected by conid: {conid}, SID is: {conversation_id},  {username} who gender is {usergender} has came in with role: {ai_role_name} selected, which uncensored is: {ai_is_uncensored}')
+    # query_args = request.args
+    # conid = query_args.get('conid')
+    # username = query_args.get('username')
+    # usergender = query_args.get('usergender')
+    # ai_role_name = query_args.get('ai_role_name')
+    # ai_is_uncensored = query_args.get('ai_is_uncensored')
+    # conversation_id = request.sid
+    # print(f'server has been connected by conid: {conid}, SID is: {conversation_id},  {username} who gender is {usergender} has came in with role: {ai_role_name} selected, which uncensored is: {ai_is_uncensored}')
+    print(f'The server has been connected by request id: [{request.sid}]')
+    pass
     #as we know, conid to define the same user in a chat period between different roles, and SID to define user's different conversation with ai role.
     #once user enter the system, and connect to server, user will get a consistent conid that created by uid and cookie in client side, it will not change until user close the browser
     
     # if conid in chatRoomList: 
     # create new user chat room if conid not existed
-@socketio.on('initialize room')
+@socketio.on('initialize_room')
 def initializeRoom(client_msg):
     conid = client_msg["data"]["conid"]
     username = client_msg["data"]["username"]
+    user_sys_name = client_msg["data"]["user_sys_name"]
     usergender = client_msg["data"]["usergender"]
+    user_facelooks = client_msg["data"]["user_facelooks"]
     ai_role_name = client_msg["data"]["ai_role_name"]
     ai_is_uncensored = client_msg["data"]["ai_is_uncensored"]
     windowRatio = round(float(client_msg["data"]["windowRatio"]),2)
@@ -95,17 +155,19 @@ def initializeRoom(client_msg):
             userCurrentRoom.conversation_id = conversation_id
             userCurrentRoom.ai_role_name=ai_role_name
             userCurrentRoom.username = username
+            userCurrentRoom.user_sys_name = user_sys_name
             userCurrentRoom.usergender = usergender
+            userCurrentRoom.user_facelooks = user_facelooks
             if hasattr(userCurrentRoom, 'windowRatio'):
                 userCurrentRoom.windowRatio = windowRatio
             break
     else:    
         if ai_is_uncensored == "No":
-            chatRoomList[conid] = chatRoom(ai_role_name=ai_role_name, username=username, usergender=usergender, conid=conid,
+            chatRoomList[conid] = chatRoom(user_sys_name=user_sys_name, ai_role_name=ai_role_name, username=username, usergender=usergender, user_facelooks=user_facelooks, conid=conid,
                                         conversation_id=conversation_id, sentiment_pipeline=sentiment_pipeline, send_msg_websocket=send_status) #Generate a unique chatRoom with unique conid for specific user.
             print("a censored room created")
         else:
-            chatRoomList[conid] = chatRoom_unsensor(ai_role_name=ai_role_name, username=username, usergender=usergender, conid=conid,
+            chatRoomList[conid] = chatRoom_unsensor(user_sys_name=user_sys_name, ai_role_name=ai_role_name, username=username, usergender=usergender, user_facelooks=user_facelooks, conid=conid,
                                         conversation_id=conversation_id, sentiment_pipeline=sentiment_pipeline, windowRatio=windowRatio, send_msg_websocket=send_status)
             print("a uncensored room created")
         userCurrentRoom = chatRoomList[conid]
@@ -118,13 +180,16 @@ def initializeRoom(client_msg):
             'message': user_ai_text,
             'voice_text': userCurrentRoom.G_voice_text,
             'avatar': userCurrentRoom.G_avatar_url,
+            'user_looks': userCurrentRoom.G_userlooks_url,
             'speaker': userCurrentRoom.ai_speakers,
             'speak_tone': userCurrentRoom.speaker_tone,
             'ttskey': userCurrentRoom.ttskey,
             'dynamic_picture':False,
             'bgImg': userCurrentRoom.bkImg,
+            'user_bkImg': userCurrentRoom.user_bkImg,
             'model_list': userCurrentRoom.model_list,
-            'instruct_list': userCurrentRoom.instr_temp_list
+            'instruct_list': userCurrentRoom.instr_temp_list,
+            'SD_model_list': userCurrentRoom.SD_model_list
         }
         socketio.emit('my response', {'data': data_to_send}, room=userCurrentRoom.conversation_id)
     #send response data to user's current conversation , it ensure the response to the correct chat dialogue.
@@ -142,23 +207,28 @@ def reset(client_msg):
     if hasattr(userCurrentRoom,'state'):
         userCurrentRoom.state['translate'] = True if transswitcher else False
     if hasattr(userCurrentRoom, 'windowRatio'):
-                userCurrentRoom.windowRatio = round(float(windowRatio),2)
+        userCurrentRoom.windowRatio = round(float(windowRatio),2)
     userCurrentRoom.start_stats()
+    userCurrentRoom.create_envart()
     user_ai_text = markdownText(userCurrentRoom.G_ai_text)
     print('chat has been reset')
     data_to_send = {
         'message': user_ai_text,
         'voice_text': userCurrentRoom.G_voice_text,
         'avatar': userCurrentRoom.G_avatar_url,
+        'user_looks': userCurrentRoom.G_userlooks_url,
         'speaker': userCurrentRoom.ai_speakers,
         'speak_tone': userCurrentRoom.speaker_tone,
         'ttskey': userCurrentRoom.ttskey,
         'dynamic_picture': False,
         'bgImg': userCurrentRoom.bkImg,
+        'user_bkImg': userCurrentRoom.user_bkImg,
         'model_list': userCurrentRoom.model_list,
-        'instruct_list': userCurrentRoom.instr_temp_list
+        'instruct_list': userCurrentRoom.instr_temp_list,
+        'SD_model_list': userCurrentRoom.SD_model_list
     }
     socketio.emit('my response', {'data': data_to_send}, room=userCurrentRoom.conversation_id)
+    send_status({"name":"initialization","msg":"DONE"}, userCurrentRoom.conversation_id)
 
 @socketio.on('regen_msg')
 #user ask for regenerate message
@@ -167,9 +237,12 @@ def regen_msg(client_msg):
     usermsg = client_msg['data']['message']
     embbedswitcher = client_msg['data']['isembbed']
     transswitcher = client_msg['data']['istranslated']
+    windowRatio = client_msg['data']['windowRatio']
     userCurrentRoom = chatRoomList[conid]
     if hasattr(userCurrentRoom,'state'):
         userCurrentRoom.state["translate"] = True if transswitcher else False
+    if hasattr(userCurrentRoom, 'windowRatio'):
+        userCurrentRoom.windowRatio = round(float(windowRatio),2)
     def callback_regen(future):
         ai_text, voice_text, speaker, speak_tone, avatar_url, conversation_id, dynamic_picture = future.result()
         user_ai_text = markdownText(ai_text)
@@ -218,7 +291,10 @@ def change_model(client_msg):
         if unloadresp.status_code == 200:
             def callback_load(future):
                 response = future.result()
-                print(response)
+                # print(response)
+                if response == "Success":
+                     send_status({"name":"initialization","msg":"DONE"}, userCurrentRoom.conversation_id)
+                     pass
                 data_to_send = {
                     'message': response
                 }
@@ -241,6 +317,39 @@ def change_instruction(client_msg):
                     }
     socketio.emit('instruction_change_result', {'data': data_to_send}, room=userCurrentRoom.conversation_id)
 
+@socketio.on("change_SD_Model")
+def change_SD_Model(client_msg):
+    conid = client_msg['data']['conid']
+    SD_Model = client_msg['data']['SD_Model']
+    userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.my_generate.image_payload["override_settings"]["sd_model_checkpoint"] = SD_Model
+    data_to_send = {
+                    'message': "Success"
+                    }
+    socketio.emit('SD_Model_change_result', {'data': data_to_send}, room=userCurrentRoom.conversation_id)
+
+@socketio.on("save_chat_history")
+def save_chat_history(client_msg):
+    conid = client_msg['data']['conid']
+    userCurrentRoom = chatRoomList[conid]
+    result = userCurrentRoom.chat_history_op("save")
+    if result:
+        send_status({"name":"chat_history_op","msg":{"operation":"save","result":"Success"}}, userCurrentRoom.conversation_id)
+    else:
+        send_status({"name":"chat_history_op","msg":{"operation":"save","result":"Fail"}}, userCurrentRoom.conversation_id)
+    pass
+
+@socketio.on("load_chat_history")
+def save_chat_history(client_msg):
+    conid = client_msg['data']['conid']
+    userCurrentRoom = chatRoomList[conid]
+    result = userCurrentRoom.chat_history_op("load")
+    if result:
+        send_status({"name":"chat_history_op","msg":{"operation":"load","result":result}}, userCurrentRoom.conversation_id)
+    else:
+        send_status({"name":"chat_history_op","msg":{"operation":"load","result":"Fail"}}, userCurrentRoom.conversation_id)
+    pass
+
 @socketio.on('send_user_msg')
 #when user send message , send it to user's chatroom
 def reply_user_query(client_msg):
@@ -248,9 +357,12 @@ def reply_user_query(client_msg):
     usermsg = client_msg['data']['message']
     embbedswitcher = client_msg['data']['isembbed']
     transswitcher = client_msg['data']['istranslated']
+    windowRatio = client_msg['data']['windowRatio']
     userCurrentRoom = chatRoomList[conid]
     if hasattr(userCurrentRoom, 'state'):
         userCurrentRoom.state["translate"] = True if transswitcher else False
+    if hasattr(userCurrentRoom, 'windowRatio'):
+        userCurrentRoom.windowRatio = round(float(windowRatio),2)
 
     def callback(future):
         ai_text, voice_text, speaker, speak_tone, avatar_url, conversation_id, dynamic_picture = future.result()

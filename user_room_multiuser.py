@@ -24,11 +24,13 @@ except Exception as e:
 
 #the main room class
 class chatRoom:
-    def __init__(self,ai_role_name,username, usergender, conid, conversation_id, sentiment_pipeline, send_msg_websocket:callable = None) -> None:
+    def __init__(self,user_sys_name,ai_role_name,username, usergender, user_facelooks, conid, conversation_id, sentiment_pipeline, send_msg_websocket:callable = None) -> None:
         self.send_msg_websocket = send_msg_websocket
+        self.user_sys_name = user_sys_name
         self.ai_role_name = ai_role_name
         self.username = username
         self.usergender = usergender
+        self.user_facelooks = user_facelooks
         self.conid=conid
         self.conversation_id = conversation_id
         self.ai_role=object()
@@ -55,6 +57,12 @@ class chatRoom:
         self.send_msg_websocket({"name":"initialization","msg":"Generate Chat Environment ..."}, self.conversation_id)
         self.ai_role=airole(roleselector=self.ai_role_name,username=self.username,usergender=self.usergender)
         self.summary_tool=summaryTool(self.ai_role)
+        self.start_stats()
+        self.send_msg_websocket({"name":"initialization","msg":"DONE"}, self.conversation_id)
+        self.initialization_start = False
+        return True
+    
+    def start_stats(self):
         self.initialize_msg.clear()
         self.messages.clear()
         self.messages = [
@@ -67,14 +75,18 @@ class chatRoom:
         self.G_ai_text = self.ai_role.welcome_text
         self.G_voice_text = self.extract_text(self.ai_role.welcome_text)
         self.G_avatar_url = f'/static/images/avatar/{self.ai_role_name}/none.png'
+        self.G_userlooks_url = f'/static/images/avatar/user_{self.usergender}.png'
+        self.user_bkImg = f'/static/images/avatar/user_{self.usergender}.png'
         self.bkImg = f'/static/images/avatar/{self.ai_role_name}/background.png'
         self.model_list=[]
         self.instr_temp_list=[]
+        self.SD_model_list=[]
         self.ai_speakers = self.ai_role.ai_speaker
         self.speaker_tone = 'affectionate'
-        self.send_msg_websocket({"name":"initialization","msg":"DONE"}, self.conversation_id)
-        self.initialization_start = False
-        return True
+
+    def create_envart(self):
+        pass
+
 
 
     def is_chinese(self,text):

@@ -146,8 +146,8 @@ class tabby_fastapi:
         response = requests.post(
             url=url, headers=headers, json=self.model_load_data)
         if response.status_code == 200:
-            if send_msg_websocket is not None:
-                send_msg_websocket({"name":"initialization","msg":"DONE"}, self.conversation_id)
+            # if send_msg_websocket is not None:
+            #     send_msg_websocket({"name":"initialization","msg":"DONE"}, self.conversation_id)
             print(f">>> Model Changed To: {name}")
             return "Success"
         else:

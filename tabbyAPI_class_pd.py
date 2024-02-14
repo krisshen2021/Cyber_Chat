@@ -27,8 +27,8 @@ def get_model_name(api_base:str,model_type:str):
             print("请求失败，状态码：", response.status_code)
     except Exception as e:
         print(f"Error to get model from {api_base}, \nPlease set up the {model_type} model address in config.yml before chatting")
-        # return "NONE"
-        sys.exit(1)
+        return "NONE"
+        # sys.exit(1)
         
         
 

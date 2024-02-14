@@ -1,84 +1,154 @@
+*{
+    box-sizing: border-box;
+}
 html,
 body {
     margin: 0px;
-    padding: 0;
-    box-sizing: border-box;
-    background-size: cover;
+    padding: 0px;
     height: 100%;
     /* font-family: 'Philosopher', sans-serif; */
+    width: 100%;
     font-family: "Barlow", sans-serif;
     font-weight: 400;
     font-style: normal;
-}
-
-#role_selector {
+    color:antiquewhite;
     background-image: url('/static/images/bg/chatroom.png');
+}
+.placeholder{
+    
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
-    height: 100%;
-    width: 100%;
-    color: antiquewhite;
-    font-size: 16px;
     display: flex;
-    
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100%;
+}
+.settings{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 15px 10px;
+    background-color: rgba(21, 21, 21, 0.164);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    gap:5px
+}
+.top_buttons{
+    padding: 5px 20px;
+    font-size: 14px;
+    border-radius: 15px;
+    background-color: rgba(52, 7, 104, 0.7);
+    height:fit-content;
+    cursor: pointer;
 
 }
+.user_profile{
+  display: none;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap:5px;
+  margin-right: 20px;
+}
+.user_profile .profile_avatar{
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background-image: url('/static/images/avatar/profile_male.png');
+  background-position: center center;
+  background-size: 100%;
+}
+.user_profile .username{
+  font-weight: 300;
+}
+.user_profile .credits{
+  font-size: 12px;
+  color:#c7660b;
+  font-weight: 300;
+  display: flex;
+  flex-direction: row;
+  gap:5px;
+  justify-content: flex-start;
+  align-items: center;
+}
+.user_profile #btn_logout{
+  cursor: pointer;
+}
 
-.blurlayer {
-    flex-direction: column;
+#role_selector {
     display: flex;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
+    flex-direction: column;
+    justify-items: flex-start;
     align-items: center;
-    backdrop-filter: blur(0px);
+    width: 100%;
+
+}
+.headline {
+    padding: 40px 0px;
+    text-shadow: 0px 0px 10px #000000;
+    font-size: 40px;
+    font-family: 'Philosopher', sans-serif; 
+}
+.chatbtn{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  background-color: antiquewhite;
+  color:#280149;
+  gap: 5px;
+  padding: 5px 30px;
+  border-radius: 25px;
+  cursor: pointer;
 }
 
 #logindiv {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
     align-items: center;
     height: auto;
-    width: 50vw;
-    background-color: rgba(29, 29, 29, 0.7);
+    width: 80%;
+    background-color: rgba(0, 0, 0, 0.2);
+    /* background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) 1px, rgba(0, 0, 0, 0.1) 2px, rgba(0, 0, 0, 0.1) 5px); */
     backdrop-filter: blur(3px);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     border-radius: 10px;
-    flex-direction: column;
-    padding: 40px 10px 40px 10px;
-}
-
-.headline {
-    display: flex;
-    padding: 20px;
-    text-shadow: 0px 0px 10px #000000;
-    font-size: 5vmax;
-    font-family: 'Philosopher', sans-serif; 
+    gap:35px;
+    padding: 10px;
 }
 
 #role_form {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     align-items: center;
     gap: 15px;
-    width: 80%;
-}
+    width: 100%
+} 
 
 .subtitle {
-    font-size: 1.2vmax;
-    align-self: center;
     display: flex;
-    background-color: rgba(64, 30, 64, 0.5);
-    padding: 10px;
-    border-radius: 20px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    width: 100%;
+    background-color: rgba(52, 7, 104, 0.7);
+    padding: 5px 20px;
+    border-radius: 25px;
 }
 
 .rolelist {
     display: flex;
+    flex-direction: row;
     justify-content: center;
     flex-wrap:wrap; 
-    width: 200%;
+    width: 100%;
     gap: 15px;
     
 }
@@ -129,12 +199,142 @@ body {
 }
 
 .submit_btn {
-    
     border: 0px;
-    border-radius: 15px;
-    width: 150px;
-    align-self: center;
-    padding: 5px;
-    /* font-family: 'Philosopher', sans-serif; */
+    border-radius: 20px;
+    height: 40px;
+    font-weight: 300;
+    font-size: 16px;
+    color:#280149;
     cursor: pointer;
+    padding: 0px 30px;
 }
+.overlay {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); 
+    display: none; 
+    opacity: 100;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px); 
+    z-index: 9999;
+  }
+  #signup_form, #login_form{
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 500px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 25px -5px rgba(153, 0, 254, 0.5);
+  }
+  #login_form{
+    width: 300px;
+  }
+
+  #signup_form .top_bar, #login_form .top_bar{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px;
+    background: rgba(255, 255, 255, 1);
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    
+  }
+  #signup_form .top_bar .title, #login_form .top_bar .title{
+    font-weight: 600;
+    font-size: 18px;
+    color: rgba(52, 7, 104, 0.7);
+  }
+
+  #signup_form #sign_author, #login_form #login_author{
+    display: none;
+  }
+
+  #signup_form .main_body, #login_form .main_body{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    gap:10px;
+    background: rgba(52, 7, 104, 0.7);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    padding: 10px;
+  }
+  #signup_form .info_row{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap:10px;
+    width: 100%;
+  }
+  #sign_profile, #sign_charlooks{
+    display: flex;
+    width: 60%;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap:10px
+  }
+  #sign_charlooks{
+    width: 40%;
+    background: rgba(61, 29, 87, 0.9);
+    border-radius: 10px;
+    padding: 15px;
+  }
+  #signup_form label, #login_form label, #sign_charlooks span{
+    align-self: flex-start;
+  }
+  #sign_charlooks label{
+    font-size: 10px;
+  }
+  .btn_close{
+    cursor: pointer;
+  }
+  .pwd_type{
+    margin:0 10px;
+  }
+  .form_hint{
+    font-size: 10px;
+    font-weight: 600;
+    font-style: italic;
+    color: #c7660b;
+  }
+  .overlay input, .overlay select{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(25, 3, 52);
+    border-bottom-color: rgb(87, 36, 164);
+    border-right-color: rgb(67, 20, 137);
+    border-radius: 15px;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    font-size: 14px;
+    color:rgba(52, 7, 104);
+    width: 100%
+  }
+  .overlay select{
+    font-size: 10px;
+  }
+  .overlay input[type="radio"]{
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #eee;
+  }
+  .overlay input[type="radio"]:hover{
+    background-color: #280149;
+  }
+  .overlay input[type="radio"]:checked{
+    background-color: #c7660b;
+  }

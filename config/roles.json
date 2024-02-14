@@ -14,14 +14,20 @@
   "Doctor": {
     "if_uncensored": "Yes",
     "ai_name": "Dr Samantha",
-    "ai_speaker": "zh-CN-YunyeNeural",
-    "ai_speaker_en": "en-US-JasonNeural"
+    "ai_speaker": "zh-CN-XiaomoNeural",
+    "ai_speaker_en": "en-US-SaraNeural"
   },
   "CyberBitch": {
     "if_uncensored": "Yes",
-    "ai_name": "Cyber Cynthia",
-    "ai_speaker": "zh-CN-YunyeNeural",
-    "ai_speaker_en": "en-US-JasonNeural"
+    "ai_name": "Cyborg Cynthia",
+    "ai_speaker": "zh-CN-XiaomoNeural",
+    "ai_speaker_en": "en-US-SaraNeural"
+  },
+  "IELTSTeacher": {
+    "if_uncensored": "Yes",
+    "ai_name": "Mrs. Taylor",
+    "ai_speaker": "zh-CN-XiaomoNeural",
+    "ai_speaker_en": "en-US-SaraNeural"
   },
   "Coder": {
     "if_uncensored": "Yes",

@@ -1,4 +1,4 @@
-import os, random, re, io, base64, yaml, copy
+import os, random, re, io, base64, yaml, copy, requests, markdown
 from airole_creator_uncensor import airole
 from googlecloudtrans import googletransClass
 # from azure_translator import azuretransClass
@@ -6,7 +6,9 @@ from googlecloudtrans import googletransClass
 from tabbyAPI_class_pd import tabbyAPI
 from PIL import Image
 from yeelight import discover_bulbs, Bulb
+from sqliteclass import SQLiteDB
 
+database = SQLiteDB()
 # load server address from config.yml
 dir_path = os.path.dirname(os.path.realpath(__file__))
 config_path = os.path.join(dir_path, 'config', 'config.yml')
@@ -41,7 +43,7 @@ image_payload = {
                 "sd_vae" : "Automatic",
                 "sd_model_checkpoint":  config_data["sd_model_checkpoint"]
                 },
-            "override_settings_restore_afterwards" : False
+            "override_settings_restore_afterwards" : True
         }
 
 state = {
@@ -85,15 +87,20 @@ with open(prompt_template_path, 'r') as file:
 
 myTrans = googletransClass()
 
+def markdownText(text):
+    Mtext = markdown.markdown(text, extensions=['pymdownx.superfences', 'pymdownx.highlight', 'pymdownx.magiclink'])
+    return Mtext
 
 
 #the main room class
 class chatRoom_unsensor:
-    def __init__(self,ai_role_name,username, usergender, conid, conversation_id, sentiment_pipeline, windowRatio, send_msg_websocket) -> None:
+    def __init__(self,user_sys_name, ai_role_name, username, usergender, user_facelooks, conid, conversation_id, sentiment_pipeline, windowRatio, send_msg_websocket) -> None:
         self.send_msg_websocket = send_msg_websocket
+        self.user_sys_name = user_sys_name
         self.ai_role_name = ai_role_name
         self.username = username
         self.usergender = usergender
+        self.user_facelooks = user_facelooks
         self.conid=conid
         self.conversation_id = conversation_id
         self.ai_role=object()
@@ -120,6 +127,21 @@ class chatRoom_unsensor:
         template = prompts_templates[self.state["prompt_template"]]
         pt=template.replace(r"<|character|>",ainame).replace(r"<|user|>", username)
         return pt
+    def get_sd_model_list(self):
+        url = config_data["SDAPI_url"]+"/sdapi/v1/sd-models"
+        headers = {
+            'accept': 'application/json'
+        }
+        try:
+            response = requests.get(url, headers=headers).json()
+            model_list = []
+            for model_name in response:
+                model_list.append(model_name["model_name"])
+            print(f'>>> SD Model List: {model_list}')
+            return model_list
+        except Exception as e:
+            print("Error on get SD model list: ", e)
+            return None
 
     def initialize(self):
         self.initialization_start = True
@@ -140,11 +162,9 @@ class chatRoom_unsensor:
         self.send_msg_websocket({"name":"initialization","msg":"Get Model List ..."}, self.conversation_id)
         self.current_model = self.my_generate.tabby_server.get_model()
         self.model_list = self.my_generate.tabby_server.get_model_list()
+        self.SD_model_list = self.get_sd_model_list()
         self.instr_temp_list = instr_temp_list
-        self.send_msg_websocket({"name":"initialization","msg":"Generate Chat Environment ..."}, self.conversation_id)
-        self.bkImg = 'data:image/png;base64,' + self.gen_bgImg(self.my_generate, self.state['char_looks'], self.state['env_setting'])
-        self.send_msg_websocket({"name":"initialization","msg":"Generate Avatar ..."}, self.conversation_id)
-        self.G_avatar_url = 'data:image/png;base64,' + self.gen_avatar(self.my_generate,self.state['char_avatar'], "smile")
+        self.create_envart()
         if self.ai_role.model_to_load is not False:
             self.my_generate.tabby_server.unload_model()
             self.my_generate.tabby_server.load_model(name=self.ai_role.model_to_load, send_msg_websocket=self.send_msg_websocket)
@@ -154,7 +174,19 @@ class chatRoom_unsensor:
         self.initialization_start = False
         return True
     
+    def create_envart(self):
+        self.send_msg_websocket({"name":"initialization","msg":"Generate Chat Environment ..."}, self.conversation_id)
+        self.bkImg = 'data:image/png;base64,' + self.gen_bgImg(self.my_generate, self.state['char_looks'], self.state['env_setting'])
+        self.user_bkImg = 'data:image/png;base64,' + self.gen_bgImg(self.my_generate, self.user_facelooks, self.state['env_setting'], False, True)
+        self.send_msg_websocket({"name":"initialization","msg":"Generate Avatar ..."}, self.conversation_id)
+        self.G_avatar_url = 'data:image/png;base64,' + self.gen_avatar(self.my_generate,self.state['char_avatar'], "smile",True)
+        userlooksprefix = "Perfect face portrait, (close-up:0.8),"
+        self.G_userlooks_url = 'data:image/png;base64,' + self.gen_avatar(self.my_generate,userlooksprefix+self.user_facelooks, "smile",False)
+        return True
+    
     def start_stats(self):
+        # char_records_loaded = self.chat_history_op("load")
+        # print(f">>>loading chat history \n {char_records_loaded}")
         self.ainame = self.ai_role.ai_role_name
         self.chathistory.clear()
         self.messages=""
@@ -170,30 +202,43 @@ class chatRoom_unsensor:
         self.speaker_tone = 'affectionate'
         pass
 
-    def gen_bgImg(self,tabbyGen,char_looks,bgImgstr):
+    def gen_bgImg(self,tabbyGen,char_looks,bgImgstr, is_save=True, is_user=False):
         print(f'>>>The window ratio[w/h]: {self.windowRatio}')
         tabbyGen.image_payload['enable_hr'] = True
-        tabbyGen.image_payload['width'] = 1024 if self.windowRatio >= 1 else 512
-        tabbyGen.image_payload['height'] = int(tabbyGen.image_payload['width'] / self.windowRatio)
-        tabbyGen.image_payload['steps'] = 50
-        print(">>>Generate Background\n")
-        bkImg = tabbyGen.generate_image(prompt_prefix=tabbyGen.prmopt_fixed_prefix, char_looks=char_looks, env_setting=bgImgstr, prompt_suffix=tabbyGen.prmopt_fixed_suffix)
-        image_save = Image.open(io.BytesIO(base64.b64decode(bkImg)))
-        image_save.save(os.path.join(dir_path, "static",
-                        "images", "avatar", self.ai_role_name, "background.png"))
+        if not is_user:
+            tabbyGen.image_payload['width'] = 1024 if self.windowRatio >= 1 else 512
+            tabbyGen.image_payload['height'] = int(tabbyGen.image_payload['width'] / self.windowRatio)
+            tabbyGen.image_payload['steps'] = 40
+            portraitprefix = ", Upper body portrait, looking directly at the camera, front view, clear and detailed"
+            print(f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}")
+            print(">>>Generate Character Background\n")
+        elif is_user:
+            tabbyGen.image_payload['width'] = 768 if self.windowRatio >= 1 else 512
+            tabbyGen.image_payload['height'] = 512 if self.windowRatio >= 1 else int((tabbyGen.image_payload['width'] / self.windowRatio ) * 0.5)
+            tabbyGen.image_payload['steps'] = 40
+            portraitprefix = ", Upper body portrait, front view"
+            print(f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}")
+            print(">>>Generate User Background\n")
+        
+        bkImg = tabbyGen.generate_image(prompt_prefix=tabbyGen.prmopt_fixed_prefix + portraitprefix, char_looks=char_looks, env_setting=bgImgstr, prompt_suffix=tabbyGen.prmopt_fixed_suffix)
+        if is_save:
+            image_save = Image.open(io.BytesIO(base64.b64decode(bkImg)))
+            image_save.save(os.path.join(dir_path, "static",
+                            "images", "avatar", self.ai_role_name, "background.png"))
         return bkImg
     
-    def gen_avatar(self,tabbyGen,char_avatar,emotion):
-        tabbyGen.image_payload['enable_hr'] = False
+    def gen_avatar(self,tabbyGen,char_avatar,emotion,is_save=True):
+        tabbyGen.image_payload['enable_hr'] = True
         tabbyGen.image_payload['width'] = 256
         tabbyGen.image_payload['height'] = 256
-        tabbyGen.image_payload['steps'] = 25
+        tabbyGen.image_payload['steps'] = 20
         char_avatar = char_avatar.replace('<|emotion|>',emotion)
         print(">>>Generate avatar\n")
         avatarImg = tabbyGen.generate_image(prompt_prefix=tabbyGen.prmopt_fixed_prefix, char_looks=char_avatar, env_setting=self.state['env_setting'], prompt_suffix=tabbyGen.prmopt_fixed_suffix)
-        image_save = Image.open(io.BytesIO(base64.b64decode(avatarImg)))
-        image_save.save(os.path.join(dir_path, "static",
-                        "images", "avatar", self.ai_role_name, "none.png"))
+        if is_save:
+            image_save = Image.open(io.BytesIO(base64.b64decode(avatarImg)))
+            image_save.save(os.path.join(dir_path, "static",
+                            "images", "avatar", self.ai_role_name, "none.png"))
         return avatarImg
     
     def is_chinese(self,text):
@@ -223,8 +268,8 @@ class chatRoom_unsensor:
             f'>>> The number tokens: {self.my_generate.count_token_numbers(prompt)} \n The limitation token is: {token_limition}')
         # print(f'>>> The final prompt is :{prompt}') #test the prompt output
         #llm request
-        self.my_generate.image_payload['width'] = 512
-        self.my_generate.image_payload['height'] = 512
+        self.my_generate.image_payload['width'] = 512 if self.windowRatio <= 1 else 768
+        self.my_generate.image_payload['height'] = 768 if self.windowRatio <= 1 else 512
         self.my_generate.image_payload['enable_hr'] = True
         self.my_generate.image_payload['steps'] = 40
         self.my_generate.state['temperature'] = random.choice([0.71, 0.72, 0.73])
@@ -236,7 +281,7 @@ class chatRoom_unsensor:
         if picture:
             # image_save = Image.open(io.BytesIO(base64.b64decode(picture)))
             # image_save.save('Sdimg.png')
-            self.dynamic_picture = picture
+            self.dynamic_picture = 'data:image/png;base64,' + picture
         elif not picture:
             self.dynamic_picture = False
         result_text_cn = myTrans.translate_text("zh",result_text) if self.state["translate"] == True else result_text
@@ -279,15 +324,60 @@ class chatRoom_unsensor:
 
         self.ai_lastword = result_text
         self.chathistory.append(f'{self.ainame}: {result_text}')
+        # print(f">>>chat history in server reply: \n{self.chathistory}")
 
         if self.is_chinese(tts_text_extracted):
             self.ai_speakers = self.ai_role.ai_speaker
         else:
             self.ai_speakers = self.ai_role.ai_speaker_en
         print(self.ai_speakers)
-
+        # self.chat_history_op("save")
         self.G_avatar_url = avatar_url
         self.G_ai_text = result_text_cn
         self.G_voice_text = tts_text_extracted
         self.send_msg_websocket({"name":"chatreply","msg":"DONE"}, self.conversation_id)
         return self.G_ai_text,self.G_voice_text,self.ai_speakers,self.speaker_tone,self.G_avatar_url,self.conversation_id,self.dynamic_picture
+    
+    def chat_history_op(self, operation:str):
+        if operation == "save":
+            char = self.chathistory[-1].split(": ", maxsplit=1)
+            if len(self.chathistory)>1 and char[0]==self.ainame:
+                db_chat_history = copy.deepcopy(self.chathistory)
+                db_chat_history.pop(0)
+                chat_record = []
+                for record in db_chat_history:
+                    chatitem = record.split(": ", maxsplit=1)
+                    if chatitem[0] == self.username:
+                        chatitem[0] = r"{{user}}"
+                    else:
+                        chatitem[0] = r"{{char}}"
+                    chatitem[1] = chatitem[1].replace(self.username,r"{{user}}").replace(self.ainame, r"{{char}}")
+                    chatitem_dict = {
+                        "role":chatitem[0],
+                        "msg":chatitem[1]
+                        }
+                    chat_record.append(chatitem_dict)
+                save_result = database.save_chat_records(username=self.user_sys_name, character=self.ai_role_name, chat_data=chat_record)
+                return save_result
+            else:
+                return False
+            
+        if operation == "load":
+            user_chat_history = database.get_chat_records(username=self.user_sys_name, character=self.ai_role_name)
+            if user_chat_history:
+                self.chathistory[:] = self.chathistory[:1]
+                self.loadedhistory = []
+                history_content = user_chat_history[0]["content"]
+                for msg in history_content:
+                    msgs = msg["msg"].replace(r"{{user}}", self.username).replace(r"{{char}}", self.ainame)
+                    msgsMarkdown = markdownText(msgs)
+                    self.loadedhistory.append({"role":"user" if msg["role"] == r"{{user}}" else "char", "msg":msgsMarkdown})
+                    role = msg["role"].replace(r"{{user}}", self.username).replace(r"{{char}}", self.ainame)              
+                    self.chathistory.append(f"{role}: {msgs}")
+                # print(f">>> chat history after loaded is \n {self.chathistory}")
+                return self.loadedhistory
+            else:
+                return False
+        if operation == "delete":
+            delete_result = database.delete_chat_records(username=self.user_sys_name, character=self.ai_role_name)
+            return delete_result

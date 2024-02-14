@@ -1,5 +1,5 @@
 #Chat server Settings
-server_address: 127.0.0.1
+server_address: 0.0.0.0
 server_port: 5500
 debug_mode: True
 #TabbyAPI Configuration
@@ -8,10 +8,11 @@ openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional leave it is ok
 openai_api_rephase_base: http://127.0.0.1:5003/v1
 #StableDiffusion Configuration
 SDAPI_url: http://127.0.0.1:7860
-sd_model_checkpoint: realcartoon25D_v2.safetensors [1736b1efbe]
+# sd_model_checkpoint: hardcoreHentai13_v13.safetensors [3f99e42bef]
+sd_model_checkpoint: astranime_v5B
 # sampler_name: Euler a
 sampler_name: DPM++ 2M Karras
 hr_upscaler: Latent (nearest)
 yeelight_url: 192.168.5.142
-chroma_server_host: 192.168.5.236
+chroma_server_host: 192.168.5.179
 chroma_server_http_port: 8000
