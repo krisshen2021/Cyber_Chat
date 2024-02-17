@@ -2,8 +2,8 @@
   "SlaveDream": {
     "if_uncensored": "Yes",
     "ai_name": "Mary",
-    "ai_speaker": "zh-CN-XiaomoNeural",
-    "ai_speaker_en": "en-US-SaraNeural"
+    "ai_speaker": "zh-cn_qingling",
+    "ai_speaker_en": "en_female-06"
   },
   "FreakGirl": {
     "if_uncensored": "Yes",
@@ -14,8 +14,8 @@
   "Doctor": {
     "if_uncensored": "Yes",
     "ai_name": "Dr Samantha",
-    "ai_speaker": "zh-CN-XiaomoNeural",
-    "ai_speaker_en": "en-US-SaraNeural"
+    "ai_speaker": "zh-cn_yufeihong",
+    "ai_speaker_en": "en_female-03"
   },
   "CyberBitch": {
     "if_uncensored": "Yes",

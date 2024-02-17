@@ -30,7 +30,7 @@ ChatML_Doctor: |
   Treatment plans should be output strictly in well Markdown formated. 
   <|prompt|><|im_end|>
   <|im_start|>assistant
-  <|character|>:
+  <|character|>: 
 
 ChatML_Coder: |
   <|im_start|>system

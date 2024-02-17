@@ -30,3 +30,4 @@ class airole:
         self.generate_dynamic_picture = persona_data['generate_dynamic_picture'] if 'generate_dynamic_picture' in persona_data else True
         self.model_to_load = persona_data['model_to_load'] if 'model_to_load' in persona_data else False
         self.prompt_to_load = persona_data['prompt_to_load'] if 'prompt_to_load' in persona_data else False
+        self.match_words_cata = persona_data['match_words_cata'] if 'match_words_cata' in persona_data else "SFW"

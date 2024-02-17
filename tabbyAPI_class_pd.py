@@ -38,21 +38,21 @@ def load_prompts(file_path):
     with open(yaml_file_path, 'r') as file:
         prompts_data = yaml.safe_load(file)
         restruct_prompt = prompts_data['restruct_prompt']
-        summary_prompt = prompts_data['summary_prompt']
         prmopt_fixed_prefix = prompts_data['prmopt_fixed_prefix']
         prmopt_fixed_suffix = prompts_data['prmopt_fixed_suffix']
         nagetive_prompt = prompts_data['nagetive_prompt']
-    return restruct_prompt, summary_prompt, prmopt_fixed_prefix, prmopt_fixed_suffix, nagetive_prompt
+    return restruct_prompt, prmopt_fixed_prefix, prmopt_fixed_suffix, nagetive_prompt
 
 #Load Words dictionary and sex result matching
 def load_vocabulary(file_path):
-    file_path = os.path.join(dir_path, "config", file_path)
+    file_path = os.path.join(dir_path, "config", "match_words", file_path+".yaml")
     with open(file_path, 'r') as file:
-        data = json.load(file)
+        data = yaml.safe_load(file)
         vocabs = [word.lower() for word in data["words"]]
-        sex_result = [word.lower() for word in data["sex_results"]]
+        result = [word.lower() for word in data["results"]]
         lora = data["lora"]
-    return vocabs, sex_result, lora
+        summary_prompt = data["summary_prompt"]
+    return vocabs, result, lora, summary_prompt
 
 def contains_vocabulary(input_string, vocabulary):
     input_string = input_string.lower()
@@ -72,8 +72,8 @@ class tabbyAPI:
         self.funcall_model = get_model_name(self.state['openai_api_funcall_base'],"Funcall")
         self.rephase_model = get_model_name(self.state['openai_api_rephase_base'],"Rephase")
         print(f'Chat model: {self.chat_model} | Fun call model: {self.funcall_model} | Rephase model: {self.rephase_model}')
-        self.vocabulary, self.sexresultslist, self.lora = load_vocabulary("match_words.json")
-        self.restruct_prompt, self.summary_prompt, self.prmopt_fixed_prefix, self.prmopt_fixed_suffix, self.nagetive_prompt = load_prompts("prompts.yaml")
+        self.vocabulary, self.resultslist, self.lora, self.summary_prompt = load_vocabulary(self.state['match_words_cata'])
+        self.restruct_prompt, self.prmopt_fixed_prefix, self.prmopt_fixed_suffix, self.nagetive_prompt = load_prompts("prompts.yaml")
         self.restruct_prompt = self.restruct_prompt.replace('<|default_bg|>', self.state['env_setting'])
         self.inputmsg = ""
         self.tabby_server = tabby_fastapi(url=self.state['openai_api_chat_base'], api_key=api_key, admin_key=admin_key, conversation_id=self.state["conversation_id"])
@@ -217,22 +217,28 @@ class tabbyAPI:
 
 
     #Excutions !
-    def generate_picture_by_sdapi(self, prompt:str):
+    def generate_picture_by_sdapi(self, prompt:str="", loraword:str=""):
         recived_prompt = prompt
-        system_prompt = self.summary_prompt
-        user_msg=f'Output your selection base on this context: \"{recived_prompt}\"'
-        response = self.get_rephase_response(system_prompt=system_prompt,user_msg=user_msg)
-        is_matched_se,final_response = contains_vocabulary(response, self.sexresultslist)
-        print(f"<{final_response}>")
-        if is_matched_se :
-            lora_prompt = self.lora.get(final_response.strip(), "")
-            if self.send_msg_websocket is not None:
-                self.send_msg_websocket({"name":"chatreply","msg":"Generating Scene Image"}, self.state["conversation_id"])
-            print(">>>Generate Dynamic Picture\n")
-            image = self.generate_image(prompt_prefix=self.prmopt_fixed_prefix, char_looks=self.state['char_looks'], prompt_main=recived_prompt, env_setting="", prompt_suffix=self.prmopt_fixed_suffix, lora_prompt=lora_prompt)
-            return image
-        else:
-            return False
+        lora_prompt = self.lora.get(loraword.strip(), "")
+        if self.send_msg_websocket is not None:
+            self.send_msg_websocket({"name":"chatreply","msg":"Generating Scene Image"}, self.state["conversation_id"])
+        print(">>>Generate Dynamic Picture\n")
+        image = self.generate_image(prompt_prefix=self.prmopt_fixed_prefix, char_looks=self.state['char_looks'], prompt_main=recived_prompt, env_setting="", prompt_suffix=self.prmopt_fixed_suffix, lora_prompt=lora_prompt)
+        return image
+        
+        # user_msg=f'Output your selection base on this context: \"{recived_prompt}\"'
+        # response = self.get_rephase_response(system_prompt=system_prompt,user_msg=user_msg)
+        # is_matched_se,final_response = contains_vocabulary(response, self.resultslist)
+        # print(f"<{final_response}>")
+        # if is_matched_se :
+        #     lora_prompt = self.lora.get(final_response.strip(), "")
+        #     if self.send_msg_websocket is not None:
+        #         self.send_msg_websocket({"name":"chatreply","msg":"Generating Scene Image"}, self.state["conversation_id"])
+        #     print(">>>Generate Dynamic Picture\n")
+        #     image = self.generate_image(prompt_prefix=self.prmopt_fixed_prefix, char_looks=self.state['char_looks'], prompt_main=recived_prompt, env_setting="", prompt_suffix=self.prmopt_fixed_suffix, lora_prompt=lora_prompt)
+        #     return image
+        # else:
+        #     return False
 
 
     #Block for funcation call
@@ -288,16 +294,18 @@ class tabbyAPI:
     #Block for chat
 #    
     def Chat_with_LLM(self, words:str):
-
         system_prompt=self.inputmsg
         response_text = self.get_chat_response(system_prompt=system_prompt).strip()
         if self.state['generate_dynamic_picture'] is True:
-            is_six_involved, match_word = contains_vocabulary(response_text, self.vocabulary)
-
-            if is_six_involved is True :
-                # print(f"Matched word is: {match_word}")
+            user_msg=f'Output your selection base on this context: \"{response_text}\"'
+            response = self.get_rephase_response(system_prompt=self.summary_prompt,user_msg=user_msg)
+            print(f">>>The rephase result is {response}")
+            is_word_triggered, match_result = contains_vocabulary(response, self.resultslist)
+            # is_word_triggered, match_word = contains_vocabulary(response_text, self.vocabulary)
+            if is_word_triggered is True :
+                print(f">>>Matched result is: {match_result}")
                 text_to_image = response_text.replace("\n",".").strip()
-                result_picture = self.generate_picture_by_sdapi(text_to_image)
+                result_picture = self.generate_picture_by_sdapi(prompt=text_to_image,loraword=match_result)
                 return response_text, result_picture
             else:
                 return response_text, False

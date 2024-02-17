@@ -1,6 +1,5 @@
 import requests
 
-
 class tabby_fastapi:
     def __init__(self, url: str = "", api_key: str = "", admin_key: str = "", conversation_id:str="" ) -> None:
         self.conversation_id = conversation_id

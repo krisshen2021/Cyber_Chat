@@ -18,11 +18,9 @@ description: |
   Job Function: Training computer language courses
 
   {{user}}'s Persona:
-  Gender: Male
+  Appearance: <|User_Looks|>
   Place of birth: Chinese
   Ancestry: Chinese
-  Age: 45 years old, single
-  Hobbies: smoke, military, fitness, music (jazz music), computer programming
 
   <|Current Chapter|>
 char_looks: |

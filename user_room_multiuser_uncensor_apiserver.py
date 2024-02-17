@@ -72,7 +72,8 @@ state = {
     "char_avatar":"",
     "env_setting":"",
     "conversation_id":"",
-    "generate_dynamic_picture": True
+    "generate_dynamic_picture": True,
+    "match_words_cata":""
 }
 
 #Read prompt template
@@ -156,6 +157,7 @@ class chatRoom_unsensor:
         self.state['char_avatar'] = self.ai_role.char_avatar
         self.state['max_new_tokens'] = self.ai_role.max_new_tokens
         self.state['generate_dynamic_picture'] = self.ai_role.generate_dynamic_picture
+        self.state['match_words_cata'] = self.ai_role.match_words_cata
         print(f'>>>Generate Dynamic Picture: {self.state["generate_dynamic_picture"]}')
         print(f'>>>The max new token: {self.state["max_new_tokens"]}')
         self.my_generate = tabbyAPI(state=self.state, image_payload=image_payload, send_msg_websocket=self.send_msg_websocket)
@@ -181,16 +183,14 @@ class chatRoom_unsensor:
         self.send_msg_websocket({"name":"initialization","msg":"Generate Avatar ..."}, self.conversation_id)
         self.G_avatar_url = 'data:image/png;base64,' + self.gen_avatar(self.my_generate,self.state['char_avatar'], "smile",True)
         userlooksprefix = "Perfect face portrait, (close-up:0.8),"
-        self.G_userlooks_url = 'data:image/png;base64,' + self.gen_avatar(self.my_generate,userlooksprefix+self.user_facelooks, "smile",False)
+        self.G_userlooks_url = 'data:image/png;base64,' + self.gen_avatar(self.my_generate,userlooksprefix+self.user_facelooks, "smile", False)
         return True
     
     def start_stats(self):
-        # char_records_loaded = self.chat_history_op("load")
-        # print(f">>>loading chat history \n {char_records_loaded}")
         self.ainame = self.ai_role.ai_role_name
         self.chathistory.clear()
         self.messages=""
-        self.char_desc_system = self.ai_role.ai_system_role.replace(r'<|Current Chapter|>',self.ai_role.chapters[0]['name'])
+        self.char_desc_system = self.ai_role.ai_system_role.replace(r'<|Current Chapter|>',self.ai_role.chapters[0]['name']).replace(r'<|User_Looks|>', self.user_facelooks)
         self.messages = f"{self.char_desc_system}{self.ainame}: {self.ai_role.welcome_text_dec}"
         self.messages = self.messages.replace(r"{{char}}",self.ainame).replace(r"{{user}}",self.username)
         self.chathistory.append(self.messages)
@@ -205,17 +205,20 @@ class chatRoom_unsensor:
     def gen_bgImg(self,tabbyGen,char_looks,bgImgstr, is_save=True, is_user=False):
         print(f'>>>The window ratio[w/h]: {self.windowRatio}')
         tabbyGen.image_payload['enable_hr'] = True
+        
         if not is_user:
+            tabbyGen.image_payload['hr_scale'] = 1.5
             tabbyGen.image_payload['width'] = 1024 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload['height'] = int(tabbyGen.image_payload['width'] / self.windowRatio)
-            tabbyGen.image_payload['steps'] = 40
+            tabbyGen.image_payload['steps'] = 20
             portraitprefix = ", Upper body portrait, looking directly at the camera, front view, clear and detailed"
             print(f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}")
             print(">>>Generate Character Background\n")
         elif is_user:
+            tabbyGen.image_payload['hr_scale'] = 1.25
             tabbyGen.image_payload['width'] = 768 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload['height'] = 512 if self.windowRatio >= 1 else int((tabbyGen.image_payload['width'] / self.windowRatio ) * 0.5)
-            tabbyGen.image_payload['steps'] = 40
+            tabbyGen.image_payload['steps'] = 20
             portraitprefix = ", Upper body portrait, front view"
             print(f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}")
             print(">>>Generate User Background\n")
@@ -229,6 +232,7 @@ class chatRoom_unsensor:
     
     def gen_avatar(self,tabbyGen,char_avatar,emotion,is_save=True):
         tabbyGen.image_payload['enable_hr'] = True
+        tabbyGen.image_payload['hr_scale'] = 1.25
         tabbyGen.image_payload['width'] = 256
         tabbyGen.image_payload['height'] = 256
         tabbyGen.image_payload['steps'] = 20
@@ -271,7 +275,8 @@ class chatRoom_unsensor:
         self.my_generate.image_payload['width'] = 512 if self.windowRatio <= 1 else 768
         self.my_generate.image_payload['height'] = 768 if self.windowRatio <= 1 else 512
         self.my_generate.image_payload['enable_hr'] = True
-        self.my_generate.image_payload['steps'] = 40
+        self.my_generate.image_payload['steps'] = 20
+        self.my_generate.image_payload['hr_scale'] = 1.25
         self.my_generate.state['temperature'] = random.choice([0.71, 0.72, 0.73])
         self.send_msg_websocket({"name":"chatreply","msg":"Generate Response"}, self.conversation_id)
         result_text, picture = self.my_generate.fetch_results(prompt,input_text)

@@ -1,0 +1,14 @@
+words:
+  - <Picture_Scene>
+results:
+  - Intense Action
+  - Explicit Sexual Behavior
+  - Specific Location
+  - Atmospheric Scene
+lora:
+  Explicit Sexual Scene: NSFW, naked, lewd, sex
+summary_prompt: |
+  You are an subject summarization robot, you will judge if the subject provided involves intense actions, explicit sexual behaviors, specific locations (such as home, office, shop, park, etc.) or atmospheric scenes (such as delightful, nostalgic, unsettling settings, etc.).
+  Select only one of the following options for output, Do not output any reasoning process. 
+  Options: <Intense Action>, <Explicit Sexual Behavior>, <Specific Location>, <Atmospheric Scene>
+  if nothing matched, output <Speech Content> only, Do not output any reasoning process, Do not output any thoughts too.

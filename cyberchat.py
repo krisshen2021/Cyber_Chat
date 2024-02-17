@@ -1,7 +1,7 @@
 from gevent import monkey
 monkey.patch_all()
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 import os, uuid, json, markdown,yaml
 from transformers import pipeline
 from user_room_multiuser import chatRoom
@@ -26,7 +26,7 @@ app = Flask(__name__)
 socketio = SocketIO(app, path="/chat", ping_interval=10, cors_allowed_origins="*", async_mode='gevent')
 
 def send_status(messages,room_id):
-    print(f'send {messages} to {room_id}')
+    # print(f'send {messages} to {room_id}')
     data_to_send={
         'message': messages
     }

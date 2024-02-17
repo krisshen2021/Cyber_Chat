@@ -59,7 +59,10 @@
 
   <script type="module" charset="utf-8">
     import { msTTS } from "/static/js/tts.js";
-    var msttser = new msTTS();
+    const msttser = new msTTS();
+
+    import { AudioGenerator } from "/static/js/AudioGenerator.js";
+    const audioGen = new AudioGenerator();
 
     marked.use({
       mangle: false,
@@ -223,6 +226,15 @@
       window.location.href = "/";
     }
 
+    function extractLanguageCode(inputString) {
+      const parts = inputString.split("_");
+      if (parts.length > 1) {
+        return parts[0];
+      } else {
+        return false;
+      }
+    }
+
     function add_msg({
       message_input = "",
       avatar_url = "",
@@ -269,8 +281,19 @@
       
 
       if (voiceswitcher.checked && voice_text != "") {
+        let langcode = extractLanguageCode(speaker);
+        if (langcode) {
+        let data = {
+          text:voice_text,
+          speaker:speaker,
+          language_input:langcode
+        };
+        audioGen.gen_audio(data);
+      }else{
         msttser.tts(voice_text, speaker, speak_tone, ttskey);
       }
+      };
+
       if (!server_reply_done || initialstate){
         let $msgNormal = $("#msg_container").clone();
         $msgNormal.removeAttr("id");
