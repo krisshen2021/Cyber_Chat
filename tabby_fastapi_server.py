@@ -11,7 +11,7 @@ class tabby_fastapi:
             'Content-Type': 'application/json'
         }
         self.completions_data = {
-            "model": "",
+            # "model": "",
             # "best_of": 0,
             # "echo": False,
             # "logprobs": 0,
@@ -79,7 +79,7 @@ class tabby_fastapi:
         self.completions_data["tfs"] = tfs
         self.completions_data["stop"] = stop_token
         self.completions_data["mirostat_mode"] = mirostat_mode
-        self.completions_data["model"] = self.get_model()
+        # self.completions_data["model"] = self.get_model()
         response = requests.post(url, headers=headers,
                                  json=self.completions_data).json()
         return response['choices'][0]['text']
@@ -111,9 +111,17 @@ class tabby_fastapi:
     def unload_model(self):
         url = self.url+"/model/unload"
         headers = self.headers
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return response
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                return response
+            elif response.status_code == 405:
+                response = requests.post(url, headers=headers)
+                if response.status_code == 200:
+                    return response
+        except Exception as e:
+            print("Error on get current model-list: ", e)
+            return False
 
     def load_model(self, name: str = "", max_seq_len: int = 4096, gpu_split_auto: bool = True, gpu_split: list = [0], prompt_template: str = None, send_msg_websocket: callable = None):
         # Then load the model
