@@ -134,11 +134,14 @@ class chatRoom_unsensor:
         return pt
     def get_sd_model_list(self):
         url = config_data["SDAPI_url"]+"/sdapi/v1/sd-models"
+        tabbyAPIurl = f'{self.state["openai_api_chat_base"]}/SDapiModelList'
         headers = {
-            'accept': 'application/json'
+            # 'accept': 'application/json'
+            "SD-URL": url
         }
         try:
-            response = requests.get(url, headers=headers).json()
+            # response = requests.get(url, headers=headers).json()
+            response = requests.post(url=tabbyAPIurl, headers=headers).json()
             model_list = []
             for model_name in response:
                 model_list.append(model_name["model_name"])
