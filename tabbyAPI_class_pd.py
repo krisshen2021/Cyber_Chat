@@ -4,12 +4,9 @@ from openai import OpenAI
 from tabby_fastapi_server import tabby_fastapi
 import requests, json, os, tiktoken, yaml, sys
 
-openai_api_key = "0764ee6f39280e8b485e9a18668f6a62"
-api_key = "0764ee6f39280e8b485e9a18668f6a62"
-admin_key = "f4b1a7dc92c8a576c918844f440ba90a"
 dir_path = os.path.dirname(os.path.realpath(__file__))
 #get models
-def get_model_name(api_base:str,model_type:str):
+def get_model_name(api_base:str,model_type:str, api_key:str, admin_key:str):
     headers = {
         'accept': 'application/json',
         'x-api-key': api_key,
@@ -68,23 +65,33 @@ class tabbyAPI:
         self.state = state
         self.send_msg_websocket = send_msg_websocket
         self.image_payload = image_payload
-        self.chat_model = get_model_name(self.state['openai_api_chat_base'],"Chat")       
-        self.funcall_model = get_model_name(self.state['openai_api_funcall_base'],"Funcall")
-        self.rephase_model = get_model_name(self.state['openai_api_rephase_base'],"Rephase")
+        self.api_key = self.state["tappyapi_api_key"]
+        self.admin_key = self.state["tappyapi_admin_key"]
+        self.chat_model = get_model_name(self.state['openai_api_chat_base'],"Chat", self.api_key, self.admin_key)       
+        self.funcall_model = get_model_name(self.state['openai_api_funcall_base'],"Funcall", self.api_key, self.admin_key)
+        self.rephase_model = get_model_name(self.state['openai_api_rephase_base'],"Rephase", self.api_key, self.admin_key)
         print(f'Chat model: {self.chat_model} | Fun call model: {self.funcall_model} | Rephase model: {self.rephase_model}')
         self.vocabulary, self.resultslist, self.lora, self.summary_prompt = load_vocabulary(self.state['match_words_cata'])
         self.restruct_prompt, self.prmopt_fixed_prefix, self.prmopt_fixed_suffix, self.nagetive_prompt = load_prompts("prompts.yaml")
         self.restruct_prompt = self.restruct_prompt.replace('<|default_bg|>', self.state['env_setting'])
         self.inputmsg = ""
-        self.tabby_server = tabby_fastapi(url=self.state['openai_api_chat_base'], api_key=api_key, admin_key=admin_key, conversation_id=self.state["conversation_id"])
+        self.tabby_server = tabby_fastapi(url=self.state['openai_api_chat_base'], api_key=self.api_key, admin_key=self.admin_key, conversation_id=self.state["conversation_id"])
+
+    def get_rephrase_template(self):
+        chat_template_name = self.state["prompt_template"].split("_")
+        rephrase_template_name = chat_template_name[0]+"_Rephrase"
+        self.rephrase_template = self.state["prompts_templates"][rephrase_template_name]
+        pass
 
 
     #Chat Block
-    def get_chat_response(self, system_prompt:str) -> str:
+    def get_chat_response(self, system_prompt:str, temperature=None ) -> str:
+        if temperature is None:
+            temperature = self.state["temperature"]
         response_text = self.tabby_server.remove_extra_punctuation(self.tabby_server.inference(
             prompt=system_prompt, 
             stop_token=self.state["custom_stop_string"], 
-            temperature=self.state["temperature"],
+            temperature=temperature,
             temperature_last=self.state["temperature_last"],
             min_p=self.state["min_p"],
             tfs=self.state["tfs"],
@@ -94,25 +101,6 @@ class tabbyAPI:
             presence_penalty=self.state["presence_penalty"],
             mirostat_mode=self.state["mirostat_mode"]
             ))
-        # client_chat = OpenAI(
-        #     api_key=openai_api_key,
-        #     base_url=self.state['openai_api_chat_base'],
-        # )
-
-        # chat_response = client_chat.chat.completions.create(
-        #     model=self.chat_model,
-        #     messages=[
-        #         {"role": "system", "content": system_prompt}, 
-        #     ],
-        #     # frequency_penalty=self.state['frequency_penalty'], 
-        #     # presence_penalty=self.state['presence_penalty'],
-        #     max_tokens=self.state['max_new_tokens'],
-        #     # temperature=self.state['temperature'],
-        #     temperature=random.choice([0.8,0.8,0.8]),
-        #     stop=self.state['custom_stop_string'],
-        #     top_p=self.state['top_p']
-        # )
-        # response_text = chat_response.choices[0].message.content.strip()
         return response_text
     
     #Funcall Block   
@@ -120,7 +108,7 @@ class tabbyAPI:
 
         try:
             client_funcall = OpenAI(
-                api_key=openai_api_key,
+                api_key=self.api_key,
                 base_url=self.state['openai_api_funcall_base'],
                 )
             funcall_response = client_funcall.chat.completions.create(
@@ -156,23 +144,27 @@ class tabbyAPI:
 
     #Rephase Block
     def get_rephase_response(self,user_msg:str, system_prompt:str) -> str:
+        if self.state['openai_api_rephase_base'] == self.state['openai_api_chat_base']:
+            prompt = self.rephrase_template.replace(r"<|system_prompt|>", system_prompt).replace(r"<|user_prompt|>", user_msg)
+            response_text = self.get_chat_response(system_prompt=prompt, temperature=0.001).strip()
+            return response_text
+        else:
+            client_rephase = OpenAI(
+                api_key=self.api_key,
+                base_url=self.state['openai_api_rephase_base']
+            )
 
-        client_rephase = OpenAI(
-            api_key=openai_api_key,
-            base_url=self.state['openai_api_rephase_base']
-        )
-
-        rephase_response = client_rephase.chat.completions.create(
-            model=self.rephase_model,
-            max_tokens=200,
-            temperature=0.001,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_msg}
-                ]
-        )
-        response_text = rephase_response.choices[0].message.content.strip().replace('"','')
-        return response_text
+            rephase_response = client_rephase.chat.completions.create(
+                model=self.rephase_model,
+                max_tokens=200,
+                temperature=0.001,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_msg}
+                    ]
+            )
+            response_text = rephase_response.choices[0].message.content.strip().replace('"','')
+            return response_text
 
     #Generate Images!
     def generate_prompt_main(self, response_to_reprompt:str):

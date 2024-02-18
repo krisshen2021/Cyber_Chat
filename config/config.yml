@@ -5,7 +5,7 @@ debug_mode: True
 #TabbyAPI Configuration
 openai_api_chat_base: http://127.0.0.1:5001/v1
 openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional leave it is ok
-openai_api_rephase_base: http://127.0.0.1:5003/v1
+openai_api_rephase_base: http://127.0.0.1:5001/v1
 #StableDiffusion Configuration
 SDAPI_url: http://127.0.0.1:7860
 # sd_model_checkpoint: hardcoreHentai13_v13.safetensors [3f99e42bef]
@@ -16,3 +16,6 @@ hr_upscaler: Latent (nearest)
 yeelight_url: 192.168.5.142
 chroma_server_host: 192.168.5.179
 chroma_server_http_port: 8000
+# tappyapi keys
+api_key: "0764ee6f39280e8b485e9a18668f6a62"
+admin_key: "f4b1a7dc92c8a576c918844f440ba90a"

@@ -51,6 +51,8 @@ state = {
     "openai_api_chat_base": config_data["openai_api_chat_base"],
     "openai_api_funcall_base": config_data["openai_api_funcall_base"],
     "openai_api_rephase_base": config_data["openai_api_rephase_base"],
+    "tappyapi_api_key": config_data["api_key"],
+    "tappyapi_admin_key": config_data["admin_key"],
     "SDAPI_url": config_data["SDAPI_url"],
     "prompt_template": "Alpaca_RP",
     "max_seq_len":4096,
@@ -73,7 +75,8 @@ state = {
     "env_setting":"",
     "conversation_id":"",
     "generate_dynamic_picture": True,
-    "match_words_cata":""
+    "match_words_cata":"",
+    "prompts_templates":{}
 }
 
 #Read prompt template
@@ -127,6 +130,7 @@ class chatRoom_unsensor:
     def create_instruct_template(self, ainame,username):
         template = prompts_templates[self.state["prompt_template"]]
         pt=template.replace(r"<|character|>",ainame).replace(r"<|user|>", username)
+        self.my_generate.get_rephrase_template()
         return pt
     def get_sd_model_list(self):
         url = config_data["SDAPI_url"]+"/sdapi/v1/sd-models"
@@ -150,6 +154,7 @@ class chatRoom_unsensor:
         self.ai_role=airole(roleselector=self.ai_role_name,username=self.username,usergender=self.usergender)
         self.start_stats()
         #customize state
+        self.state['prompts_templates'] = prompts_templates
         self.state["conversation_id"] = self.conversation_id
         self.state['custom_stop_string']=state['custom_stop_string']+[f'{self.username}:',f'{self.ainame}:','###']
         self.state['char_looks'] = self.ai_role.char_looks
@@ -172,6 +177,8 @@ class chatRoom_unsensor:
             self.my_generate.tabby_server.load_model(name=self.ai_role.model_to_load, send_msg_websocket=self.send_msg_websocket)
         if self.ai_role.prompt_to_load is not False:
             self.state['prompt_template'] = self.ai_role.prompt_to_load
+            self.my_generate.state['prompt_template'] = self.ai_role.prompt_to_load
+            self.my_generate.get_rephrase_template()
         self.send_msg_websocket({"name":"initialization","msg":"DONE"}, self.conversation_id)
         self.initialization_start = False
         return True
