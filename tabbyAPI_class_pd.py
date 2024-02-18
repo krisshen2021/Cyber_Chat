@@ -201,12 +201,16 @@ class tabbyAPI:
                 },
             "override_settings_restore_afterwards" : self.image_payload['override_settings_restore_afterwards']
         }
-        response = requests.post(url=f'{self.state["SDAPI_url"]}/sdapi/v1/txt2img', json=payload)
-
+        SDurl = f'{self.state["SDAPI_url"]}/sdapi/v1/txt2img'
+        tabbySDApi = f'{self.state["openai_api_chat_base"]}/SDapi'
+        headers = {
+            "SD-URL":SDurl
+        }
+        # response = requests.post(url=f'{self.state["SDAPI_url"]}/sdapi/v1/txt2img', json=payload)
+        response = requests.post(url=tabbySDApi, json=payload, headers=headers)
         r = response.json()
         self.imgBase64 = r['images'][0]
         return self.imgBase64
-
 
     #Excutions !
     def generate_picture_by_sdapi(self, prompt:str="", loraword:str=""):
