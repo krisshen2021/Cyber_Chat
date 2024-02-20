@@ -129,11 +129,15 @@ def client_connect():
 @socketio.on('disconnect')
 def client_disconnect():
     user_sid = request.sid
+    room_removed = False
     for conid, room in list(chatRoomList.items()):
         if room.conversation_id == user_sid:
             del chatRoomList[conid]
+            print(f'User {user_sid} disconnected, room {conid} removed')
+            room_removed = True
             break
-    print(f'User {user_sid} disconnected, room removed')
+    if not room_removed:
+        print(f'User {user_sid} disconnected')
 
   
 @socketio.on('initialize_room')
