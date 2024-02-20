@@ -41,5 +41,4 @@ chapters:
       *Chapter - "Javascript"*
 max_new_tokens: 1000
 generate_dynamic_picture: false
-model_to_load: "Coder"
 prompt_to_load: "ChatML_Coder"

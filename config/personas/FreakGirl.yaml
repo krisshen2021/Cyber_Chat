@@ -53,5 +53,4 @@ chapters:
       *Chapter - "I Can Be Your Bloody Food"*
 max_new_tokens: 300
 generate_dynamic_picture: true
-model_to_load: "TheBloke_Loyal-Macaroni-Maid-7B-GPTQ"
 prompt_to_load: "Alpaca_RP"

@@ -62,5 +62,6 @@ chapters:
       *Chapter - "Become Human"*
 max_new_tokens: 300
 generate_dynamic_picture: true
+model_to_load: "TheBloke_Kunoichi-7B-GPTQ"
 prompt_to_load: "Alpaca_RP"
 match_words_cata: "NSFW"

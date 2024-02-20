@@ -62,5 +62,4 @@ chapters:
       *Chapter - "She Is A Sexual Pervert"*
 max_new_tokens: 300
 generate_dynamic_picture: true
-model_to_load: "Coder"
-prompt_to_load: "ChatML_RP"
+prompt_to_load: "Alpaca_RP"
