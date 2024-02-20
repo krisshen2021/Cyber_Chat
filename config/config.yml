@@ -3,9 +3,9 @@ server_address: 0.0.0.0
 server_port: 5500
 debug_mode: True
 #TabbyAPI Configuration
-openai_api_chat_base: http://127.0.0.1:5001/v1
+openai_api_chat_base: https://glorious-alpaca-genuinely.ngrok-free.app/v1
 openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional leave it is ok
-openai_api_rephase_base: http://127.0.0.1:5001/v1
+openai_api_rephase_base: https://glorious-alpaca-genuinely.ngrok-free.app/v1
 #StableDiffusion Configuration
 SDAPI_url: http://127.0.0.1:7860
 # sd_model_checkpoint: hardcoreHentai13_v13.safetensors [3f99e42bef]

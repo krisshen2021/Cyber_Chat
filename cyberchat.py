@@ -23,7 +23,7 @@ database = SQLiteDB()
 database.create_table()
 
 app = Flask(__name__)
-socketio = SocketIO(app, path="/chat", ping_interval=10, cors_allowed_origins="*", async_mode='gevent')
+socketio = SocketIO(app, path="/chat", ping_interval=10, ping_timeout=5, cors_allowed_origins="*", async_mode='gevent')
 
 def send_status(messages,room_id):
     # print(f'send {messages} to {room_id}')
@@ -123,21 +123,19 @@ def client_login(client_info):
 
 @socketio.on('connect')
 def client_connect():
-    # query_args = request.args
-    # conid = query_args.get('conid')
-    # username = query_args.get('username')
-    # usergender = query_args.get('usergender')
-    # ai_role_name = query_args.get('ai_role_name')
-    # ai_is_uncensored = query_args.get('ai_is_uncensored')
-    # conversation_id = request.sid
-    # print(f'server has been connected by conid: {conid}, SID is: {conversation_id},  {username} who gender is {usergender} has came in with role: {ai_role_name} selected, which uncensored is: {ai_is_uncensored}')
     print(f'The server has been connected by request id: [{request.sid}]')
     pass
-    #as we know, conid to define the same user in a chat period between different roles, and SID to define user's different conversation with ai role.
-    #once user enter the system, and connect to server, user will get a consistent conid that created by uid and cookie in client side, it will not change until user close the browser
-    
-    # if conid in chatRoomList: 
-    # create new user chat room if conid not existed
+
+@socketio.on('disconnect')
+def client_disconnect():
+    user_sid = request.sid
+    for conid, room in list(chatRoomList.items()):
+        if room.conversation_id == user_sid:
+            del chatRoomList[conid]
+            break
+    print(f'User {user_sid} disconnected, room removed')
+
+  
 @socketio.on('initialize_room')
 def initializeRoom(client_msg):
     conid = client_msg["data"]["conid"]
