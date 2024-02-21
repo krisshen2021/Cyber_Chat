@@ -738,15 +738,17 @@ input[type="checkbox"]:hover {
   }
   .comic_msg_holder_char{
     top:35% !important; 
-    right:2rem !important;
-    min-width: 110px;
-    max-width: 70%;
+    left:4rem !important;
+    min-width: auto;
+    max-width: 80%;
+    width: fit-content;
   }
   .comic_msg_holder_user{
-    top:calc(30% + 10rem) !important;
+    top:calc(30% + 12rem) !important;
     left: 2rem !important;
-    min-width: 110px;
-    max-width: 70%;
+    min-width: auto;
+    max-width: 80%;
+    width: fit-content;
   }
   .comic_msgbox{
     min-height: 4rem;
@@ -856,21 +858,24 @@ input[type="checkbox"]:hover {
   .wrapper-user {
     bottom: 5rem;
   }
+  
   .comic_msg_holder_char{
     top:35% !important; 
-    right:2rem !important;
-    min-width: 110px;
+    left:4rem !important;
+    min-width: auto;
     max-width: 85%;
+    width: fit-content;
   }
   .comic_msg_holder_user{
-    top:calc(35% + 10rem) !important;
+    top:calc(35% + 13rem) !important;
     left: 2rem !important;
-    min-width: 110px;
+    min-width: auto;
     max-width: 85%;
+    width: fit-content;
   }
   .comic_msgbox{
     min-height: 4rem;
-    max-height: 7rem;
+    max-height: 10rem;
     padding: 2px;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
