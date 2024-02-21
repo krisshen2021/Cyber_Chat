@@ -148,14 +148,8 @@
         $("#user-bgpic").removeClass("user_bg_horizon").addClass("user_bg");
         $("#char-dynpic-wrapper").removeClass("wrapper-char-dynpic-fullscreen").addClass("wrapper-char-dynpic");
         $("#char-dynpic").removeClass("char_dynmicpic_bg_horizon").addClass("char_dynmicpic_bg");
-        $("#comic-msg-holder-char").removeClass("comic_msg_holder_char_horizon").css({
-          top:"40%",
-          left:"80px"
-        });
-        $("#comic-msg-holder-user").removeClass("comic_msg_holder_user_horizon").css({
-          top: "calc(40% + 300px)",
-          left: "30%"
-        });
+        $("#comic-msg-holder-char").removeClass("comic_msg_holder_char_horizon").addClass("comic_msg_holder_char");
+        $("#comic-msg-holder-user").removeClass("comic_msg_holder_user_horizon").addClass("comic_msg_holder_user");
 
       }else if(ratio > 1){
         $("#char-wrapper").removeClass("wrapper-char-fullscreen").addClass("wrapper-char-horizon");
@@ -178,12 +172,13 @@
 
     function dispModeSwitch() {
       if ($("#comicMode").is(':checked')) {
-        $("#message_box").fadeOut(200);
-        gsap.to($("#holder_box"), {
+        $("#message_box").css("display","none");
+        /*gsap.to($("#holder_box"), {
           duration: 0.5,
-          height: '15%',
+          height: "auto",
           ease: "power4.out",
-        });
+        });*/
+        $("#holder_box").css("height","auto");
         resizeComicLayout();        
         gsap.from($("#char-wrapper"), {
           duration: 0.5,
@@ -943,9 +938,6 @@
       </div>
     </div>
     <div id="setTings" class="chatSetting">
-      <div id="ai_intro">
-        <div>{{ainame}}</div>
-      </div>
       <div id="settingOption" class="settingOpt">
         <div>
           <input type="checkbox" id="comicMode">
@@ -966,6 +958,10 @@
         </select>
       </div>
     </div>
+    <div id="ai_intro">
+      <div>{{ainame}}</div>
+    </div>
+    <div class="free-space"></div>
     <div id="holder_box">
       <div id="drag-handle"></div>
       <div id="message_box"></div>
@@ -982,7 +978,7 @@
         <div class="messageOptions">
           <div class="subButtonsGroup">
             <button id="submit">Submit</button>
-            <button id="regenerate">Regenerate</button>
+            <button id="regenerate">Regen</button>
             <button id="restart">Restart</button>
             <button id="exitchat">Exit</button>
           </div>

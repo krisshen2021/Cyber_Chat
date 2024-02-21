@@ -7,17 +7,24 @@ body {
   margin: 0px;
   padding: 0px;
   height: 100%;
+  font-size: 100%;
+  width: 100%;
   background-size: cover;
   /* font-family: "Philosopher", sans-serif; */
   font-family: "Barlow", sans-serif;
   font-weight: 400;
   font-style: normal;
 }
+body{
+  font-size: 1rem;
+}
 
 .flexPage {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  /* display: grid;
+  grid-template-rows: auto 1fr auto; */
   height: 100%;
   width: 100%;
   flex-direction: column;
@@ -26,6 +33,7 @@ body {
   background: linear-gradient(to bottom, #1f0b1f 0%, #121212 20%);
   overflow: hidden;
 }
+/*comic blocks*/
 .comic-area{
   position: absolute;
   top:0;
@@ -40,7 +48,7 @@ body {
   background: rgb(0, 0, 0); /* 边框颜色 */
 }
 .wrapper-char {
-  top: 80px;
+  top: 3rem;
   left: 48%;
   transform: translateX(-50%);
   width: calc(100% - 40px);
@@ -167,13 +175,12 @@ body {
   position: absolute;
   flex-direction: column;
   z-index: 8;
-  top:40%;
-  left:80px;
+  top:40% ; 
+  left:80px ;
   width:auto;
   min-width: 200px;
   max-width: 70%;
   display: none;
-
 }
 .comic_msg_holder_char_horizon{
   max-width: 40%;
@@ -190,8 +197,8 @@ body {
   position: absolute;
   flex-direction: column;
   z-index: 9;
-  top:calc(40% + 300px);
-  left: 30%;
+  top:calc(40% + 300px) ;
+  left: 30% ;
   width:auto;
   min-width: 200px;
   max-width: 50%;
@@ -255,6 +262,66 @@ body {
   width: fit-content;
   cursor: pointer;
 }
+
+/*List mode blocks*/
+
+
+#setTings {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem;
+  background-color: rgba(21, 21, 21, 0.164);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  z-index: 3;
+}
+
+.settingOpt {
+  background: rgba(34, 32, 37, 0.5);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  padding: 10px;
+  align-items: center;
+  gap:5px;
+  width: 100%;
+}
+.settingOpt div{
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+}
+
+.topSelect{
+  font-size: 0.6rem;
+  font-weight: 500;
+  width: 8rem;
+  border-radius: 10px;
+  border: 0px;
+  padding: 0 0.8rem;
+  background: rgba(255, 127, 36, 0.7);
+  color: rgb(255, 255, 255);
+  height: 1.5rem;
+  cursor: pointer;
+}
+
+#ai_intro {
+  color: antiquewhite;
+  font-size: 3rem;
+  text-shadow: 1px 1px 5px #000000;
+  padding: 4px;
+  z-index: 10;
+  width:fit-content;
+  align-self: flex-start;
+  margin-left: 4rem;
+}
+.free-space{
+  margin-top: auto;
+}
 #holder_box {
   /* display: flex; */
   flex-direction: column;
@@ -262,12 +329,13 @@ body {
   justify-content: space-between;
   gap:10px;
   width: 90%;
-  height: 50%;
+  height: 50vh;
   background: rgba(36, 36, 36, 0.32);
   backdrop-filter: blur(3px);
-  margin-bottom: 40px;
+  margin-bottom: 2rem;
   z-index: 4;
   display:none;
+  position: relative;
 }
 #drag-handle{
   position: absolute;
@@ -279,19 +347,6 @@ body {
   z-index: 100;
 }
 
-#setTings {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 15px;
-  background-color: rgba(21, 21, 21, 0.164);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-  z-index: 3;
-}
-
 #message_box {
   display: flex;
   flex-direction: column;
@@ -299,9 +354,10 @@ body {
   width: 100%;
   height: 100%;
   overflow: auto;
+  position: relative;
 }
 
-#message_box::after {
+#holder_box::after {
   content: "";
   position: absolute;
   top: 0;
@@ -314,20 +370,16 @@ body {
   background: linear-gradient(to bottom,
       rgb(81, 81, 81) 0%,
       rgba(36, 36, 36, 0) 100%);
+  pointer-events: none;
   z-index: 1;
 }
 #message_box::-webkit-scrollbar {
   display: none;
 }
 
-#ai_intro {
-  color: antiquewhite;
-  font-size: 28px;
-  text-shadow: 1px 1px 5px #000000;
-  padding: 4px;
-}
 
-#ai_human {
+
+/* #ai_human {
   display: none;
   flex-direction: column;
   position: fixed;
@@ -350,15 +402,15 @@ body {
   height: auto;
   background-position: left top;
   background-repeat: no-repeat;
-}
-
+} */
+/*input blocks*/
 #inputArea {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   width: 100%;
   height: auto;
-  padding: 20px;
+  padding: 1rem;
   gap: 10px;
   /* position: fixed; */
   /* bottom: 0; */
@@ -373,45 +425,24 @@ body {
 .messageOptions {
   width: 100%;
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap:1rem;
 }
 
-.settingOpt {
-  background: rgba(34, 32, 37, 0.5);
-  border-radius: 5px;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  padding: 10px;
-  align-items: center;
-  gap:5px;
-}
 
-.topSelect{
-  font-size: 10px;
-  font-weight: 500;
-  width: 100px;
-  border-radius: 10px;
-  border: 0px;
-  padding: 0 10px;
-  background: rgba(255, 255, 255, 0.7);
-  color: rgb(52, 46, 55);
-  height: 20px;
-  cursor: pointer;
-}
 
 #messageToSend {
   padding: 0 20px 0 20px;
   display: block;
   width: 100%;
-  height: 40px;
+  height: 2rem;
   border-radius: 10px;
   border: 0px;
   background: rgba(2, 2, 2, 0.7);
   backdrop-filter: blur(3px);
   color: whitesmoke;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 #submit,
@@ -440,7 +471,7 @@ body {
   height: 28px;
   cursor: pointer;
   font-weight: 300;
-  font-size: 10px;
+  font-size: 0.6rem;
 }
 
 .codePre {
@@ -465,17 +496,19 @@ body {
 }
 
 .smallFonts {
-  font-size: 10px;
+  font-size: 0.6rem;
   color: rgb(231, 231, 231);
 }
 
 .sub_options {
   display: flex;
-  flex-direction: column;
-  width: 140px;
-  justify-content: center;
-  background: rgba(52, 7, 104, 0.7);
-  border-radius: 5px;
+  flex-direction: row;
+  width: fit-content;
+  justify-content: flex-end;
+  background: rgba(48, 48, 48, 0.3);
+  border-radius: 0.4rem;
+  align-self: flex-end;
+  padding: 0.4rem;
 }
 
 .sub_options div {
@@ -595,3 +628,158 @@ body {
   width: 6px;
   height: 6px;
 }
+
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none; /* 针对 Safari */
+  -moz-appearance: none; /* 针对 Firefox */
+  width: 1.2rem;
+  height: 1.2rem;
+  min-width: 1.2rem;
+  min-height: 1.2rem;
+  border-radius: 50%;
+  background-color: #eee;
+  position: relative;
+  border: none; /* 可能需要添加以移除默认边框 */
+  outline: none; /* 移除焦点时的轮廓 */
+}
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 0.5rem;
+  width: 0.5rem;
+  min-width: 0.5rem;
+  min-height: 0.5rem;
+  border-radius: 50%;
+  background-color: #c7660b;
+}
+
+input[type="checkbox"]:hover {
+  cursor: pointer;
+}
+
+
+ /*Media Query Blocks*/
+ @media only screen and (max-width: 430px) {
+  #setTings {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  .settingOpt {
+    display: flex;
+  }
+  .topSelect{
+    font-size: 0.6rem;
+    font-weight: 500;
+    width: 5rem;
+    border-radius: 10px;
+    border: 0px;
+    padding: 0 0.5rem;
+    background: rgba(255, 127, 36, 0.7);
+    color: rgb(255, 255, 255);
+    height: 1rem;
+    cursor: pointer;
+  }
+  #ai_intro {
+    font-size: 2rem;
+    margin-left: 2rem;
+  }
+  #holder_box {
+    height: 50vh;
+    width: 95vw;
+    margin-bottom: 0.5rem;
+    background: rgba(36, 36, 36, 0.25);
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+  }
+  #message_box{
+    padding: 1rem 0;
+  }
+  .message {
+    display: flex;
+    flex-direction: column;
+    word-wrap: break-word;
+    padding: 0.8rem;
+    border-radius: 10px;
+    width: auto;
+    height: fit-content;
+    max-width: calc(100% - 4.5rem);
+    box-shadow: 5px 5px 8px 0px rgba(0, 0, 0, 0.55);
+    background: rgba(18, 18, 18, 0.85);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    color: antiquewhite;
+    font-size: 0.8rem;
+    line-height: 1.4rem;
+    font-weight: 400;
+    font-style: normal;
+  }
+  .avatar {
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    min-width: 3rem;
+    min-height: 3rem;
+  }
+  .messageOptions {
+    gap:0.5rem;
+  }
+  #submit,#regenerate,#restart,#exitchat {
+    padding: 0 0.8rem 0 0.8rem;
+    height: 1.5rem;
+    font-size: 0.8rem;
+  }
+  .border-wrapper {
+    padding: 5px; /* 边框的宽度 */
+  }
+  .wrapper-char-fullscreen{
+    padding: 0;
+  }
+  .wrapper-user {
+    bottom: 5rem;
+  }
+  .comic_msg_holder_char{
+    top:35% !important; 
+    right:2rem !important;
+    min-width: 110px;
+    max-width: 70%;
+  }
+  .comic_msg_holder_user{
+    top:calc(30% + 10rem) !important;
+    left: 2rem !important;
+    min-width: 110px;
+    max-width: 70%;
+  }
+  .comic_msgbox{
+    min-height: 4rem;
+    max-height: 7rem;
+    padding: 2px;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .message-comic {
+    font-size: 0.8rem;
+    line-height: 1.4rem;
+  }
+  .msg-drag-handle{
+    display: none;
+  }
+  .comic_msgbox_arrow_char{
+    width: 1rem;
+    height: 1rem;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  
+  .comic_msgbox_arrow_user{
+    width: 1rem;
+    height: 1rem;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+ }

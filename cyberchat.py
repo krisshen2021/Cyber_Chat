@@ -69,6 +69,8 @@ def enter_room():
         }
 
         return render_template('webhook_client_multiuser.html', **userdata)
+    elif request.method == "GET":
+        return index()
 # after selected role, enter chat room, and bring the connection id to the room, the conid is get from cookie of browser.
      
     

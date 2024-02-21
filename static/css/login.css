@@ -327,6 +327,7 @@ body{
     padding: 0.2rem 1rem;
     color:#280149
   }
+  /*Media Query Blocks*/
   @media only screen and (max-width: 430px) {
     body {
       font-size: 1.1rem; 
