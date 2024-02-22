@@ -137,6 +137,10 @@ def handle_reconnect(client_msg):
         del_room_instance = Remove_pending_roomlist.pop(conid, None)
         if del_room_instance:
             del_room_instance.cancel_timer()
+            userCurrentRoom = chatRoomList[conid]
+            userCurrentRoom.conversation_id = conversation_id
+            userCurrentRoom.my_generate.conversation_id = conversation_id
+            userCurrentRoom.my_generate.tabby_server.conversation_id = conversation_id
             socketio.emit('room_reconnected', room=conversation_id)
     elif conid not in chatRoomList:
         socketio.emit('reconnect_and_recreate_room', room=conversation_id)

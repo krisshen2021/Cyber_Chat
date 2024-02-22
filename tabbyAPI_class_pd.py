@@ -65,6 +65,7 @@ class tabbyAPI:
         self.state = state
         self.send_msg_websocket = send_msg_websocket
         self.image_payload = image_payload
+        self.conversation_id = self.state["conversation_id"]
         self.api_key = self.state["tappyapi_api_key"]
         self.admin_key = self.state["tappyapi_admin_key"]
         self.chat_model = get_model_name(self.state['openai_api_chat_base'],"Chat", self.api_key, self.admin_key)       
@@ -75,7 +76,7 @@ class tabbyAPI:
         self.restruct_prompt, self.prmopt_fixed_prefix, self.prmopt_fixed_suffix, self.nagetive_prompt = load_prompts("prompts.yaml")
         self.restruct_prompt = self.restruct_prompt.replace('<|default_bg|>', self.state['env_setting'])
         self.inputmsg = ""
-        self.tabby_server = tabby_fastapi(url=self.state['openai_api_chat_base'], api_key=self.api_key, admin_key=self.admin_key, conversation_id=self.state["conversation_id"])
+        self.tabby_server = tabby_fastapi(url=self.state['openai_api_chat_base'], api_key=self.api_key, admin_key=self.admin_key, conversation_id=self.conversation_id)
 
     def get_rephrase_template(self):
         chat_template_name = self.state["prompt_template"].split("_")
@@ -217,7 +218,7 @@ class tabbyAPI:
         recived_prompt = prompt
         lora_prompt = self.lora.get(loraword.strip(), "")
         if self.send_msg_websocket is not None:
-            self.send_msg_websocket({"name":"chatreply","msg":"Generating Scene Image"}, self.state["conversation_id"])
+            self.send_msg_websocket({"name":"chatreply","msg":"Generating Scene Image"}, self.conversation_id)
         print(">>>Generate Dynamic Picture\n")
         image = self.generate_image(prompt_prefix=self.prmopt_fixed_prefix, char_looks=self.state['char_looks'], prompt_main=recived_prompt, env_setting="", prompt_suffix=self.prmopt_fixed_suffix, lora_prompt=lora_prompt)
         return image
@@ -229,7 +230,7 @@ class tabbyAPI:
         # if is_matched_se :
         #     lora_prompt = self.lora.get(final_response.strip(), "")
         #     if self.send_msg_websocket is not None:
-        #         self.send_msg_websocket({"name":"chatreply","msg":"Generating Scene Image"}, self.state["conversation_id"])
+        #         self.send_msg_websocket({"name":"chatreply","msg":"Generating Scene Image"}, self.conversation_id)
         #     print(">>>Generate Dynamic Picture\n")
         #     image = self.generate_image(prompt_prefix=self.prmopt_fixed_prefix, char_looks=self.state['char_looks'], prompt_main=recived_prompt, env_setting="", prompt_suffix=self.prmopt_fixed_suffix, lora_prompt=lora_prompt)
         #     return image
