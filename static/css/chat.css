@@ -268,7 +268,7 @@ body{
 
 #setTings {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   width: 100%;
@@ -276,7 +276,15 @@ body{
   background-color: rgba(21, 21, 21, 0.164);
   backdrop-filter: blur(10px);
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  gap:5px;
   z-index: 3;
+}
+.chatSetUpBtn{
+  width: 2rem;
+  height: 2rem;
+  border-radius: 5px;
+  background: rgba(34, 32, 37, 0.95);
+  display: none;
 }
 
 .settingOpt {
@@ -314,10 +322,10 @@ body{
   font-size: 3rem;
   text-shadow: 1px 1px 5px #000000;
   padding: 4px;
-  z-index: 10;
   width:fit-content;
   align-self: flex-start;
   margin-left: 4rem;
+  z-index: 10;
 }
 .free-space{
   margin-top: auto;
@@ -658,13 +666,40 @@ input[type="checkbox"]:hover {
 
 
  /*Media Query Blocks*/
- @media only screen and (max-width: 430px) {
+ @media only screen and (max-width: 430px){
   #setTings {
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    z-index: 15;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: fit-content;
+    height: fit-content;
+    background-color: rgba(21, 21, 21, 0);
+    box-shadow: none;
+  }
+  .chatSetUpBtn{
+    display: flex;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: rgba(21, 21, 21, 0.5);
+    cursor: pointer;
   }
   .settingOpt {
+    position: fixed;
+    left: 0.5rem;
+    top: 3rem;
     display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: max-content;
+    height: max-content;
+    background: rgba(34, 32, 37, 0.8);
+    display: none;
   }
   .topSelect{
     font-size: 0.6rem;
@@ -680,10 +715,12 @@ input[type="checkbox"]:hover {
   }
   #ai_intro {
     font-size: 2rem;
-    margin-left: 2rem;
+    margin-top: 0rem;
+    margin-right: 2rem;
+    margin-left: auto;
   }
   #holder_box {
-    height: 50vh;
+    height: 70vh;
     width: 95vw;
     margin-bottom: 0.5rem;
     background: rgba(36, 36, 36, 0.25);

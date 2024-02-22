@@ -96,6 +96,7 @@
     var ai_avatar = "";
     var user_looks = "";
     var initialstate = true;
+    var holdbox_origin_height;
 
     function Module_timer(){
       var timer;
@@ -172,6 +173,7 @@
 
     function dispModeSwitch() {
       if ($("#comicMode").is(':checked')) {
+        holdbox_origin_height = $("#holder_box").height();
         $("#message_box").css("display","none");
         /*gsap.to($("#holder_box"), {
           duration: 0.5,
@@ -189,9 +191,6 @@
         $(".comic_msg_holder_user").css("display", "flex");
         }
       } else {
-        $("#message_box").css("display","flex");
-        let msgNormalScrollHeight = $('#message_box').prop('scrollHeight');
-        $('#message_box').scrollTop(msgNormalScrollHeight); 
         $("#char-dynpic-wrapper").removeClass("wrapper-char-dynpic").removeClass("wrapper-char-dynpic-horizon").addClass("wrapper-char-dynpic-fullscreen");
         $("#char-bgpic").removeClass("char_bg").removeClass("char_bg_horizon").addClass("char_bg_fullscreen");
         $("#char-wrapper").removeClass("wrapper-char").removeClass("wrapper-char-horizon").addClass("wrapper-char-fullscreen");
@@ -202,17 +201,22 @@
         $("#user-wrapper").removeClass("wrapper-user").removeClass("wrapper-user-horizon").addClass("wrapper-user-fullscreen");
         $(".comic_msg_holder_char").fadeOut(200);
         $(".comic_msg_holder_user").fadeOut(200);
-        gsap.to($("#holder_box"), {
+        /*gsap.to($("#holder_box"), {
           duration: 0.5,
-          height: '50%',
+          height: holdbox_origin_height,
           ease: "power4.out",
-        });
+        });*/
+        $("#holder_box").height(holdbox_origin_height);
+        $("#message_box").css("display","flex");
+        let msgNormalScrollHeight = $('#message_box').prop('scrollHeight');
+        $('#message_box').scrollTop(msgNormalScrollHeight); 
       }
     }
 
     function exitChat() {
       var querydata = {
-        conid: conid
+        conid: conid,
+        socket_id: socket.id
       };
       socket.emit("exit_room", { data: querydata });
     }
@@ -401,7 +405,8 @@
         conid: conid,
         windowRatio: windowSize.ratio,
         isembbed: statechk.embswitcher,
-        istranslated: statechk.transswitcher
+        istranslated: statechk.transswitcher,
+        socket_id: socket.id
       };
       socket.emit("restart", { data: querydata });
     }
@@ -438,7 +443,8 @@
           conid: conid,
           isembbed: statechk.embswitcher,
           istranslated: statechk.transswitcher,
-          windowRatio: windowSize.ratio
+          windowRatio: windowSize.ratio,
+          socket_id: socket.id
         };
         socket.emit("regen_msg", { data: querydata });
       }
@@ -446,7 +452,8 @@
 
     function loadChatHistory(){
       var querydata = {
-        conid: conid
+        conid: conid,
+        socket_id: socket.id
       };
       socket.emit("load_chat_history", { data: querydata });
       toggleInputs(false);
@@ -454,7 +461,8 @@
 
     function saveChatHistory(){
       var querydata = {
-        conid: conid
+        conid: conid,
+        socket_id: socket.id
       };
       socket.emit("save_chat_history", { data: querydata });
       toggleInputs(false);
@@ -476,7 +484,8 @@
             if (modelSelected !== 'None') {
               var querydata = {
                 model: modelSelected,
-                conid: conid
+                conid: conid,
+                socket_id: socket.id
               };
               socket.emit("change_model", { data: querydata });
               toggleInputs(false);
@@ -504,7 +513,8 @@
             if (instrSelected !== 'None') {
               var querydata = {
                 instruction: instrSelected,
-                conid: conid
+                conid: conid,
+                socket_id: socket.id
               };
               socket.emit("change_instruction", { data: querydata });
               toggleInputs(false);
@@ -533,7 +543,8 @@
             if (sdSelected !== 'None') {
               var querydata = {
                 SD_Model: sdSelected,
-                conid: conid
+                conid: conid,
+                socket_id: socket.id
               };
               socket.emit("change_SD_Model", { data: querydata });
               toggleInputs(false);
@@ -715,7 +726,8 @@
           conid: conid,
           isembbed: statechk.embswitcher,
           istranslated: statechk.transswitcher,
-          windowRatio: windowSize.ratio
+          windowRatio: windowSize.ratio,
+          socket_id: socket.id
         };
 
         socket.emit("send_user_msg", { data: querydata });
@@ -741,28 +753,35 @@
         sendmsgtoserver();
       }
     }
-    function initializeUI() {
-      $("#load-chat-history").click(loadChatHistory);
-      $("#save-chat-history").click(saveChatHistory);
-      $("#submit").click(sendmsgtoserver);
-      $("#restart").click(resetChat);
-      $("#regenerate").click(regenReply);
-      $("#exitchat").click(exitChat);
-      $("#comicMode").change(dispModeSwitch);
-      $("#messageToSend").off("keyup").on("keyup", onKeyUp);
-      var windowSize = getWindowSize();
-      var querydata = {
-        username: username,
-        user_sys_name: user_sys_name,
-        usergender: usergender,
-        user_facelooks:user_facelooks,
-        ai_role_name: ai_role_name,
-        conid: conid,
-        ai_is_uncensored: ai_is_uncensored,
-        windowRatio: windowSize.ratio,
-        socket_id: socket.id
-      };
-      socket.emit("initialize_room", { data: querydata });
+    function Server_Connected() {
+      if(initialstate){
+        $("#message_box").empty();
+        $(".comic_msgbox").empty();
+        $("#comicMode").prop("checked", false).trigger("change");
+        $("#holder_box").css("display","none");
+        var windowSize = getWindowSize();
+        var querydata = {
+          username: username,
+          user_sys_name: user_sys_name,
+          usergender: usergender,
+          user_facelooks:user_facelooks,
+          ai_role_name: ai_role_name,
+          conid: conid,
+          ai_is_uncensored: ai_is_uncensored,
+          windowRatio: windowSize.ratio,
+          socket_id: socket.id
+        };
+        socket.emit("initialize_room", { data: querydata });
+
+      }else{
+        /* reconnect to server */
+        var querydata = {
+          conid: conid,
+          socket_id: socket.id
+        };
+        socket.emit('reconnect_room', { data: querydata });
+      }
+      
     }
 
     function debounce(func, wait) {
@@ -782,6 +801,14 @@
       };
   }
     $(document).ready(function() {
+      $("#load-chat-history").click(loadChatHistory);
+      $("#save-chat-history").click(saveChatHistory);
+      $("#submit").click(sendmsgtoserver);
+      $("#restart").click(resetChat);
+      $("#regenerate").click(regenReply);
+      $("#exitchat").click(exitChat);
+      $("#comicMode").change(dispModeSwitch);
+      $("#messageToSend").off("keyup").on("keyup", onKeyUp);
       toggleInputs(false);
       // Auto resize comic layout
       $(".comic_msg_holder_char").draggable({
@@ -834,6 +861,25 @@
       $("#char-dynpic-wrapper").css("cursor","pointer").on('click', function(){
         $(this).fadeOut(200);
       });
+      
+      $(".chatSetUpBtn").on('click', function(){
+        if ($(".settingOpt").css("display") == "none") {
+          $(".settingOpt").css("opacity", 0).css("display", "flex");
+          gsap.to($(".settingOpt"), {
+            duration: 0.4, 
+            opacity: 1
+          });
+        } else {
+          gsap.to($(".settingOpt"), {
+            duration: 0.2, 
+            opacity: 0,
+            onComplete: function() {
+              $(".settingOpt").css("display", "none");
+            }
+          });
+        }
+      });
+      
 
       //Resize holder_box function
       var startY, startHeight, containerHeight;
@@ -899,7 +945,18 @@
           ai_is_uncensored: ai_is_uncensored,
         },
       });
-      socket.on("connect", initializeUI);
+      socket.on("connect", Server_Connected);
+      socket.on("disconnect", function(reason){
+        alert("Server Disconnected ["+reason+"]");
+      });
+      socket.on("room_reconnected", function(){
+        alert("Server Reconnected, You Can Continue To Chat Now");
+      });
+      socket.on("reconnect_and_recreate_room", function(){
+        alert("Room Removed, Needs To Be Initiated");
+        initialstate = true;
+        Server_Connected();
+      });
       socket.on("status from server", showServerStatus);
       socket.on("my response", msg_proc);
       socket.on("model_change_result", model_loaded);
@@ -938,6 +995,7 @@
       </div>
     </div>
     <div id="setTings" class="chatSetting">
+      <div class="chatSetUpBtn"><svg width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff"><path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19.6224 10.3954L18.5247 7.7448L20 6L18 4L16.2647 5.48295L13.5578 4.36974L12.9353 2H10.981L10.3491 4.40113L7.70441 5.51596L6 4L4 6L5.45337 7.78885L4.3725 10.4463L2 11V13L4.40111 13.6555L5.51575 16.2997L4 18L6 20L7.79116 18.5403L10.397 19.6123L11 22H13L13.6045 19.6132L16.2551 18.5155C16.6969 18.8313 18 20 18 20L20 18L18.5159 16.2494L19.6139 13.598L21.9999 12.9772L22 11L19.6224 10.3954Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
       <div id="settingOption" class="settingOpt">
         <div>
           <input type="checkbox" id="comicMode">

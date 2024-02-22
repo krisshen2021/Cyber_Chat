@@ -2,6 +2,7 @@
 server_address: 0.0.0.0
 server_port: 5500
 debug_mode: True
+sentimodelpath: "touch20032003/xuyuan-trial-sentiment-bert-chinese"
 #TabbyAPI Configuration
 openai_api_chat_base: https://glorious-alpaca-genuinely.ngrok-free.app/v1
 openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional leave it is ok

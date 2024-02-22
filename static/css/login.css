@@ -328,6 +328,18 @@ body{
     color:#280149
   }
   /*Media Query Blocks*/
+  @media only screen and (max-width: 360px){
+    .avatarbk {
+      width:calc(100vw / 2 - 2.5rem);
+      height:calc(100vw / 2 - 2.5rem);
+      display: flex;
+      background-position: center center;
+      background-size: 100%;
+      border-radius: 0.4rem;
+      box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+  }
+  }
   @media only screen and (max-width: 430px){
     body {
       font-size: 1.1rem; 

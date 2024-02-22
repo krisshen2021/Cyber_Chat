@@ -1,25 +1,16 @@
 from gevent import monkey
 monkey.patch_all()
+import uuid, markdown
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
-import os, uuid, json, markdown,yaml
-from transformers import pipeline
 from user_room_multiuser import chatRoom
 from user_room_multiuser_uncensor_apiserver import chatRoom_unsensor
 from concurrent.futures import ThreadPoolExecutor
 from user_validation import Validation
-from sqliteclass import SQLiteDB
+from global_sets import chatRoomList, Remove_pending_roomlist, database, config_data, sentiment_pipeline, roleconf
+from DelChatRoom import DelRoom
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-config_path = os.path.join(dir_path, 'config', 'config.yml')
-with open(config_path, 'r') as file:
-            config_data = yaml.safe_load(file)
-sentimodelpath = "touch20032003/xuyuan-trial-sentiment-bert-chinese"
-sentiment_pipeline = pipeline('sentiment-analysis', model=sentimodelpath, tokenizer=sentimodelpath)
 executor = ThreadPoolExecutor(max_workers=10)
-
-chatRoomList = {} #create a chat room list , with conid and chatroom object that generated from chatRoom class.
-database = SQLiteDB()
 database.create_table()
 
 app = Flask(__name__)
@@ -39,10 +30,6 @@ def markdownText(text):
 @app.route('/')
 def index():
     cookid_server = uuid.uuid1()
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    roles_path = os.path.join(dir_path, 'config', 'roles.json')
-    with open(roles_path, 'r', encoding='utf-8') as f:
-        roleconf = json.load(f)
     ainame = []
     ai_is_uncensored = []
     for key, value in roleconf.items():
@@ -125,22 +112,34 @@ def client_login(client_info):
 
 @socketio.on('connect')
 def client_connect():
-    print(f'The server has been connected by request id: [{request.sid}]')
+    print(f'>>> The server has been connected by request id: [{request.sid}]')
     pass
 
 @socketio.on('disconnect')
 def client_disconnect():
     user_sid = request.sid
-    room_removed = False
+    room_removed_pending = False
     for conid, room in list(chatRoomList.items()):
         if room.conversation_id == user_sid:
-            del chatRoomList[conid]
-            print(f'User {user_sid} disconnected, room {conid} removed')
-            room_removed = True
+            pending_room = DelRoom(conid)
+            Remove_pending_roomlist[conid] = pending_room
+            print(f'>>> User {user_sid} disconnected, room {conid} is pending to remove in 5 min')
+            room_removed_pending = True
             break
-    if not room_removed:
-        print(f'User {user_sid} disconnected')
+    if not room_removed_pending:
+        print(f'>>> User {user_sid} disconnected but no room to remove pending.')
 
+@socketio.on('reconnect_room')
+def handle_reconnect(client_msg):
+    conid = client_msg["data"]["conid"]
+    conversation_id = client_msg["data"]["socket_id"]
+    if conid in Remove_pending_roomlist and conid in chatRoomList:
+        del_room_instance = Remove_pending_roomlist.pop(conid, None)
+        if del_room_instance:
+            del_room_instance.cancel_timer()
+            socketio.emit('room_reconnected', room=conversation_id)
+    elif conid not in chatRoomList:
+        socketio.emit('reconnect_and_recreate_room', room=conversation_id)
   
 @socketio.on('initialize_room')
 def initializeRoom(client_msg):
@@ -205,7 +204,9 @@ def initializeRoom(client_msg):
 def reset(client_msg):
     conid = client_msg['data']['conid']
     windowRatio = client_msg['data']['windowRatio']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     embbedswitcher = client_msg['data']['isembbed']
     transswitcher = client_msg['data']['istranslated']
     if hasattr(userCurrentRoom,'state'):
@@ -242,7 +243,9 @@ def regen_msg(client_msg):
     embbedswitcher = client_msg['data']['isembbed']
     transswitcher = client_msg['data']['istranslated']
     windowRatio = client_msg['data']['windowRatio']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     if hasattr(userCurrentRoom,'state'):
         userCurrentRoom.state["translate"] = True if transswitcher else False
     if hasattr(userCurrentRoom, 'windowRatio'):
@@ -266,8 +269,10 @@ def regen_msg(client_msg):
 @socketio.on('exit_room')
 def exit_user_current_room(client_msg):
     conid = client_msg['data']['conid']
+    conversation_id = client_msg["data"]["socket_id"]
     try:
         if conid in chatRoomList:
+            chatRoomList[conid].conversation_id = conversation_id
             room = chatRoomList[conid].conversation_id
             username = chatRoomList[conid].username
             del chatRoomList[conid]
@@ -289,7 +294,9 @@ def exit_user_current_room(client_msg):
 def change_model(client_msg):
     conid = client_msg['data']['conid']
     model = client_msg['data']['model']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     def callback_unload(future):
         unloadresp = future.result()
         if unloadresp.status_code == 200:
@@ -314,7 +321,9 @@ def change_model(client_msg):
 def change_instruction(client_msg):
     conid = client_msg['data']['conid']
     instruction = client_msg['data']['instruction']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     userCurrentRoom.state["prompt_template"]=instruction
     data_to_send = {
                     'message': "Success"
@@ -325,7 +334,9 @@ def change_instruction(client_msg):
 def change_SD_Model(client_msg):
     conid = client_msg['data']['conid']
     SD_Model = client_msg['data']['SD_Model']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     userCurrentRoom.my_generate.image_payload["override_settings"]["sd_model_checkpoint"] = SD_Model
     data_to_send = {
                     'message': "Success"
@@ -335,7 +346,9 @@ def change_SD_Model(client_msg):
 @socketio.on("save_chat_history")
 def save_chat_history(client_msg):
     conid = client_msg['data']['conid']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     result = userCurrentRoom.chat_history_op("save")
     if result:
         send_status({"name":"chat_history_op","msg":{"operation":"save","result":"Success"}}, userCurrentRoom.conversation_id)
@@ -346,7 +359,9 @@ def save_chat_history(client_msg):
 @socketio.on("load_chat_history")
 def save_chat_history(client_msg):
     conid = client_msg['data']['conid']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     result = userCurrentRoom.chat_history_op("load")
     if result:
         send_status({"name":"chat_history_op","msg":{"operation":"load","result":result}}, userCurrentRoom.conversation_id)
@@ -362,7 +377,9 @@ def reply_user_query(client_msg):
     embbedswitcher = client_msg['data']['isembbed']
     transswitcher = client_msg['data']['istranslated']
     windowRatio = client_msg['data']['windowRatio']
+    conversation_id = client_msg["data"]["socket_id"]
     userCurrentRoom = chatRoomList[conid]
+    userCurrentRoom.conversation_id = conversation_id
     if hasattr(userCurrentRoom, 'state'):
         userCurrentRoom.state["translate"] = True if transswitcher else False
     if hasattr(userCurrentRoom, 'windowRatio'):
