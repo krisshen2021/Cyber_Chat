@@ -55,6 +55,22 @@
         $dynapicDiv.find('svg').replaceWith(svg)
       }
     }
+    
+
+    function previewPic(backgroundImg){
+      $("#overLayer").css("display","flex");
+      let backdynpic = backgroundImg;
+      $("#overLayer").find(".overlay-dynpic").css("display","flex").css('background-image', backdynpic);
+      $("#overLayer").find("#closePreview").off('click').on('click',function(){
+        $("#overLayer").css("display","none");
+        $("#overLayer").find(".overlay-dynpic").css("display","none");
+        $(this).off('click');
+      });
+    }
+    function preDynaPic(){
+      let backdynpic = $("#char-dynpic-wrapper").find("#char-dynpic").css('background-image');
+      previewPic(backdynpic);
+    }
   </script>
 
 
@@ -265,7 +281,7 @@
       let $image_str = null;
       if (dynamic_pictures != false) {
         console.log("Find Dynamic pictures");
-        let image_str = "<div class='dynamicPicBox'><div class='dynaPicControl' onclick='hideDynaPic(this)'><svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF'><path d='M3 13C6.6 5 17.4 5 21 13' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17C10.3431 17 9 15.6569 9 14C9 12.3431 10.3431 11 12 11C13.6569 11 15 12.3431 15 14C15 15.6569 13.6569 17 12 17Z' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg></div><img class='dynamicPic' src='" + dynamic_pictures + "' width=100% ></div>"
+        let image_str = "<div class='dynamicPicBox'><div class='dynaPicControl' onclick='hideDynaPic(this)'><svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF'><path d='M3 13C6.6 5 17.4 5 21 13' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17C10.3431 17 9 15.6569 9 14C9 12.3431 10.3431 11 12 11C13.6569 11 15 12.3431 15 14C15 15.6569 13.6569 17 12 17Z' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg></div><div class='dynamicPic' onclick='preDynaPic()'><img src='" + dynamic_pictures + "'></div></div>"
         $image_str = $(image_str);
       };
       let $combine = $('<div></div>');
@@ -799,7 +815,8 @@
           clearTimeout(timeout);
           timeout = setTimeout(later, wait);
       };
-  }
+    }
+    /*Document Ready Actions*/
     $(document).ready(function() {
       $("#load-chat-history").click(loadChatHistory);
       $("#save-chat-history").click(saveChatHistory);
@@ -857,17 +874,30 @@
       }, 250);
       $(window).on('resize', handleResize);
       //
+      
 
       $("#char-dynpic-wrapper").css("cursor","pointer").on('click', function(){
         $(this).fadeOut(200);
+        let backdynpic = $(this).find("#char-dynpic").css('background-image');
+        previewPic(backdynpic);
       });
       
       $(".chatSetUpBtn").on('click', function(){
         if ($(".settingOpt").css("display") == "none") {
+          $("#overLayer").css("display","flex");
+          $("#setTings").css("z-index",1000);
           $(".settingOpt").css("opacity", 0).css("display", "flex");
           gsap.to($(".settingOpt"), {
             duration: 0.4, 
-            opacity: 1
+            opacity: 1,
+            onComplete: function(){
+              $("#overLayer").on('click', function(){
+                $(".settingOpt").css("display","none");
+                $(this).css("display","none");
+                $(this).off('click');
+                $("#setTings").css("z-index",15);
+              });
+            }
           });
         } else {
           gsap.to($(".settingOpt"), {
@@ -875,6 +905,9 @@
             opacity: 0,
             onComplete: function() {
               $(".settingOpt").css("display", "none");
+              $("#overLayer").css("display","none");
+              $("#overLayer").off('click');
+              $("#setTings").css("z-index",15);
             }
           });
         }
@@ -1073,6 +1106,9 @@
             </path>
           </svg></div>
         <div class="loadingText"></div>
+      </div>
+      <div class="overlay-dynpic">
+        <div id="closePreview">Close Preview</div>
       </div>
     </div>
   </div>
