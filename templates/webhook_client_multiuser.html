@@ -15,10 +15,8 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script> -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="/static/js/marked.js"></script>
-  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
@@ -113,6 +111,7 @@
     var user_looks = "";
     var initialstate = true;
     var holdbox_origin_height;
+    var audioPlayer;
 
     function Module_timer(){
       var timer;
@@ -251,6 +250,31 @@
       }
     }
 
+    function base64ToBlob(base64, mimeType) {
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      return new Blob([byteArray], {type: mimeType});
+    }
+    
+    function xtts_audio_data(msg){
+      const audioData = msg.data["audio_data"];
+      if (audioData) {
+        const audioBlob = base64ToBlob(audioData, 'audio/wav');
+        const audioUrl = URL.createObjectURL(audioBlob);
+        audioPlayer = new Audio(audioUrl);
+        audioPlayer.play().catch(e => console.error('Audio playback failed:', e));
+        audioPlayer.onended = function() {
+            URL.revokeObjectURL(audioUrl);
+        };
+      } else {
+        console.error('Audio data is not available.');
+      }
+    }
+
     function add_msg({
       message_input = "",
       avatar_url = "",
@@ -299,12 +323,14 @@
       if (voiceswitcher.checked && voice_text != "") {
         let langcode = extractLanguageCode(speaker);
         if (langcode) {
-        let data = {
-          text:voice_text,
-          speaker:speaker,
-          language_input:langcode
+        let querydata = {
+          text: voice_text,
+          speaker_wav: speaker,
+          language: langcode,
+          socket_id: socket.id
         };
-        audioGen.gen_audio(data);
+        /*audioGen.gen_audio(data);*/
+        socket.emit("xtts_audio_gen", { data: querydata });
       }else{
         msttser.tts(voice_text, speaker, speak_tone, ttskey);
       }
@@ -996,7 +1022,7 @@
       socket.on("exit_room_success", exitRoomSuccess);
       socket.on("instruction_change_result", instruct_changed);
       socket.on("SD_Model_change_result", SD_model_changed);
-
+      socket.on("xtts_result", xtts_audio_data);
     });
   </script>
 </head>

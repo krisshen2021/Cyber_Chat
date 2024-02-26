@@ -5,8 +5,8 @@ export class AudioGenerator extends EventTarget{
         super();
     }
 
-    gen_audio({text = "hello world", url_api = "http://localhost:8020/tts_to_audio/", speaker = "female_01", language_input = "en"} = {}) {
-        fetch(url_api, {
+    gen_audio({text = "hello world", url_api = "http://127.0.0.1:8020/tts_to_audio", speaker_wav = "female_01", language = "en", mainserver = "http://127.0.0.1:5001/v1/xtts"} = {}) {
+        fetch(mainserver, {
             method: 'POST',
             headers: {
                 'accept': 'audio/wav',
@@ -14,8 +14,9 @@ export class AudioGenerator extends EventTarget{
             },
             body: JSON.stringify({
                 text: text,
-                speaker_wav: speaker,
-                language: language_input
+                speaker_wav: speaker_wav,
+                language: language,
+                server_url: url_api
             })
         })
         .then(response => {

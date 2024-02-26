@@ -1,6 +1,6 @@
 from gevent import monkey
 monkey.patch_all()
-import uuid, markdown
+import uuid, markdown, requests, base64
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 from user_room_multiuser import chatRoom
@@ -372,6 +372,39 @@ def save_chat_history(client_msg):
     else:
         send_status({"name":"chat_history_op","msg":{"operation":"load","result":"Fail"}}, userCurrentRoom.conversation_id)
     pass
+
+@socketio.on("xtts_audio_gen")
+def xtts_audio_generate(client_msg):
+    text = client_msg["data"]["text"]
+    speaker_wav = client_msg["data"]["speaker_wav"]
+    language = client_msg["data"]["language"]
+    conversation_id = client_msg["data"]["socket_id"]
+    url = config_data["openai_api_chat_base"]+"/xtts"
+    headers = {
+        'accept': 'audio/wav',
+        'Content-Type': 'application/json'
+        }
+    payload = {
+        "text":text,
+        "speaker_wav": speaker_wav,
+        "language": language,
+        "server_url": config_data["xtts_api_base"]
+        }
+    try:
+        response = requests.post(url=url, headers=headers, json=payload)
+        if response.status_code == 200:
+           audio_data_base64 = base64.b64encode(response.content).decode('utf-8')
+           audio_data = audio_data_base64
+        else:
+            audio_data = False
+        data_to_send = {
+                'audio_data': audio_data
+            }
+        socketio.emit('xtts_result', {'data': data_to_send}, room=conversation_id)
+    except Exception as e:
+            print("Error on get xtts audio: ", e)
+            audio_data = False
+    
 
 @socketio.on('send_user_msg')
 #when user send message , send it to user's chatroom
