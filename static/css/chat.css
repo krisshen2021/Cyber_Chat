@@ -15,7 +15,8 @@ body {
   font-weight: 400;
   font-style: normal;
 }
-body{
+
+body {
   font-size: 1rem;
 }
 
@@ -23,30 +24,31 @@ body{
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  /* display: grid;
-  grid-template-rows: auto 1fr auto; */
   height: 100%;
   width: 100%;
   flex-direction: column;
-  gap:10px;
+  gap: 10px;
   position: relative;
   background: linear-gradient(to bottom, #1f0b1f 0%, #121212 20%);
   overflow: hidden;
 }
+
 /*comic blocks*/
-.comic-area{
+.comic-area {
   position: absolute;
-  top:0;
-  left:0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   z-index: 0;
 }
+
 .border-wrapper {
   position: absolute;
-  padding: 10px; /* 边框的宽度 */
-  background: rgb(0, 0, 0); /* 边框颜色 */
+  padding: 10px;
+  background: rgb(0, 0, 0);
 }
+
 .wrapper-char {
   top: 3rem;
   left: 48%;
@@ -56,6 +58,7 @@ body{
   clip-path: polygon(0 0, 100% 0%, 100% calc(100% - 150px), 0% 100%);
   z-index: 1;
 }
+
 .wrapper-char-horizon {
   top: 80px;
   left: 20px;
@@ -64,37 +67,42 @@ body{
   clip-path: polygon(0 0, 100% 0%, calc(100% - 150px) 100%, 0% 100%);
   z-index: 1;
 }
-.wrapper-char-fullscreen{
-  top:0;
+
+.wrapper-char-fullscreen {
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width:100%;
+  width: 100%;
   height: 100%;
   padding: 0;
   z-index: 1;
 }
-.char_bg{
+
+.char_bg {
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position:left top;
+  background-position: left top;
   clip-path: polygon(0 0, 100% 0%, 100% calc(100% - 150px), 0% 100%);
 }
-.char_bg_horizon{
+
+.char_bg_horizon {
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position:left top;
+  background-position: left top;
   clip-path: polygon(0 0, 100% 0%, calc(100% - 150px) 100%, 0% 100%);
 }
-.char_bg_fullscreen{
+
+.char_bg_fullscreen {
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position:left top;
+  background-position: left top;
   clip-path: polygon(0 0, 100% 0%, 100% 100%, 0% 100%);
 }
-.wrapper-char-dynpic{
+
+.wrapper-char-dynpic {
   top: 35%;
   left: 65%;
   transform: translate(-50%, -50%);
@@ -102,9 +110,10 @@ body{
   height: calc(55% - 20px);
   clip-path: polygon(0 4%, 100% 0, 93% 100%, 4% 95%);
   display: none;
-  z-index:5;
+  z-index: 5;
 }
-.wrapper-char-dynpic-horizon{
+
+.wrapper-char-dynpic-horizon {
   top: 40%;
   left: 45%;
   transform: translate(-50%, -50%);
@@ -112,27 +121,30 @@ body{
   height: calc(70% - 40px);
   clip-path: polygon(0 4%, 100% 0, 95% 100%, 4% 96%);
   display: none;
-  z-index:5;
+  z-index: 5;
 }
-.wrapper-char-dynpic-fullscreen{
+
+.wrapper-char-dynpic-fullscreen {
   display: none;
   z-index: 5;
 }
 
-.char_dynmicpic_bg{
+.char_dynmicpic_bg {
   width: 100%;
   height: 100%;
   background-size: cover;
   background-position: center;
   clip-path: polygon(0 4%, 100% 0, 93% 100%, 4% 95%);
 }
-.char_dynmicpic_bg_horizon{
+
+.char_dynmicpic_bg_horizon {
   width: 100%;
   height: 100%;
   background-size: cover;
   background-position: center;
   clip-path: polygon(0 4%, 100% 0, 95% 100%, 4% 96%);
 }
+
 .wrapper-user {
   bottom: 150px;
   left: 60%;
@@ -142,6 +154,7 @@ body{
   clip-path: polygon(0 180px, 100% 70px, 100% 100%, 0% 100%);
   z-index: 2;
 }
+
 .wrapper-user-horizon {
   top: 100px;
   left: auto;
@@ -151,78 +164,84 @@ body{
   clip-path: polygon(150px 0, 100% 0%, 100% 100%, 0% 100%);
   z-index: 2;
 }
-.wrapper-user-fullscreen{
+
+.wrapper-user-fullscreen {
   display: none;
 }
-.user_bg{
+
+.user_bg {
   width: 100%;
   height: 100%;
   clip-path: polygon(0 180px, 100% 70px, 100% 100%, 0% 100%);
   background-size: cover;
-  background-position:left top;
+  background-position: left top;
   background-color: blueviolet;
 }
+
 .user_bg_horizon {
   width: 100%;
   height: 100%;
   clip-path: polygon(150px 0, 100% 0%, 100% 100%, 0% 100%);
   background-size: cover;
-  background-position:left top;
+  background-position: left top;
   background-color: blueviolet;
 }
 
-.comic_msg_holder_char{
+.comic_msg_holder_char {
   position: absolute;
   flex-direction: column;
   z-index: 8;
-  top:40% ; 
-  left:80px ;
-  width:auto;
+  top: 40%;
+  left: 80px;
+  width: auto;
   min-width: 200px;
   max-width: 70%;
   display: none;
 }
-.comic_msg_holder_char_horizon{
+
+.comic_msg_holder_char_horizon {
   max-width: 40%;
   position: absolute;
   flex-direction: column;
   z-index: 8;
-  top:50%;
-  left:80px;
-  width:auto;
+  top: 50%;
+  left: 80px;
+  width: auto;
   min-width: 200px;
 }
 
-.comic_msg_holder_user{
+.comic_msg_holder_user {
   position: absolute;
   flex-direction: column;
   z-index: 9;
-  top:calc(40% + 300px) ;
-  left: 30% ;
-  width:auto;
+  top: calc(40% + 300px);
+  left: 30%;
+  width: auto;
   min-width: 200px;
   max-width: 50%;
   display: none;
 }
-.comic_msg_holder_user_horizon{
+
+.comic_msg_holder_user_horizon {
   position: absolute;
   flex-direction: column;
   z-index: 9;
-  width:auto;
+  width: auto;
   min-width: 200px;
   max-width: 30%;
   top: 50%;
   left: calc(40% + 140px);
 }
 
-.msg-drag-handle{
+.msg-drag-handle {
   position: absolute;
   left: 5px;
   bottom: 5px;
   cursor: move;
   opacity: 0.4;
 }
-.comic_msgbox_arrow_char{
+
+.comic_msgbox_arrow_char {
   width: 30px;
   height: 30px;
   background: rgba(0, 0, 0, 0.7);
@@ -232,7 +251,7 @@ body{
   backdrop-filter: blur(5px);
 }
 
-.comic_msgbox_arrow_user{
+.comic_msgbox_arrow_user {
   width: 30px;
   height: 30px;
   background: rgba(0, 0, 0, 0.7);
@@ -242,7 +261,7 @@ body{
   backdrop-filter: blur(5px);
 }
 
-.comic_msgbox{
+.comic_msgbox {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -255,10 +274,12 @@ body{
   box-shadow: 3px 3px 5px rgba(45, 2, 58, 0.5);
   padding: 5px;
 }
+
 .comic_msgbox::-webkit-scrollbar {
   display: none;
 }
-.dynaPicControl{
+
+.dynaPicControl {
   width: fit-content;
   cursor: pointer;
 }
@@ -276,10 +297,11 @@ body{
   background-color: rgba(21, 21, 21, 0.164);
   backdrop-filter: blur(10px);
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-  gap:5px;
+  gap: 5px;
   z-index: 3;
 }
-.chatSetUpBtn{
+
+.chatSetUpBtn {
   width: 2rem;
   height: 2rem;
   border-radius: 5px;
@@ -295,16 +317,17 @@ body{
   justify-content: flex-end;
   padding: 10px;
   align-items: center;
-  gap:1rem;
+  gap: 1rem;
   width: 100%;
 }
-.settingOpt div{
+
+.settingOpt div {
   display: flex;
   align-items: center;
   flex-direction: row;
 }
 
-.topSelect{
+.topSelect {
   font-size: 0.6rem;
   font-weight: 500;
   width: 8rem;
@@ -322,35 +345,38 @@ body{
   font-size: 3rem;
   text-shadow: 1px 1px 5px #000000;
   padding: 4px;
-  width:fit-content;
+  width: fit-content;
   align-self: flex-start;
   margin-left: 4rem;
   z-index: 10;
 }
-.free-space{
+
+.free-space {
   margin-top: auto;
 }
+
 #holder_box {
   /* display: flex; */
   flex-direction: column;
   border-radius: 10px;
   justify-content: space-between;
-  gap:10px;
+  gap: 10px;
   width: 90%;
   height: 50vh;
   background: rgba(36, 36, 36, 0.32);
   backdrop-filter: blur(3px);
   margin-bottom: 2rem;
   z-index: 4;
-  display:none;
+  display: none;
   position: relative;
 }
-#drag-handle{
+
+#drag-handle {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 10px; 
+  height: 10px;
   cursor: ns-resize;
   z-index: 100;
 }
@@ -381,6 +407,7 @@ body{
   pointer-events: none;
   z-index: 1;
 }
+
 #message_box::-webkit-scrollbar {
   display: none;
 }
@@ -420,10 +447,8 @@ body{
   height: auto;
   padding: 1rem;
   gap: 10px;
-  /* position: fixed; */
-  /* bottom: 0; */
   align-items: center;
-  
+
 }
 
 .messageInputBox {
@@ -435,7 +460,7 @@ body{
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap:1rem;
+  gap: 1rem;
 }
 
 
@@ -466,9 +491,10 @@ body{
   font-weight: 500;
 }
 
-#chat-history-buttons{
+#chat-history-buttons {
   align-self: flex-end;
 }
+
 #load-chat-history,
 #save-chat-history {
   border-radius: 15px;
@@ -480,6 +506,7 @@ body{
   font-weight: 300;
   font-size: 0.6rem;
 }
+
 #submit:hover,
 #regenerate:hover,
 #restart:hover,
@@ -508,11 +535,13 @@ body{
   position: relative;
   display: flex;
 }
-.dynamicPic img{
+
+.dynamicPic img {
   width: 100%;
   border-radius: 5px;
   height: auto;
 }
+
 .dynamicPic::after {
   content: "Click to enlarge";
   position: absolute;
@@ -521,13 +550,37 @@ body{
   width: fit-content;
   height: 1rem;
   display: flex;
-  align-items: center; 
-  justify-content: center; 
+  align-items: center;
+  justify-content: center;
   background-color: #1f0b1f7e;
   border-radius: 1rem;
   font-size: 0.8rem;
-  padding: 0 0.5rem; 
+  padding: 0 0.5rem;
   color: antiquewhite;
+}
+.voiceController{
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  width: fit-content;
+  height: min-content;
+  padding: 0.5rem 1rem;
+  background: #1f0b1f;
+  border-radius: 1.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: none;
+  color: antiquewhite;
+  margin-top: 5px;
+  align-self: flex-end;
+
+}
+.voicePlayer{
+  display: none;
+}
+.voiceController:hover{
+  background: #cb5118;
+
 }
 
 .codePreDiv {
@@ -593,7 +646,9 @@ body{
   line-height: 24px;
   font-weight: 400;
   font-style: normal;
+  gap:1rem;
 }
+
 .message-comic {
   display: flex;
   flex-direction: column;
@@ -606,48 +661,49 @@ body{
   font-weight: 400;
   font-style: normal;
 }
-.genImgDiv{
+
+.genImgDiv {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-.genImgDiv > svg{
+
+.genImgDiv>svg {
   margin-right: 6px;
 }
 
 .overlay {
-  position: fixed; /* 固定定位，覆盖在页面上 */
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8); /* 半透明黑色背景，可以根据需要调整透明度 */
-  display: flex; /* 使用 Flex 布局，使内容垂直和水平居中 */
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
   opacity: 1;
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
-  z-index: 999; /* 设置一个较高的 z-index 值，确保在所有窗口元素之上 */
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
 }
 
-/* 浮层内容样式 */
 .overlay-content {
   display: none;
   flex-direction: row;
   justify-content: center;
   align-items: center;
   background: rgba(52, 7, 104, 0.7);
-  padding: 10px; /* 内边距，根据需要调整 */
-  border-radius: 25px; /* 圆角边框，根据需要调整 */
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); /* 阴影效果，根据需要调整 */
-  color:antiquewhite;
+  padding: 10px;
+  border-radius: 25px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  color: antiquewhite;
 }
 
 .overlay-dynpic {
   display: none;
-  border-radius: 5px;
-  box-shadow: 5px 5px 5px rgba(104, 39, 150, 0.468);
-  width: calc(100vw - 2rem);
-  height: calc(100vh - 4rem);
+  border-radius: 1rem;
+  box-shadow: inset 0 0 0 3px rgb(31, 10, 50), 5px 5px 5px rgba(104, 39, 150, 0.468);
+  width: calc(100% - 2rem);
+  height: calc(100% - 2rem);
   padding: 1rem;
   flex-direction: row;
   justify-content: flex-end;
@@ -655,9 +711,10 @@ body{
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
+  position: relative;
 }
 
-.overlay-dynpic #closePreview{
+.overlay-dynpic #closePreview {
   padding: 0.5rem;
   border-radius: 1rem;
   color: antiquewhite;
@@ -668,15 +725,17 @@ body{
 }
 
 
-.loadingSvg{
+.loadingSvg {
   margin-right: 6px;
   margin-left: 6px;
 }
-.loadingText{
+
+.loadingText {
   font-weight: 500;
   font-size: 1.1rem;
   margin-right: 1.1rem;
 }
+
 ::-webkit-scrollbar-track {
   display: none;
 }
@@ -693,8 +752,10 @@ body{
 
 input[type="checkbox"] {
   appearance: none;
-  -webkit-appearance: none; /* 针对 Safari */
-  -moz-appearance: none; /* 针对 Firefox */
+  -webkit-appearance: none;
+  /* 针对 Safari */
+  -moz-appearance: none;
+  /* 针对 Firefox */
   width: 1.2rem;
   height: 1.2rem;
   min-width: 1.2rem;
@@ -702,8 +763,10 @@ input[type="checkbox"] {
   border-radius: 50%;
   background-color: #eee;
   position: relative;
-  border: none; /* 可能需要添加以移除默认边框 */
-  outline: none; /* 移除焦点时的轮廓 */
+  border: none;
+  /* 可能需要添加以移除默认边框 */
+  outline: none;
+  /* 移除焦点时的轮廓 */
 }
 
 input[type="checkbox"]:checked::after {
@@ -725,8 +788,8 @@ input[type="checkbox"]:hover {
 }
 
 
- /*Media Query Blocks*/
- @media only screen and (max-width: 430px){
+/*Media Query Blocks*/
+@media only screen and (max-width: 430px) {
   #setTings {
     backdrop-filter: blur(0px);
     -webkit-backdrop-filter: blur(0px);
@@ -739,7 +802,8 @@ input[type="checkbox"]:hover {
     background-color: rgba(21, 21, 21, 0);
     box-shadow: none;
   }
-  .chatSetUpBtn{
+
+  .chatSetUpBtn {
     display: flex;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     justify-content: center;
@@ -748,6 +812,7 @@ input[type="checkbox"]:hover {
     background-color: rgba(21, 21, 21, 0.5);
     cursor: pointer;
   }
+
   .settingOpt {
     position: fixed;
     left: 0.5rem;
@@ -761,7 +826,8 @@ input[type="checkbox"]:hover {
     background: rgba(34, 32, 37, 0.8);
     display: none;
   }
-  .topSelect{
+
+  .topSelect {
     font-size: 0.8rem;
     font-weight: 500;
     width: 6.5rem;
@@ -773,12 +839,14 @@ input[type="checkbox"]:hover {
     height: 1.5rem;
     cursor: pointer;
   }
+
   #ai_intro {
     font-size: 2rem;
     margin-top: 0rem;
     margin-right: 2rem;
     margin-left: auto;
   }
+
   #holder_box {
     height: 70vh;
     width: 95vw;
@@ -787,9 +855,11 @@ input[type="checkbox"]:hover {
     backdrop-filter: blur(1px);
     -webkit-backdrop-filter: blur(1px);
   }
-  #message_box{
+
+  #message_box {
     padding: 1rem 0;
   }
+
   .message {
     display: flex;
     flex-direction: column;
@@ -809,6 +879,7 @@ input[type="checkbox"]:hover {
     font-weight: 400;
     font-style: normal;
   }
+
   .avatar {
     border-radius: 50%;
     width: 3rem;
@@ -816,79 +887,97 @@ input[type="checkbox"]:hover {
     min-width: 3rem;
     min-height: 3rem;
   }
+
   .messageOptions {
-    gap:0.5rem;
+    gap: 0.5rem;
   }
-  #submit,#regenerate,#restart,#exitchat {
+
+  #submit,
+  #regenerate,
+  #restart,
+  #exitchat {
     padding: 0 0.8rem 0 0.8rem;
     height: 1.5rem;
     font-size: 0.8rem;
   }
+
   .border-wrapper {
-    padding: 5px; /* 边框的宽度 */
+    padding: 5px;
+    /* 边框的宽度 */
   }
-  .wrapper-char-fullscreen{
+
+  .wrapper-char-fullscreen {
     padding: 0;
   }
+
   .wrapper-user {
     bottom: 5rem;
   }
-  .comic_msg_holder_char{
-    top:35% !important; 
-    left:4rem !important;
+
+  .comic_msg_holder_char {
+    top: 35% !important;
+    left: 4rem !important;
     min-width: auto;
     max-width: 80%;
     width: fit-content;
   }
-  .comic_msg_holder_user{
-    top:calc(30% + 12rem) !important;
+
+  .comic_msg_holder_user {
+    top: calc(30% + 14rem) !important;
     left: 2rem !important;
     min-width: auto;
     max-width: 80%;
     width: fit-content;
   }
-  .comic_msgbox{
+
+  .comic_msgbox {
     min-height: 4rem;
     max-height: 7rem;
     padding: 2px;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
+
   .message-comic {
     font-size: 0.8rem;
     line-height: 1.4rem;
   }
-  .msg-drag-handle{
+
+  .msg-drag-handle {
     display: none;
   }
-  .comic_msgbox_arrow_char{
+
+  .comic_msgbox_arrow_char {
     width: 1rem;
     height: 1rem;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
-  
-  .comic_msgbox_arrow_user{
+
+  .comic_msgbox_arrow_user {
     width: 1rem;
     height: 1rem;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
-  .smallFonts{
+
+  .smallFonts {
     font-size: 0.8rem;
   }
 
- }
+}
 
- @media only screen and (min-width: 500px) and (max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
+@media only screen and (min-width: 500px) and (max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
   #setTings {
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
   }
+
   .settingOpt {
     display: flex;
   }
-  .topSelect{
+
+  .topSelect {
     font-size: 0.8rem;
     font-weight: 500;
     width: 6.5rem;
@@ -900,10 +989,12 @@ input[type="checkbox"]:hover {
     height: 1rem;
     cursor: pointer;
   }
+
   #ai_intro {
     font-size: 2rem;
     margin-left: 2rem;
   }
+
   #holder_box {
     height: 50vh;
     width: 95vw;
@@ -912,9 +1003,11 @@ input[type="checkbox"]:hover {
     backdrop-filter: blur(1px);
     -webkit-backdrop-filter: blur(1px);
   }
-  #message_box{
+
+  #message_box {
     padding: 1rem 0;
   }
+
   .message {
     display: flex;
     flex-direction: column;
@@ -934,6 +1027,7 @@ input[type="checkbox"]:hover {
     font-weight: 400;
     font-style: normal;
   }
+
   .avatar {
     border-radius: 50%;
     width: 3rem;
@@ -941,66 +1035,81 @@ input[type="checkbox"]:hover {
     min-width: 3rem;
     min-height: 3rem;
   }
+
   .messageOptions {
-    gap:0.5rem;
+    gap: 0.5rem;
   }
-  #submit,#regenerate,#restart,#exitchat {
+
+  #submit,
+  #regenerate,
+  #restart,
+  #exitchat {
     padding: 0 0.8rem 0 0.8rem;
     height: 1.5rem;
     font-size: 1rem;
   }
+
   .border-wrapper {
-    padding: 5px; /* 边框的宽度 */
+    padding: 5px;
+    /* 边框的宽度 */
   }
-  .wrapper-char-fullscreen{
+
+  .wrapper-char-fullscreen {
     padding: 0;
   }
+
   .wrapper-user {
     bottom: 5rem;
   }
-  
-  .comic_msg_holder_char{
-    top:35% !important; 
-    left:4rem !important;
+
+  .comic_msg_holder_char {
+    top: 35% !important;
+    left: 4rem !important;
     min-width: auto;
     max-width: 85%;
     width: fit-content;
   }
-  .comic_msg_holder_user{
-    top:calc(35% + 13rem) !important;
+
+  .comic_msg_holder_user {
+    top: calc(35% + 14rem) !important;
     left: 2rem !important;
     min-width: auto;
     max-width: 85%;
     width: fit-content;
   }
-  .comic_msgbox{
+
+  .comic_msgbox {
     min-height: 4rem;
     max-height: 10rem;
     padding: 2px;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
+
   .message-comic {
     font-size: 1rem;
     line-height: 1.6rem;
   }
-  .msg-drag-handle{
+
+  .msg-drag-handle {
     display: none;
   }
-  .comic_msgbox_arrow_char{
+
+  .comic_msgbox_arrow_char {
     width: 1rem;
     height: 1rem;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
-  
-  .comic_msgbox_arrow_user{
+
+  .comic_msgbox_arrow_user {
     width: 1rem;
     height: 1rem;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
-  .smallFonts{
+
+  .smallFonts {
     font-size: 0.8rem;
   }
- }
+}

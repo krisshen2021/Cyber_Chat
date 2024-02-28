@@ -285,7 +285,7 @@ class chatRoom_unsensor:
         self.my_generate.image_payload['width'] = 512 if self.windowRatio <= 1 else 768
         self.my_generate.image_payload['height'] = 768 if self.windowRatio <= 1 else 512
         self.my_generate.image_payload['enable_hr'] = True
-        self.my_generate.image_payload['steps'] = 20
+        self.my_generate.image_payload['steps'] = 40
         self.my_generate.image_payload['hr_scale'] = 1.25
         self.my_generate.state['temperature'] = random.choice([0.71, 0.72, 0.73])
         self.send_msg_websocket({"name":"chatreply","msg":"Generate Response"}, self.conversation_id)

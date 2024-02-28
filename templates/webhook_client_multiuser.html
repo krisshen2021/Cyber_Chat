@@ -1,972 +1,1222 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/chat.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Philosopher&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"
+    />
+    <title>{{ainame}}</title>
 
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/favicon.ico" />
-  <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
-  <link rel="stylesheet" type="text/css" href="/static/css/chat.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css?family=Philosopher&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
-  <title>{{ainame}}</title>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="/static/js/marked.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="/static/js/marked.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
-  <script type="text/javascript">
-    
-    window.addEventListener("beforeunload", function (e) {
-      socket.disconnect();
-    });
-
-    function copyCode(clickedDiv) {
-      let $clickdiv = $(clickedDiv);
-      let tempHtml = $clickdiv.parent().next().get(0);
-      console.log(tempHtml.textContent);
-      navigator.clipboard
-        .writeText(tempHtml.textContent)
-        .then(() => {
-          console.log("Text copied to clipboard");
-        })
-        .catch((err) => {
-          // This can happen if the user denies clipboard permissions:
-          console.error("Could not copy text: ", err);
-        });
-    }
-    function hideDynaPic(dynapicDiv) {
-      let $dynapicDiv = $(dynapicDiv);
-      let $dypic = $dynapicDiv.parent().find('.dynamicPic')
-      if ($dypic.is(":visible")) {
-        $dypic.toggle("blind");
-        let svg = "<svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF' ><path d='M19.5 16L17.0248 12.6038' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17.5V14' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M4.5 16L6.96895 12.6124' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M3 8C6.6 16 17.4 16 21 8' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg>"
-        $dynapicDiv.find('svg').replaceWith(svg)
-      } else {
-        $dypic.toggle("blind");
-        let svg = "<svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF'><path d='M3 13C6.6 5 17.4 5 21 13' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17C10.3431 17 9 15.6569 9 14C9 12.3431 10.3431 11 12 11C13.6569 11 15 12.3431 15 14C15 15.6569 13.6569 17 12 17Z' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg>"
-        $dynapicDiv.find('svg').replaceWith(svg)
-      }
-    }
-    
-
-    function previewPic(backgroundImg){
-      $("#overLayer").css("display","flex");
-      let backdynpic = backgroundImg;
-      $("#overLayer").find(".overlay-dynpic").css("display","flex").css('background-image', backdynpic);
-      $("#overLayer").find("#closePreview").off('click').on('click',function(){
-        $("#overLayer").css("display","none");
-        $("#overLayer").find(".overlay-dynpic").css("display","none");
-        $(this).off('click');
+    <script type="text/javascript">
+      window.addEventListener("beforeunload", function (e) {
+        socket.disconnect();
       });
-    }
-    function preDynaPic(){
-      let backdynpic = $("#char-dynpic-wrapper").find("#char-dynpic").css('background-image');
-      previewPic(backdynpic);
-    }
-  </script>
 
-
-  <script type="module" charset="utf-8">
-    import { msTTS } from "/static/js/tts.js";
-    const msttser = new msTTS();
-
-    import { AudioGenerator } from "/static/js/AudioGenerator.js";
-    const audioGen = new AudioGenerator();
-
-    marked.use({
-      mangle: false,
-      headerIds: false,
-    });
-
-    var socket = Object;
-    var username = "{{nickname}}";
-    var user_sys_name = "{{username}}";
-    var user_avatar = "{{avatar}}";
-    var user_facelooks ="{{facelooks}}";
-    var usergender = "{{gender}}";
-    var credits = "{{credits}}";
-    var ai_role_name = "{{ai_role_name}}";
-    var ai_is_uncensored = "{{is_uncensored}}";
-    var conid = "{{conid}}";
-    var bkimg_path =
-      "/static/images/avatar/" + ai_role_name + "/background.png";
-    /**load viseme
-    var visemeImgs = [];
-    var img_path = "/static/images/avatar/" + ai_role_name + "/viseme";
-    for (let i = 0; i < 10; i++) {
-      let vsimg = new Image();
-      vsimg.src = img_path + "/viseme-id-" + i + ".png";
-      visemeImgs.push(vsimg);
-    }
-    **/
-    var currentIndex = 0;
-    var userLastMsg = "";
-    var ai_avatar = "";
-    var user_looks = "";
-    var initialstate = true;
-    var holdbox_origin_height;
-    var audioPlayer;
-
-    function Module_timer(){
-      var timer;
-      function SORTimer(selector, fadeouttimes, keeptimes){
-        if (timer){
-          clearTimeout(timer);
-        }
-        timer = setTimeout(function(){
-          $(selector).fadeOut(fadeouttimes);
-        },keeptimes);
+      function copyCode(clickedDiv) {
+        let $clickdiv = $(clickedDiv);
+        let tempHtml = $clickdiv.parent().next().get(0);
+        console.log(tempHtml.textContent);
+        navigator.clipboard
+          .writeText(tempHtml.textContent)
+          .then(() => {
+            console.log("Text copied to clipboard");
+          })
+          .catch((err) => {
+            // This can happen if the user denies clipboard permissions:
+            console.error("Could not copy text: ", err);
+          });
       }
-      return {
-        TimerTrigger: SORTimer
-      };
-    }
-    var divTimer = Module_timer();
+      function hideDynaPic(dynapicDiv) {
+        let $dynapicDiv = $(dynapicDiv);
+        let $dypic = $dynapicDiv.parent().find(".dynamicPic");
+        if ($dypic.is(":visible")) {
+          $dypic.toggle("blind");
+          let svg =
+            "<svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF' ><path d='M19.5 16L17.0248 12.6038' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17.5V14' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M4.5 16L6.96895 12.6124' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M3 8C6.6 16 17.4 16 21 8' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg>";
+          $dynapicDiv.find("svg").replaceWith(svg);
+        } else {
+          $dypic.toggle("blind");
+          let svg =
+            "<svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF'><path d='M3 13C6.6 5 17.4 5 21 13' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17C10.3431 17 9 15.6569 9 14C9 12.3431 10.3431 11 12 11C13.6569 11 15 12.3431 15 14C15 15.6569 13.6569 17 12 17Z' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg>";
+          $dynapicDiv.find("svg").replaceWith(svg);
+        }
+      }
 
-    function toggleInputs(input_switcher) {
-      if (input_switcher == true) {
-        $("button, input, select").each(function(){
-          $(this).prop("disabled", false).css("opacity", 1);
-          if ($(this).is("button")) {
-            $(this).css("pointer-events", "auto");
+      function previewPic(backgroundImg) {
+        $("#overLayer").css("display", "flex");
+        let backdynpic = backgroundImg;
+        $("#overLayer")
+          .find(".overlay-dynpic")
+          .css("display", "flex")
+          .css("background-image", backdynpic);
+        $("#overLayer")
+          .find("#closePreview")
+          .off("click")
+          .on("click", function () {
+            $("#overLayer").css("display", "none");
+            $("#overLayer").find(".overlay-dynpic").css("display", "none");
+            $(this).off("click");
+          });
+      }
+      function preDynaPic(DynaDiv) {
+        let $dynaDiv = $(DynaDiv);
+        let $dynaPic = $dynaDiv.find("img");
+        let picSrc = $dynaPic.attr("src");
+        let backdynpic = "url('" + picSrc + "')";
+        previewPic(backdynpic);
+      }
+    </script>
+
+    <script type="module" charset="utf-8">
+      import { msTTS } from "/static/js/tts.js";
+      const msttser = new msTTS();
+
+      marked.use({
+        mangle: false,
+        headerIds: false,
+      });
+
+      var socket = Object;
+      var username = "{{nickname}}";
+      var user_sys_name = "{{username}}";
+      var user_avatar = "{{avatar}}";
+      var user_facelooks = "{{facelooks}}";
+      var usergender = "{{gender}}";
+      var credits = "{{credits}}";
+      var ai_role_name = "{{ai_role_name}}";
+      var ai_is_uncensored = "{{is_uncensored}}";
+      var conid = "{{conid}}";
+      var bkimg_path =
+        "/static/images/avatar/" + ai_role_name + "/background.png";
+      var currentIndex = 0;
+      var userLastMsg = "";
+      var ai_avatar = "";
+      var user_looks = "";
+      var initialstate = true;
+      var holdbox_origin_height;
+
+      function Module_timer() {
+        var timer;
+        function SORTimer(selector, fadeouttimes, keeptimes) {
+          if (timer) {
+            clearTimeout(timer);
           }
-        });
-        $("#messageToSend").focus();
-      } else {
-        $("button, input, select").each(function(){
-          $(this).prop("disabled", true).css("opacity", 0.5);
-          if ($(this).is("button")) {
-            $(this).css("pointer-events", "none");
-          }
-        });
-      }
-    }
-    function getWindowSize() {
-      var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-      var height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-      var ratio = width / height
-      console.log("width: " + width + " height: " + height + " ratio: " + ratio)
-      return { width: width, height: height, ratio: ratio };
-    }
-    function resizeComicLayout() {
-      let windowSize = getWindowSize();
-      let ratio = windowSize.ratio;
-      if (ratio < 1){
-        $("#char-wrapper").removeClass("wrapper-char-fullscreen").addClass("wrapper-char");
-        $("#char-bgpic").removeClass("char_bg_fullscreen").addClass("char_bg");
-        $("#user-wrapper").removeClass("wrapper-user-fullscreen").addClass("wrapper-user");
-        $("#user-bgpic").removeClass("user_bg_horizon").addClass("user_bg");
-        $("#char-dynpic-wrapper").removeClass("wrapper-char-dynpic-fullscreen").addClass("wrapper-char-dynpic");
-        $("#char-dynpic").removeClass("char_dynmicpic_bg_horizon").addClass("char_dynmicpic_bg");
-        $("#comic-msg-holder-char").removeClass("comic_msg_holder_char_horizon").addClass("comic_msg_holder_char");
-        $("#comic-msg-holder-user").removeClass("comic_msg_holder_user_horizon").addClass("comic_msg_holder_user");
-
-      }else if(ratio > 1){
-        $("#char-wrapper").removeClass("wrapper-char-fullscreen").addClass("wrapper-char-horizon");
-        $("#char-bgpic").removeClass("char_bg_fullscreen").addClass("char_bg_horizon");
-        $("#user-wrapper").removeClass("wrapper-user-fullscreen").addClass("wrapper-user-horizon");
-        $("#user-bgpic").removeClass("user_bg").addClass("user_bg_horizon");
-        $("#char-dynpic-wrapper").removeClass("wrapper-char-dynpic-fullscreen").addClass("wrapper-char-dynpic-horizon");
-        $("#char-dynpic").removeClass("char_dynmicpic_bg").addClass("char_dynmicpic_bg_horizon");
-        $("#comic-msg-holder-char").addClass("comic_msg_holder_char_horizon").css({
-          top:"50%",
-          left:"80px"
-        });
-        $("#comic-msg-holder-user").addClass("comic_msg_holder_user_horizon").css({
-          top: "50%",
-          left: "calc(40% + 140px)"
-        });
-      }
-
-    }
-
-    function dispModeSwitch() {
-      if ($("#comicMode").is(':checked')) {
-        holdbox_origin_height = $("#holder_box").height();
-        $("#message_box").css("display","none");
-        /*gsap.to($("#holder_box"), {
-          duration: 0.5,
-          height: "auto",
-          ease: "power4.out",
-        });*/
-        $("#holder_box").css("height","auto");
-        resizeComicLayout();        
-        gsap.from($("#char-wrapper"), {
-          duration: 0.5,
-          opacity: 0
-        });
-        $(".comic_msg_holder_char").css("display", "flex");
-        if($('#msg_box_comic_user').html() != ""){
-        $(".comic_msg_holder_user").css("display", "flex");
+          timer = setTimeout(function () {
+            $(selector).fadeOut(fadeouttimes);
+          }, keeptimes);
         }
-      } else {
-        $("#char-dynpic-wrapper").removeClass("wrapper-char-dynpic").removeClass("wrapper-char-dynpic-horizon").addClass("wrapper-char-dynpic-fullscreen");
-        $("#char-bgpic").removeClass("char_bg").removeClass("char_bg_horizon").addClass("char_bg_fullscreen");
-        $("#char-wrapper").removeClass("wrapper-char").removeClass("wrapper-char-horizon").addClass("wrapper-char-fullscreen");
-        gsap.from($("#char-wrapper"), {
-          duration: 0.5,
-          opacity: 0
-        });
-        $("#user-wrapper").removeClass("wrapper-user").removeClass("wrapper-user-horizon").addClass("wrapper-user-fullscreen");
-        $(".comic_msg_holder_char").fadeOut(200);
-        $(".comic_msg_holder_user").fadeOut(200);
-        /*gsap.to($("#holder_box"), {
-          duration: 0.5,
-          height: holdbox_origin_height,
-          ease: "power4.out",
-        });*/
-        $("#holder_box").height(holdbox_origin_height);
-        $("#message_box").css("display","flex");
-        let msgNormalScrollHeight = $('#message_box').prop('scrollHeight');
-        $('#message_box').scrollTop(msgNormalScrollHeight); 
-      }
-    }
-
-    function exitChat() {
-      var querydata = {
-        conid: conid,
-        socket_id: socket.id
-      };
-      socket.emit("exit_room", { data: querydata });
-    }
-
-    function exitRoomSuccess(msg) {
-      alert(msg.data["message"])
-      window.location.href = "/";
-    }
-
-    function extractLanguageCode(inputString) {
-      const parts = inputString.split("_");
-      if (parts.length > 1) {
-        return parts[0];
-      } else {
-        return false;
-      }
-    }
-
-    function base64ToBlob(base64, mimeType) {
-      const byteCharacters = atob(base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      return new Blob([byteArray], {type: mimeType});
-    }
-    
-    function xtts_audio_data(msg){
-      const audioData = msg.data["audio_data"];
-      if (audioData) {
-        const audioBlob = base64ToBlob(audioData, 'audio/wav');
-        const audioUrl = URL.createObjectURL(audioBlob);
-        audioPlayer = new Audio(audioUrl);
-        audioPlayer.play().catch(e => console.error('Audio playback failed:', e));
-        audioPlayer.onended = function() {
-            URL.revokeObjectURL(audioUrl);
+        return {
+          TimerTrigger: SORTimer,
         };
-      } else {
-        console.error('Audio data is not available.');
       }
-    }
+      var divTimer = Module_timer();
 
-    function add_msg({
-      message_input = "",
-      avatar_url = "",
-      voice_text = "",
-      speaker = "",
-      speak_tone = "",
-      ttskey = "",
-      dynamic_picture = false,
-      server_reply_done = false,
-      from = ""
-    }={}
-    ) {
-      let $message = $(message_input);
-      let $preElement = $message.find("pre");
-      if ($preElement.length === 0) {
-        console.log("No code found");
-      } else {
-        console.log("find" + $preElement.length + " code items");
-        $preElement.each(function () {
-          let $div = $(
-            "<div class='codePre'><div class='codePreDiv' onclick='copyCode(this)'><svg xmlns='http://www.w3.org/2000/svg' height='14px' viewBox='0 0 24 24' width='14px' fill='#FFFFFF'><path d='M0 0h24v24H0z' fill='none'/><path d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z'/></svg></div></div>"
-          );
-          $(this).before($div);
-        });
-      };
-      let dynamic_pictures = dynamic_picture;
-      let avatar_url_new = avatar_url;
-      let $image_str = null;
-      if (dynamic_pictures != false) {
-        console.log("Find Dynamic pictures");
-        let image_str = "<div class='dynamicPicBox'><div class='dynaPicControl' onclick='hideDynaPic(this)'><svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF'><path d='M3 13C6.6 5 17.4 5 21 13' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17C10.3431 17 9 15.6569 9 14C9 12.3431 10.3431 11 12 11C13.6569 11 15 12.3431 15 14C15 15.6569 13.6569 17 12 17Z' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg></div><div class='dynamicPic' onclick='preDynaPic()'><img src='" + dynamic_pictures + "'></div></div>"
-        $image_str = $(image_str);
-      };
-      let $combine = $('<div></div>');
-      let $combine_comic = $combine.clone();
-      $combine.append($message);
-      let $synmsg = $message.clone(true);
-      $combine_comic.append($synmsg);
-      if ($image_str !== null) {
-        $combine.append($image_str);
-      };
-      let combinedMessage = $combine.html();
-      let combinedMessage_comic = $combine_comic.html();
-      
-
-      if (voiceswitcher.checked && voice_text != "") {
-        let langcode = extractLanguageCode(speaker);
-        if (langcode) {
-        let querydata = {
-          text: voice_text,
-          speaker_wav: speaker,
-          language: langcode,
-          socket_id: socket.id
-        };
-        /*audioGen.gen_audio(data);*/
-        socket.emit("xtts_audio_gen", { data: querydata });
-      }else{
-        msttser.tts(voice_text, speaker, speak_tone, ttskey);
-      }
-      };
-
-      if (!server_reply_done || initialstate){
-        let $msgNormal = $("#msg_container").clone();
-        $msgNormal.removeAttr("id");
-        $msgNormal.addClass("msg-container-clone");
-        $msgNormal.find(".message").html(combinedMessage);
-        $msgNormal.find(".avatar").css("background-image","url('" + avatar_url_new + "')");
-        $("#message_box").append($msgNormal);
-        let msgNormalScrollHeight = $('#message_box').prop('scrollHeight');
-        $('#message_box').scrollTop(msgNormalScrollHeight); 
-        gsap.from($msgNormal.find(".message"),{
-          duration: 0.3,
-          scale: 0.9,
-          opacity: 0.5,
-          ease: "back.out(4)"
-        });
-        //comic process
-        if (from=="server"){
-          $("#msg_box_comic_char").empty();
-          let $msgDivServer = $("#msg_container").clone();
-          $msgDivServer.removeAttr("id");
-          $msgDivServer.addClass("msg-container-clone");
-          $msgDivServer.find(".message").html(combinedMessage_comic);
-          $msgDivServer.find(".message").removeClass("message").addClass("message-comic");
-          $msgDivServer.find(".avatar").css("background-image","url('" + avatar_url_new + "')");
-          $("#msg_box_comic_char").append($msgDivServer);
+      function toggleInputs(input_switcher) {
+        if (input_switcher == true) {
+          $("button, input, select").each(function () {
+            $(this).prop("disabled", false).css("opacity", 1);
+            if ($(this).is("button")) {
+              $(this).css("pointer-events", "auto");
+            }
+          });
+          $("#messageToSend").focus();
+        } else {
+          $("button, input, select").each(function () {
+            $(this).prop("disabled", true).css("opacity", 0.5);
+            if ($(this).is("button")) {
+              $(this).css("pointer-events", "none");
+            }
+          });
         }
-        if (from=="client"){
-          if ($("#comicMode").is(':checked')){
+      }
+      function getWindowSize() {
+        var width =
+          window.innerWidth ||
+          document.documentElement.clientWidth ||
+          document.body.clientWidth;
+        var height =
+          window.innerHeight ||
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+        var ratio = width / height;
+        console.log(
+          "width: " + width + " height: " + height + " ratio: " + ratio
+        );
+        return { width: width, height: height, ratio: ratio };
+      }
+      function resizeComicLayout() {
+        let windowSize = getWindowSize();
+        let ratio = windowSize.ratio;
+        if (ratio < 1) {
+          $("#char-wrapper")
+            .removeClass("wrapper-char-fullscreen")
+            .addClass("wrapper-char");
+          $("#char-bgpic")
+            .removeClass("char_bg_fullscreen")
+            .addClass("char_bg");
+          $("#user-wrapper")
+            .removeClass("wrapper-user-fullscreen")
+            .addClass("wrapper-user");
+          $("#user-bgpic").removeClass("user_bg_horizon").addClass("user_bg");
+          $("#char-dynpic-wrapper")
+            .removeClass("wrapper-char-dynpic-fullscreen")
+            .addClass("wrapper-char-dynpic");
+          $("#char-dynpic")
+            .removeClass("char_dynmicpic_bg_horizon")
+            .addClass("char_dynmicpic_bg");
+          $("#comic-msg-holder-char")
+            .removeClass("comic_msg_holder_char_horizon")
+            .addClass("comic_msg_holder_char");
+          $("#comic-msg-holder-user")
+            .removeClass("comic_msg_holder_user_horizon")
+            .addClass("comic_msg_holder_user");
+        } else if (ratio > 1) {
+          $("#char-wrapper")
+            .removeClass("wrapper-char-fullscreen")
+            .addClass("wrapper-char-horizon");
+          $("#char-bgpic")
+            .removeClass("char_bg_fullscreen")
+            .addClass("char_bg_horizon");
+          $("#user-wrapper")
+            .removeClass("wrapper-user-fullscreen")
+            .addClass("wrapper-user-horizon");
+          $("#user-bgpic").removeClass("user_bg").addClass("user_bg_horizon");
+          $("#char-dynpic-wrapper")
+            .removeClass("wrapper-char-dynpic-fullscreen")
+            .addClass("wrapper-char-dynpic-horizon");
+          $("#char-dynpic")
+            .removeClass("char_dynmicpic_bg")
+            .addClass("char_dynmicpic_bg_horizon");
+          $("#comic-msg-holder-char")
+            .addClass("comic_msg_holder_char_horizon")
+            .css({
+              top: "50%",
+              left: "80px",
+            });
+          $("#comic-msg-holder-user")
+            .addClass("comic_msg_holder_user_horizon")
+            .css({
+              top: "50%",
+              left: "calc(40% + 140px)",
+            });
+        }
+      }
+
+      function dispModeSwitch() {
+        if ($("#comicMode").is(":checked")) {
+          holdbox_origin_height = $("#holder_box").height();
+          $("#message_box").css("display", "none");
+          $("#holder_box").css("height", "auto");
+          resizeComicLayout();
+          gsap.from($("#char-wrapper"), {
+            duration: 0.5,
+            opacity: 0,
+          });
+          $(".comic_msg_holder_char").css("display", "flex");
+          if ($("#msg_box_comic_user").html() != "") {
             $(".comic_msg_holder_user").css("display", "flex");
-          };
-          $("#msg_box_comic_user").empty();  
-          let $msgDivClient = $("#msg_container").clone();
-          $msgDivClient.removeAttr("id");
-          $msgDivClient.addClass("msg-container-clone");
-          $msgDivClient.find(".message").html(combinedMessage_comic);
-          $msgDivClient.find(".message").removeClass("message").addClass("message-comic");
-          $msgDivClient.find(".avatar").css("background-image","url('" + avatar_url_new + "')");
-          $("#msg_box_comic_user").append($msgDivClient);
-          gsap.from($(".comic_msg_holder_user"),{
+          }
+        } else {
+          $("#char-dynpic-wrapper")
+            .removeClass("wrapper-char-dynpic")
+            .removeClass("wrapper-char-dynpic-horizon")
+            .addClass("wrapper-char-dynpic-fullscreen");
+          $("#char-bgpic")
+            .removeClass("char_bg")
+            .removeClass("char_bg_horizon")
+            .addClass("char_bg_fullscreen");
+          $("#char-wrapper")
+            .removeClass("wrapper-char")
+            .removeClass("wrapper-char-horizon")
+            .addClass("wrapper-char-fullscreen");
+          gsap.from($("#char-wrapper"), {
+            duration: 0.5,
+            opacity: 0,
+          });
+          $("#user-wrapper")
+            .removeClass("wrapper-user")
+            .removeClass("wrapper-user-horizon")
+            .addClass("wrapper-user-fullscreen");
+          $(".comic_msg_holder_char").fadeOut(200);
+          $(".comic_msg_holder_user").fadeOut(200);
+          $("#holder_box").height(holdbox_origin_height);
+          $("#message_box").css("display", "flex");
+          let msgNormalScrollHeight = $("#message_box").prop("scrollHeight");
+          $("#message_box").scrollTop(msgNormalScrollHeight);
+        }
+      }
+
+      function exitChat() {
+        var querydata = {
+          conid: conid,
+          socket_id: socket.id,
+        };
+        socket.emit("exit_room", { data: querydata });
+      }
+
+      function exitRoomSuccess(msg) {
+        alert(msg.data["message"]);
+        window.location.href = "/";
+      }
+
+      function extractLanguageCode(inputString) {
+        const parts = inputString.split("_");
+        if (parts.length > 1) {
+          return parts[0];
+        } else {
+          return false;
+        }
+      }
+
+      function base64ToBlob(base64, mimeType) {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], { type: mimeType });
+      }
+
+      function xtts_audio_data(msg) {
+        const audioData = msg.data["audio_data"];
+        let voicePlayerid = msg.data["voice_uid"];
+        if (audioData) {
+          const audioBlob = base64ToBlob(audioData, "audio/wav");
+          const audioUrl = URL.createObjectURL(audioBlob);
+          $("#" + voicePlayerid).attr("src", audioUrl);
+          $("#controller" + voicePlayerid).fadeIn(200);
+          $("#controller" + voicePlayerid).css("display", "flex");
+          $("#voiceController_comic").css("display", "flex");
+        } else {
+          console.error("Audio data is not available.");
+        }
+      }
+
+      function genUID(prefix) {
+        let uniqueId =
+          prefix +
+          "-" +
+          Date.now() +
+          "-" +
+          Math.random().toString(36).substr(2, 9);
+        return uniqueId;
+      }
+
+      function add_msg({
+        message_input = "",
+        avatar_url = "",
+        voice_text = "",
+        speaker = "",
+        speak_tone = "",
+        ttskey = "",
+        dynamic_picture = false,
+        server_reply_done = false,
+        from = "",
+      } = {}) {
+        let $message = $(message_input);
+        let $preElement = $message.find("pre");
+        if ($preElement.length === 0) {
+          console.log("No code found");
+        } else {
+          console.log("find" + $preElement.length + " code items");
+          $preElement.each(function () {
+            let $div = $(
+              "<div class='codePre'><div class='codePreDiv' onclick='copyCode(this)'><svg xmlns='http://www.w3.org/2000/svg' height='14px' viewBox='0 0 24 24' width='14px' fill='#FFFFFF'><path d='M0 0h24v24H0z' fill='none'/><path d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z'/></svg></div></div>"
+            );
+            $(this).before($div);
+          });
+        }
+        let dynamic_pictures = dynamic_picture;
+        let avatar_url_new = avatar_url;
+        let $image_str = null;
+        if (dynamic_pictures != false) {
+          console.log("Find Dynamic pictures");
+          let image_str =
+            "<div class='dynamicPicBox'><div class='dynaPicControl' onclick='hideDynaPic(this)'><svg width='24px' height='24px' viewBox='0 0 24 24' stroke-width='1.5' fill='none' xmlns='http://www.w3.org/2000/svg' color='#FFFFFF'><path d='M3 13C6.6 5 17.4 5 21 13' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M12 17C10.3431 17 9 15.6569 9 14C9 12.3431 10.3431 11 12 11C13.6569 11 15 12.3431 15 14C15 15.6569 13.6569 17 12 17Z' stroke='#FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg></div><div class='dynamicPic' onclick='preDynaPic(this)'><img src='" +
+            dynamic_pictures +
+            "'></div></div>";
+          $image_str = $(image_str);
+        }
+        let $combine = $("<div></div>");
+        let $combine_comic = $combine.clone();
+        $combine.append($message);
+        let $synmsg = $message.clone(true);
+        $combine_comic.append($synmsg);
+        if ($image_str !== null) {
+          $combine.append($image_str);
+        }
+        let combinedMessage = $combine.html();
+        let combinedMessage_comic = $combine_comic.html();
+
+        if (!server_reply_done || initialstate) {
+          let $msgNormal = $("#msg_container").clone();
+          $msgNormal.removeAttr("id");
+          $msgNormal.addClass("msg-container-clone");
+          $msgNormal.find(".message").html(combinedMessage);
+          $msgNormal
+            .find(".avatar")
+            .css("background-image", "url('" + avatar_url_new + "')");
+          $("#message_box").append($msgNormal);
+          let msgNormalScrollHeight = $("#message_box").prop("scrollHeight");
+          $("#message_box").scrollTop(msgNormalScrollHeight);
+          gsap.from($msgNormal.find(".message"), {
             duration: 0.3,
             scale: 0.9,
             opacity: 0.5,
-            ease: "elastic.out(1.2,0.3)"
+            ease: "back.out(4)",
           });
-
-        }       
-        initialstate = false;
-      } else {
-        //update normal mode contents
-        let $lastMsg = $("#message_box").find(".msg-container-clone").last()
-        $lastMsg.find(".message").html(combinedMessage);
-        $lastMsg.find(".avatar").css('backgroundImage',"url('" + avatar_url_new + "')");
-        gsap.from($lastMsg.find(".message"),{
-          duration: 0.3,
-          scale: 0.9,
-          opacity: 0.5,
-          ease: "back.out(4)"
-        });
-        let newScrollHeight = $('#message_box').prop('scrollHeight');
-        $('#message_box').scrollTop(newScrollHeight); 
-        //update comic mode contents
-        let $lastMsgComicChar = $("#msg_box_comic_char").find(".msg-container-clone").last()
-        $lastMsgComicChar.find(".message-comic").html(combinedMessage_comic);
-        $lastMsgComicChar.find(".avatar").css('backgroundImage',"url('" + avatar_url_new + "')");
-        gsap.from($(".comic_msg_holder_char"),{
-          duration: 0.7,
-          scale: 0.9,
-          opacity: 0.5,
-          ease: "elastic.out(1.2,0.3)"
-        });
-        if (dynamic_pictures){
-          //update comic char background
-          let charDynamicBgImgURL = "url('" + dynamic_pictures + "')";   
-          $("#char-dynpic").css("background-image", charDynamicBgImgURL);
-          $("#char-dynpic-wrapper").css("display","flex");
-          if ($("#comicMode").is(':checked')){
-            gsap.from($("#char-dynpic-wrapper"),{
-              duration: 0.5,
-              scale: 0.4,
+          //comic process
+          if (from == "server") {
+            $("#msg_box_comic_char").empty();
+            if ($("#voiceController_comic").length > 0) {
+              $("#voiceController_comic").css("display", "none");
+            }
+            let $msgDivServer = $("#msg_container").clone();
+            $msgDivServer.removeAttr("id");
+            $msgDivServer.addClass("msg-container-clone");
+            $msgDivServer.find(".message").html(combinedMessage_comic);
+            $msgDivServer
+              .find(".message")
+              .removeClass("message")
+              .addClass("message-comic");
+            $msgDivServer
+              .find(".avatar")
+              .css("background-image", "url('" + avatar_url_new + "')");
+            $("#msg_box_comic_char").append($msgDivServer);
+          }
+          if (from == "client") {
+            if ($("#comicMode").is(":checked")) {
+              $(".comic_msg_holder_user").css("display", "flex");
+            }
+            $("#msg_box_comic_user").empty();
+            let $msgDivClient = $("#msg_container").clone();
+            $msgDivClient.removeAttr("id");
+            $msgDivClient.addClass("msg-container-clone");
+            $msgDivClient.find(".message").html(combinedMessage_comic);
+            $msgDivClient
+              .find(".message")
+              .removeClass("message")
+              .addClass("message-comic");
+            $msgDivClient
+              .find(".avatar")
+              .css("background-image", "url('" + avatar_url_new + "')");
+            $("#msg_box_comic_user").append($msgDivClient);
+            gsap.from($(".comic_msg_holder_user"), {
+              duration: 0.3,
+              scale: 0.9,
               opacity: 0.5,
-              ease: "elastic.out(1.3,0.3)"
-            }); 
-          } 
-          divTimer.TimerTrigger("#char-dynpic-wrapper", 200, 30000);   
-        } 
-      }
-    }
-    
-    function resetChat() {
-      toggleInputs(false);
-      let statechk = checkSendState();
-      var windowSize = getWindowSize();
-      userLastMsg = "";
-      ai_avatar = "";
-      $("#holder_box").fadeOut(200);
-      $("#message_box").html("");
-      $("#msg_box_comic_char").html("");
-      $("#msg_box_comic_user").html("");
-      $(".comic_msg_holder_char").fadeOut(90);
-      $(".comic_msg_holder_user").fadeOut(100);
-      $("#char-dynpic-wrapper").css("display","none");
-      $("#char-dynpic").css("background-image", "");
-      initialstate = true;
-      //translateSwitcher.checked = true;
-      let querydata = {
-        username: username,
-        usergender: usergender,
-        ai_role_name: ai_role_name,
-        conid: conid,
-        windowRatio: windowSize.ratio,
-        isembbed: statechk.embswitcher,
-        istranslated: statechk.transswitcher,
-        socket_id: socket.id
-      };
-      socket.emit("restart", { data: querydata });
-    }
-    
-    function checkSendState() {
-      let embswitcher = "no"
-      let transswitcher = true
-      if (typeof embeddingswitcher != 'undefined') {
-        if (embeddingswitcher.checked) {
-          embswitcher = "yes"
+              ease: "elastic.out(1.2,0.3)",
+            });
+          }
+          initialstate = false;
         } else {
-          embswitcher = "no"
-        }
-      };
-      if (translateSwitcher.checked) {
-        transswitcher = true
-      } else {
-        transswitcher = false
-      };
-
-      console.log(embswitcher);
-      console.log(transswitcher);
-      return { embswitcher, transswitcher }
-    }
-    function regenReply() {
-      if (userLastMsg != '') {
-        toggleInputs(false);
-        let statechk = checkSendState();
-        console.log(userLastMsg);
-        let windowSize = getWindowSize();
-        $("#message_box").find(".msg-container-clone").last().remove();
-        var querydata = {
-          message: userLastMsg,
-          conid: conid,
-          isembbed: statechk.embswitcher,
-          istranslated: statechk.transswitcher,
-          windowRatio: windowSize.ratio,
-          socket_id: socket.id
-        };
-        socket.emit("regen_msg", { data: querydata });
-      }
-    }
-
-    function loadChatHistory(){
-      var querydata = {
-        conid: conid,
-        socket_id: socket.id
-      };
-      socket.emit("load_chat_history", { data: querydata });
-      toggleInputs(false);
-    }
-
-    function saveChatHistory(){
-      var querydata = {
-        conid: conid,
-        socket_id: socket.id
-      };
-      socket.emit("save_chat_history", { data: querydata });
-      toggleInputs(false);
-    }
-
-    function changeModel(model_list) {
-      if (model_list !== undefined) {
-        if (model_list.length > 0) {
-          console.log(model_list)
-          $("#model_selector").empty();
-          $("#model_selector").append($("<option>").text('Models').val('None'));
-          $("#model_selector").append($("<option>").text('----------').val('None'));
-          $.each(model_list, function (index, value) {
-            var option = $("<option>").text(value).val(value);
-            $("#model_selector").append(option);
+          //update normal mode contents
+          let $lastMsg = $("#message_box").find(".msg-container-clone").last();
+          $lastMsg.find(".message").html(combinedMessage);
+          $lastMsg
+            .find(".avatar")
+            .css("backgroundImage", "url('" + avatar_url_new + "')");
+          gsap.from($lastMsg.find(".message"), {
+            duration: 0.3,
+            scale: 0.9,
+            opacity: 0.5,
+            ease: "back.out(4)",
           });
-          $("#model_selector").change(function () {
-            var modelSelected = $(this).val();
-            if (modelSelected !== 'None') {
-              var querydata = {
-                model: modelSelected,
-                conid: conid,
-                socket_id: socket.id
-              };
-              socket.emit("change_model", { data: querydata });
-              toggleInputs(false);
-            }
-
-          });
-
-        }
-      }
-
-    }
-    function changeInstr(instruct_list) {
-      if (instruct_list !== undefined) {
-        if (instruct_list.length > 0) {
-          console.log(instruct_list);
-          $("#instr_selector").empty();
-          $("#instr_selector").append($("<option>").text('Instructions').val('None'));
-          $("#instr_selector").append($("<option>").text('----------').val('None'));
-          $.each(instruct_list, function (index, value) {
-            var option = $("<option>").text(value).val(value);
-            $("#instr_selector").append(option);
-          });
-          $("#instr_selector").change(function () {
-            var instrSelected = $(this).val();
-            if (instrSelected !== 'None') {
-              var querydata = {
-                instruction: instrSelected,
-                conid: conid,
-                socket_id: socket.id
-              };
-              socket.emit("change_instruction", { data: querydata });
-              toggleInputs(false);
-            }
-
-          });
-
-        }
-      }
-
-    }
-
-    function changeSDModel(SD_model_list) {
-      if (SD_model_list !== undefined) {
-        if (SD_model_list.length > 0) {
-          console.log(SD_model_list);
-          $("#sd_selector").empty();
-          $("#sd_selector").append($("<option>").text('SD Models').val('None'));
-          $("#sd_selector").append($("<option>").text('----------').val('None'));
-          $.each(SD_model_list, function (index, value) {
-            var option = $("<option>").text(value).val(value);
-            $("#sd_selector").append(option);
-          });
-          $("#sd_selector").change(function () {
-            var sdSelected = $(this).val();
-            if (sdSelected !== 'None') {
-              var querydata = {
-                SD_Model: sdSelected,
-                conid: conid,
-                socket_id: socket.id
-              };
-              socket.emit("change_SD_Model", { data: querydata });
-              toggleInputs(false);
-            }
-
-          });
-
-        }
-      }
-
-    }
-
-
-    function model_loaded(msg) {
-
-      var msg = msg.data["message"];
-      if (msg == "Success") {
-        toggleInputs(true)
-      } else {
-        alert("Model Load Failed")
-      }
-
-    }
-    function instruct_changed(msg) {
-
-      var msg = msg.data["message"];
-      if (msg == "Success") {
-        toggleInputs(true)
-      } else {
-        alert("instruct change Failed")
-      };
-
-    }
-
-    function SD_model_changed(msg) {
-      var msg = msg.data["message"];
-      if (msg == "Success") {
-        toggleInputs(true)
-      } else {
-        alert("SD Model change Failed")
-      };
-    }
-    function delay(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    async function processLoadedHistory(loaded_history) {
-      for (let msgitem of loaded_history) {
-        if (msgitem.role == 'user') {
-          var user_inputmsg = marked.parse(msgitem.msg);
-          add_msg({message_input: user_inputmsg, avatar_url: user_looks, from: "client"});
-        } else if (msgitem.role == 'char') {
-          var char_inputmsg = marked.parse(msgitem.msg);
-          add_msg({message_input: char_inputmsg, avatar_url: ai_avatar, from: "server"});
-        }
-        await delay(350); 
-      }
-    }
-        
-    function showServerStatus(msg) {
-      var msg = msg.data["message"];
-      console.log(msg);
-      if (msg["name"] == "initialization") {
-        if (msg["msg"] !== "DONE") {
-          $("#overLayer").css("display","flex");
-          $("#overLayer").find(".overlay-content").css("display","flex");
-          $("#overLayer").find(".overlay-content").find(".loadingText").html(msg["msg"]);
-          gsap.from($("#overLayer").find(".overlay-content"),{
+          let newScrollHeight = $("#message_box").prop("scrollHeight");
+          $("#message_box").scrollTop(newScrollHeight);
+          //update comic mode contents
+          let $lastMsgComicChar = $("#msg_box_comic_char")
+            .find(".msg-container-clone")
+            .last();
+          $lastMsgComicChar.find(".message-comic").html(combinedMessage_comic);
+          $lastMsgComicChar
+            .find(".avatar")
+            .css("backgroundImage", "url('" + avatar_url_new + "')");
+          gsap.from($(".comic_msg_holder_char"), {
             duration: 0.7,
             scale: 0.9,
             opacity: 0.5,
-            ease: "elastic.out(1.3,0.4)"
+            ease: "elastic.out(1.2,0.3)",
           });
-        } else {
-          $("#overLayer").fadeOut(300);
-          $("#overLayer").find(".overlay-content").css("display","none");
-          $("#overLayer").find(".overlay-content").find(".loadingText").html("");
-          $("#holder_box").fadeIn(500);
-          $("#holder_box").css("display","flex");
-          if ($("#comicMode").is(':checked')) {
-            $(".comic_msg_holder_char").css("display","flex");
-          };
-          
-        }
-      };
 
-      if (msg["name"] == "chatreply") {
-        let Svg = "<svg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='#FFFFFF'><circle cx='4' cy='12' r='3'><animate id='spinner_qFRN' begin='0;spinner_OcgL.end+0.25s' attributeName='cy' calcMode='spline' dur='0.6s' values='12;6;12' keySplines='.33,.66,.66,1;.33,0,.66,.33'/></circle><circle cx='12' cy='12' r='3'><animate begin='spinner_qFRN.begin+0.1s' attributeName='cy' calcMode='spline' dur='0.6s' values='12;6;12' keySplines='.33,.66,.66,1;.33,0,.66,.33'/></circle><circle cx='20' cy='12' r='3'><animate id='spinner_OcgL' begin='spinner_qFRN.begin+0.2s' attributeName='cy' calcMode='spline' dur='0.6s' values='12;6;12' keySplines='.33,.66,.66,1;.33,0,.66,.33'/></circle></svg>"
-        let imgSvg = "<svg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='#FFFFFF'><rect x='1' y='1' width='7.33' height='7.33'><animate id='spinner_oJFS' begin='0;spinner_5T1J.end+0.2s' attributeName='x' dur='0.6s' values='1;4;1'/><animate begin='0;spinner_5T1J.end+0.2s' attributeName='y' dur='0.6s' values='1;4;1'/><animate begin='0;spinner_5T1J.end+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='0;spinner_5T1J.end+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='8.33' y='1' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.1s' attributeName='x' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='y' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='1' y='8.33' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.1s' attributeName='x' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='y' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='15.66' y='1' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.2s' attributeName='x' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='y' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='8.33' y='8.33' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.2s' attributeName='x' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='y' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='1' y='15.66' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.2s' attributeName='x' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='y' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='15.66' y='8.33' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.3s' attributeName='x' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='y' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='8.33' y='15.66' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.3s' attributeName='x' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='y' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='15.66' y='15.66' width='7.33' height='7.33'><animate id='spinner_5T1J' begin='spinner_oJFS.begin+0.4s' attributeName='x' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.4s' attributeName='y' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.4s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.4s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect></svg>"
-        if (msg["msg"] == "Generate Response") {
-          add_msg({message_input: Svg, avatar_url: ai_avatar, from: "server"});
-        }
-        if (msg["msg"] == "Generating Scene Image"){
-          let $lastmsg = $("#message_box").find(".msg-container-clone").last();
-          $lastmsg.find(".message").html("<div class='genImgDiv'>"+imgSvg+"<span>"+msg["msg"]+"</span></div>");
-          let $lastmsg_comic = $("#msg_box_comic_char").find(".msg-container-clone").last();
-          $lastmsg_comic.find(".message-comic").html("<div class='genImgDiv'>"+imgSvg+"<span>"+msg["msg"]+"</span></div>");
-        }
-      };
-
-      if (msg["name"] == "chat_history_op"){
-        if (msg["msg"]["operation"] == "save"){
-          if(msg["msg"]["result"]=="Success"){
-            toggleInputs(true);
-            alert("Saved history successfully");
-          }else{
-            toggleInputs(true);
-            alert("Saving history failed, have you start chat?");
-          }
-        };
-        if (msg["msg"]["operation"]=="load"){
-          if(msg["msg"]["result"]=="Fail"){
-            toggleInputs(true);
-            alert("loading history failed, Empty?");
-          }else{  
-            $("#message_box").find(".msg-container-clone:not(:first)").remove();
-            let loaded_history = msg["msg"]["result"];
-            processLoadedHistory(loaded_history).then(() => {
-              toggleInputs(true);
-            });
-          }
-        };
-      };
-    }
-
-    function msg_proc(msg) {
-      var message = msg.data["message"];
-      ai_avatar = msg.data["avatar"];
-      if(msg.data["user_looks"] != undefined){
-        user_looks = msg.data["user_looks"];
-      }
-      if(msg.data["bgImg"] != undefined){
-        var bgImg = msg.data["bgImg"];
-        let charBgImgURL = "url('" + bgImg + "')";
-        $("#char-bgpic").css("background-image", charBgImgURL);
-      }
-      if(msg.data["user_bkImg"] != undefined){
-        var user_bkImg = msg.data["user_bkImg"];
-        let userBgImgURL = "url('" + user_bkImg + "')";
-        $("#user-bgpic").css("background-image", userBgImgURL);
-      }
-      var voice_text = msg.data["voice_text"];
-      var speaker = msg.data["speaker"];
-      var speak_tone = msg.data["speak_tone"];
-      var ttskey = msg.data["ttskey"];
-      var dynamic_picture = msg.data["dynamic_picture"];
-      var model_list = msg.data["model_list"];
-      var instruct_list = msg.data["instruct_list"];
-      var SD_model_list = msg.data["SD_model_list"];
-      changeModel(model_list);
-      changeInstr(instruct_list);
-      changeSDModel(SD_model_list);
-      toggleInputs(true);
-      add_msg({
-        message_input: message,
-        avatar_url: ai_avatar,
-        voice_text: voice_text,
-        speaker: speaker,
-        speak_tone: speak_tone,
-        ttskey: ttskey,
-        dynamic_picture: dynamic_picture,
-        server_reply_done: true,
-        from: "server"});
-    }
-
-
-    function sendmsgtoserver() {
-      var textbox = document.getElementById("messageToSend");
-      let statechk = checkSendState();
-      var usermsg = textbox.value;
-      let windowSize = getWindowSize();
-      if (usermsg != "") {
-        toggleInputs(false);
-        userLastMsg = usermsg;
-        //var user_avatar = "/static/images/avatar/user_" + usergender + ".png";
-        var user_inputmsg = marked.parse(usermsg);
-        add_msg({message_input: user_inputmsg, avatar_url: user_looks, from:"client"});
-        var querydata = {
-          message: usermsg,
-          conid: conid,
-          isembbed: statechk.embswitcher,
-          istranslated: statechk.transswitcher,
-          windowRatio: windowSize.ratio,
-          socket_id: socket.id
-        };
-
-        socket.emit("send_user_msg", { data: querydata });
-        textbox.value = "";
-        gsap.to($("#messageToSend"), {
-          duration: 0.7,
-          scale: 1,
-          ease: "elastic",
-        });
-      } else {
-        gsap.to($("#messageToSend"), {
-          duration: 0.7,
-          scale: 1.1,
-          ease: "elastic",
-        });
-      }
-    }
-
-    function onKeyUp(event) {
-      if (event.keyCode === 13) {
-        event.preventDefault();
-        console.log("keyup event triggered");
-        sendmsgtoserver();
-      }
-    }
-    function Server_Connected() {
-      if(initialstate){
-        $("#message_box").empty();
-        $(".comic_msgbox").empty();
-        $("#comicMode").prop("checked", false).trigger("change");
-        $("#holder_box").css("display","none");
-        var windowSize = getWindowSize();
-        var querydata = {
-          username: username,
-          user_sys_name: user_sys_name,
-          usergender: usergender,
-          user_facelooks:user_facelooks,
-          ai_role_name: ai_role_name,
-          conid: conid,
-          ai_is_uncensored: ai_is_uncensored,
-          windowRatio: windowSize.ratio,
-          socket_id: socket.id
-        };
-        socket.emit("initialize_room", { data: querydata });
-
-      }else{
-        /* reconnect to server */
-        var querydata = {
-          conid: conid,
-          socket_id: socket.id
-        };
-        socket.emit('reconnect_room', { data: querydata });
-      }
-      
-    }
-
-    function debounce(func, wait) {
-      let timeout;
-  
-      return function executedFunction() {
-          const context = this;
-          const args = arguments;
-  
-          const later = function() {
-              timeout = null;
-              func.apply(context, args);
-          };
-  
-          clearTimeout(timeout);
-          timeout = setTimeout(later, wait);
-      };
-    }
-    /*Document Ready Actions*/
-    $(document).ready(function() {
-      $("#load-chat-history").click(loadChatHistory);
-      $("#save-chat-history").click(saveChatHistory);
-      $("#submit").click(sendmsgtoserver);
-      $("#restart").click(resetChat);
-      $("#regenerate").click(regenReply);
-      $("#exitchat").click(exitChat);
-      $("#comicMode").change(dispModeSwitch);
-      $("#messageToSend").off("keyup").on("keyup", onKeyUp);
-      toggleInputs(false);
-      // Auto resize comic layout
-      $(".comic_msg_holder_char").draggable({
-        handle:".msg-drag-handle"
-      });
-      $(".comic_msg_holder_user").draggable({
-        handle:".msg-drag-handle"
-      });
-     
-      var handleResize = debounce(function() {
-        if ($("#comicMode").is(':checked')) {
-          var width = $(window).width();
-          var height = $(window).height();
-          if (width > height) {
-            $("#char-wrapper").removeClass("wrapper-char").addClass("wrapper-char-horizon");
-            $("#char-bgpic").removeClass("char_bg").addClass("char_bg_horizon");
-            $("#user-wrapper").removeClass("wrapper-user").addClass("wrapper-user-horizon");
-            $("#user-bgpic").removeClass("user_bg").addClass("user_bg_horizon");
-            $("#char-dynpic-wrapper").removeClass("wrapper-char-dynpic").addClass("wrapper-char-dynpic-horizon");
-            $("#char-dynpic").removeClass("char_dynmicpic_bg").addClass("char_dynmicpic_bg_horizon");
-            $("#comic-msg-holder-char").addClass("comic_msg_holder_char_horizon").css({
-              top:"50%",
-              left:"80px"
-            });
-            $("#comic-msg-holder-user").addClass("comic_msg_holder_user_horizon").css({
-              top: "50%",
-              left: "calc(40% + 140px)"
-            });
-          } else {
-            $("#char-wrapper").removeClass("wrapper-char-horizon").addClass("wrapper-char");
-            $("#char-bgpic").removeClass("char_bg_horizon").addClass("char_bg");
-            $("#user-wrapper").removeClass("wrapper-user-horizon").addClass("wrapper-user");
-            $("#user-bgpic").removeClass("user_bg_horizon").addClass("user_bg");
-            $("#char-dynpic-wrapper").removeClass("wrapper-char-dynpic-horizon").addClass("wrapper-char-dynpic");
-            $("#char-dynpic").removeClass("char_dynmicpic_bg_horizon").addClass("char_dynmicpic_bg");
-            $("#comic-msg-holder-char").removeClass("comic_msg_holder_char_horizon").css({
-              top:"40%",
-              left:"80px"
-            });
-            $("#comic-msg-holder-user").removeClass("comic_msg_holder_user_horizon").css({
-              top: "calc(40% + 300px)",
-              left: "30%"
-            });
-          }
-        }
-      }, 250);
-      $(window).on('resize', handleResize);
-      //
-      
-
-      $("#char-dynpic-wrapper").css("cursor","pointer").on('click', function(){
-        $(this).fadeOut(200);
-        let backdynpic = $(this).find("#char-dynpic").css('background-image');
-        previewPic(backdynpic);
-      });
-      
-      $(".chatSetUpBtn").on('click', function(){
-        if ($(".settingOpt").css("display") == "none") {
-          $("#overLayer").css("display","flex");
-          $("#setTings").css("z-index",1000);
-          $(".settingOpt").css("opacity", 0).css("display", "flex");
-          gsap.to($(".settingOpt"), {
-            duration: 0.4, 
-            opacity: 1,
-            onComplete: function(){
-              $("#overLayer").on('click', function(){
-                $(".settingOpt").css("display","none");
-                $(this).css("display","none");
-                $(this).off('click');
-                $("#setTings").css("z-index",15);
+          if (dynamic_pictures) {
+            //update comic char background
+            let charDynamicBgImgURL = "url('" + dynamic_pictures + "')";
+            $("#char-dynpic").css("background-image", charDynamicBgImgURL);
+            $("#char-dynpic-wrapper").css("display", "flex");
+            if ($("#comicMode").is(":checked")) {
+              gsap.from($("#char-dynpic-wrapper"), {
+                duration: 0.5,
+                scale: 0.4,
+                opacity: 0.5,
+                ease: "elastic.out(1.3,0.3)",
               });
             }
+            divTimer.TimerTrigger("#char-dynpic-wrapper", 200, 30000);
+          }
+          //update voice data
+          let voiceChecked = $("#voiceswitcher").is(":checked");
+          if (voiceChecked && voice_text != "") {
+            let langcode = extractLanguageCode(speaker);
+            let playText = "Play Voice";
+            let pauseText = "Pause Voice";
+            if (langcode) {
+              let uid = genUID("voicePlayer");
+              let voicePlayer = new Audio();
+              voicePlayer.id = uid;
+              voicePlayer.controls = true;
+              voicePlayer.className = "voicePlayer";
+              let $controls = $("<div></div>");
+              $controls.attr("id", "controller" + uid);
+              $controls.addClass("voiceController").text(playText);
+              $controls.on("click", function () {
+                let $closestMsgContainer = $(this).closest(
+                  ".msg-container-clone"
+                );
+                let isLastMsg = $closestMsgContainer.is(
+                  "#message_box > .msg-container-clone:last-child"
+                );
+                let audioElement = $("#" + uid)[0];
+                if (audioElement.paused) {
+                  audioElement.play();
+                  $(this).text(pauseText);
+                  if ($("#voiceController_comic").length > 0 && isLastMsg) {
+                    $("#voiceController_comic").text(pauseText);
+                  }
+                  $("#" + uid).off("ended");
+                  $("#" + uid).on("ended", function () {
+                    $("#controller" + uid).text(playText);
+                    if (isLastMsg) {
+                      $("#voiceController_comic").text(playText);
+                    }
+                  });
+                } else {
+                  audioElement.pause();
+                  $(this).text(playText);
+                  if ($("#voiceController_comic").length > 0 && isLastMsg) {
+                    $("#voiceController_comic").text(playText);
+                  }
+                }
+              });
+
+              if ($("#voiceController_comic").length == 0) {
+                let $controls_comic = $("<div></div>");
+                $controls_comic.attr("id", "voiceController_comic");
+                $controls_comic.addClass("voiceController").text(playText);
+                $controls_comic.on("click", function () {
+                  let audioElement = $("#" + uid)[0];
+                  if (audioElement.paused) {
+                    audioElement.play();
+                    $(this).text(pauseText);
+                    $("#controller" + uid).text(pauseText);
+                    $("#" + uid).off("ended");
+                    $("#" + uid).on("ended", function () {
+                      $("#voiceController_comic").text(playText);
+                      $("#controller" + uid).text(playText);
+                    });
+                  } else {
+                    audioElement.pause();
+                    $(this).text(playText);
+                    $("#controller" + uid).text(playText);
+                  }
+                });
+                $("#comic-msg-holder-char").append($controls_comic);
+              } else {
+                $("#voiceController_comic").off("click");
+                $("#voiceController_comic").on("click", function () {
+                  let audioElement = $("#" + uid)[0];
+                  if (audioElement.paused) {
+                    audioElement.play();
+                    $(this).text(pauseText);
+                    $("#controller" + uid).text(pauseText);
+                    $("#" + uid).off("ended");
+                    $("#" + uid).on("ended", function () {
+                      $("#voiceController_comic").text(playText);
+                      $("#controller" + uid).text(playText);
+                    });
+                  } else {
+                    audioElement.pause();
+                    $(this).text(playText);
+                    $("#controller" + uid).text(playText);
+                  }
+                });
+              }
+
+              voicePlayer.preload = "metadata";
+              $lastMsg.find(".message").append(voicePlayer).append($controls);
+              voice_text = ".....\n...." + voice_text;
+              let querydata = {
+                text: voice_text,
+                speaker_wav: speaker,
+                language: langcode,
+                voice_uid: uid,
+                socket_id: socket.id,
+              };
+              socket.emit("xtts_audio_gen", { data: querydata });
+            } else {
+              msttser.tts(voice_text, speaker, speak_tone, ttskey);
+            }
+          } else {
+            if ($("#voiceController_comic").length > 0) {
+              $("#voiceController_comic").remove();
+            }
+          }
+        }
+      }
+
+      function resetChat() {
+        toggleInputs(false);
+        let statechk = checkSendState();
+        var windowSize = getWindowSize();
+        userLastMsg = "";
+        ai_avatar = "";
+        $("#holder_box").fadeOut(200);
+        $("#message_box").html("");
+        $("#msg_box_comic_char").html("");
+        $("#msg_box_comic_user").html("");
+        $(".comic_msg_holder_char").fadeOut(90);
+        $(".comic_msg_holder_user").fadeOut(100);
+        $("#char-dynpic-wrapper").css("display", "none");
+        $("#char-dynpic").css("background-image", "");
+        initialstate = true;
+        //translateSwitcher.checked = true;
+        let querydata = {
+          username: username,
+          usergender: usergender,
+          ai_role_name: ai_role_name,
+          conid: conid,
+          windowRatio: windowSize.ratio,
+          isembbed: statechk.embswitcher,
+          istranslated: statechk.transswitcher,
+          socket_id: socket.id,
+        };
+        socket.emit("restart", { data: querydata });
+      }
+
+      function checkSendState() {
+        let embswitcher = "no";
+        let transswitcher = true;
+        if (typeof embeddingswitcher != "undefined") {
+          if (embeddingswitcher.checked) {
+            embswitcher = "yes";
+          } else {
+            embswitcher = "no";
+          }
+        }
+        if (translateSwitcher.checked) {
+          transswitcher = true;
+        } else {
+          transswitcher = false;
+        }
+
+        console.log(embswitcher);
+        console.log(transswitcher);
+        return { embswitcher, transswitcher };
+      }
+      function regenReply() {
+        if (userLastMsg != "") {
+          toggleInputs(false);
+          let statechk = checkSendState();
+          console.log(userLastMsg);
+          let windowSize = getWindowSize();
+          $("#message_box").find(".msg-container-clone").last().remove();
+          var querydata = {
+            message: userLastMsg,
+            conid: conid,
+            isembbed: statechk.embswitcher,
+            istranslated: statechk.transswitcher,
+            windowRatio: windowSize.ratio,
+            socket_id: socket.id,
+          };
+          socket.emit("regen_msg", { data: querydata });
+        }
+      }
+
+      function loadChatHistory() {
+        var querydata = {
+          conid: conid,
+          socket_id: socket.id,
+        };
+        socket.emit("load_chat_history", { data: querydata });
+        toggleInputs(false);
+      }
+
+      function saveChatHistory() {
+        var querydata = {
+          conid: conid,
+          socket_id: socket.id,
+        };
+        socket.emit("save_chat_history", { data: querydata });
+        toggleInputs(false);
+      }
+
+      function changeModel(model_list) {
+        if (model_list !== undefined) {
+          if (model_list.length > 0) {
+            console.log(model_list);
+            $("#model_selector").empty();
+            $("#model_selector").append(
+              $("<option>").text("Models").val("None")
+            );
+            $("#model_selector").append(
+              $("<option>").text("----------").val("None")
+            );
+            $.each(model_list, function (index, value) {
+              var option = $("<option>").text(value).val(value);
+              $("#model_selector").append(option);
+            });
+            $("#model_selector").change(function () {
+              var modelSelected = $(this).val();
+              if (modelSelected !== "None") {
+                var querydata = {
+                  model: modelSelected,
+                  conid: conid,
+                  socket_id: socket.id,
+                };
+                socket.emit("change_model", { data: querydata });
+                toggleInputs(false);
+              }
+            });
+          }
+        }
+      }
+      function changeInstr(instruct_list) {
+        if (instruct_list !== undefined) {
+          if (instruct_list.length > 0) {
+            console.log(instruct_list);
+            $("#instr_selector").empty();
+            $("#instr_selector").append(
+              $("<option>").text("Instructions").val("None")
+            );
+            $("#instr_selector").append(
+              $("<option>").text("----------").val("None")
+            );
+            $.each(instruct_list, function (index, value) {
+              var option = $("<option>").text(value).val(value);
+              $("#instr_selector").append(option);
+            });
+            $("#instr_selector").change(function () {
+              var instrSelected = $(this).val();
+              if (instrSelected !== "None") {
+                var querydata = {
+                  instruction: instrSelected,
+                  conid: conid,
+                  socket_id: socket.id,
+                };
+                socket.emit("change_instruction", { data: querydata });
+                toggleInputs(false);
+              }
+            });
+          }
+        }
+      }
+
+      function changeSDModel(SD_model_list) {
+        if (SD_model_list !== undefined) {
+          if (SD_model_list.length > 0) {
+            console.log(SD_model_list);
+            $("#sd_selector").empty();
+            $("#sd_selector").append(
+              $("<option>").text("SD Models").val("None")
+            );
+            $("#sd_selector").append(
+              $("<option>").text("----------").val("None")
+            );
+            $.each(SD_model_list, function (index, value) {
+              var option = $("<option>").text(value).val(value);
+              $("#sd_selector").append(option);
+            });
+            $("#sd_selector").change(function () {
+              var sdSelected = $(this).val();
+              if (sdSelected !== "None") {
+                var querydata = {
+                  SD_Model: sdSelected,
+                  conid: conid,
+                  socket_id: socket.id,
+                };
+                socket.emit("change_SD_Model", { data: querydata });
+                toggleInputs(false);
+              }
+            });
+          }
+        }
+      }
+
+      function model_loaded(msg) {
+        var msg = msg.data["message"];
+        if (msg == "Success") {
+          toggleInputs(true);
+        } else {
+          alert("Model Load Failed");
+        }
+      }
+      function instruct_changed(msg) {
+        var msg = msg.data["message"];
+        if (msg == "Success") {
+          toggleInputs(true);
+        } else {
+          alert("instruct change Failed");
+        }
+      }
+
+      function SD_model_changed(msg) {
+        var msg = msg.data["message"];
+        if (msg == "Success") {
+          toggleInputs(true);
+        } else {
+          alert("SD Model change Failed");
+        }
+      }
+      function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+      async function processLoadedHistory(loaded_history) {
+        for (let msgitem of loaded_history) {
+          if (msgitem.role == "user") {
+            var user_inputmsg = marked.parse(msgitem.msg);
+            add_msg({
+              message_input: user_inputmsg,
+              avatar_url: user_looks,
+              from: "client",
+            });
+          } else if (msgitem.role == "char") {
+            var char_inputmsg = marked.parse(msgitem.msg);
+            add_msg({
+              message_input: char_inputmsg,
+              avatar_url: ai_avatar,
+              from: "server",
+            });
+          }
+          await delay(350);
+        }
+      }
+
+      function showServerStatus(msg) {
+        var msg = msg.data["message"];
+        console.log(msg);
+        if (msg["name"] == "initialization") {
+          if (msg["msg"] !== "DONE") {
+            $("#overLayer").css("display", "flex");
+            $("#overLayer").find(".overlay-content").css("display", "flex");
+            $("#overLayer")
+              .find(".overlay-content")
+              .find(".loadingText")
+              .html(msg["msg"]);
+            gsap.from($("#overLayer").find(".overlay-content"), {
+              duration: 0.7,
+              scale: 0.9,
+              opacity: 0.5,
+              ease: "elastic.out(1.3,0.4)",
+            });
+          } else {
+            $("#overLayer").fadeOut(300);
+            $("#overLayer").find(".overlay-content").css("display", "none");
+            $("#overLayer")
+              .find(".overlay-content")
+              .find(".loadingText")
+              .html("");
+            $("#holder_box").fadeIn(500);
+            $("#holder_box").css("display", "flex");
+            if ($("#comicMode").is(":checked")) {
+              $(".comic_msg_holder_char").css("display", "flex");
+            }
+          }
+        }
+
+        if (msg["name"] == "chatreply") {
+          let Svg =
+            "<svg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='#FFFFFF'><circle cx='4' cy='12' r='3'><animate id='spinner_qFRN' begin='0;spinner_OcgL.end+0.25s' attributeName='cy' calcMode='spline' dur='0.6s' values='12;6;12' keySplines='.33,.66,.66,1;.33,0,.66,.33'/></circle><circle cx='12' cy='12' r='3'><animate begin='spinner_qFRN.begin+0.1s' attributeName='cy' calcMode='spline' dur='0.6s' values='12;6;12' keySplines='.33,.66,.66,1;.33,0,.66,.33'/></circle><circle cx='20' cy='12' r='3'><animate id='spinner_OcgL' begin='spinner_qFRN.begin+0.2s' attributeName='cy' calcMode='spline' dur='0.6s' values='12;6;12' keySplines='.33,.66,.66,1;.33,0,.66,.33'/></circle></svg>";
+          let imgSvg =
+            "<svg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg' fill='#FFFFFF'><rect x='1' y='1' width='7.33' height='7.33'><animate id='spinner_oJFS' begin='0;spinner_5T1J.end+0.2s' attributeName='x' dur='0.6s' values='1;4;1'/><animate begin='0;spinner_5T1J.end+0.2s' attributeName='y' dur='0.6s' values='1;4;1'/><animate begin='0;spinner_5T1J.end+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='0;spinner_5T1J.end+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='8.33' y='1' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.1s' attributeName='x' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='y' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='1' y='8.33' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.1s' attributeName='x' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='y' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.1s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='15.66' y='1' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.2s' attributeName='x' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='y' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='8.33' y='8.33' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.2s' attributeName='x' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='y' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='1' y='15.66' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.2s' attributeName='x' dur='0.6s' values='1;4;1'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='y' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.2s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='15.66' y='8.33' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.3s' attributeName='x' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='y' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='8.33' y='15.66' width='7.33' height='7.33'><animate begin='spinner_oJFS.begin+0.3s' attributeName='x' dur='0.6s' values='8.33;11.33;8.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='y' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.3s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect><rect x='15.66' y='15.66' width='7.33' height='7.33'><animate id='spinner_5T1J' begin='spinner_oJFS.begin+0.4s' attributeName='x' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.4s' attributeName='y' dur='0.6s' values='15.66;18.66;15.66'/><animate begin='spinner_oJFS.begin+0.4s' attributeName='width' dur='0.6s' values='7.33;1.33;7.33'/><animate begin='spinner_oJFS.begin+0.4s' attributeName='height' dur='0.6s' values='7.33;1.33;7.33'/></rect></svg>";
+          if (msg["msg"] == "Generate Response") {
+            add_msg({
+              message_input: Svg,
+              avatar_url: ai_avatar,
+              from: "server",
+            });
+          }
+          if (msg["msg"] == "Generating Scene Image") {
+            let $lastmsg = $("#message_box")
+              .find(".msg-container-clone")
+              .last();
+            $lastmsg
+              .find(".message")
+              .html(
+                "<div class='genImgDiv'>" +
+                  imgSvg +
+                  "<span>" +
+                  msg["msg"] +
+                  "</span></div>"
+              );
+            let $lastmsg_comic = $("#msg_box_comic_char")
+              .find(".msg-container-clone")
+              .last();
+            $lastmsg_comic
+              .find(".message-comic")
+              .html(
+                "<div class='genImgDiv'>" +
+                  imgSvg +
+                  "<span>" +
+                  msg["msg"] +
+                  "</span></div>"
+              );
+          }
+        }
+
+        if (msg["name"] == "chat_history_op") {
+          if (msg["msg"]["operation"] == "save") {
+            if (msg["msg"]["result"] == "Success") {
+              toggleInputs(true);
+              alert("Saved history successfully");
+            } else {
+              toggleInputs(true);
+              alert("Saving history failed, have you start chat?");
+            }
+          }
+          if (msg["msg"]["operation"] == "load") {
+            if (msg["msg"]["result"] == "Fail") {
+              toggleInputs(true);
+              alert("loading history failed, Empty?");
+            } else {
+              $("#message_box")
+                .find(".msg-container-clone:not(:first)")
+                .remove();
+              let loaded_history = msg["msg"]["result"];
+              processLoadedHistory(loaded_history).then(() => {
+                toggleInputs(true);
+              });
+            }
+          }
+        }
+      }
+
+      function msg_proc(msg) {
+        var message = msg.data["message"];
+        ai_avatar = msg.data["avatar"];
+        if (msg.data["user_looks"] != undefined) {
+          user_looks = msg.data["user_looks"];
+        }
+        if (msg.data["bgImg"] != undefined) {
+          var bgImg = msg.data["bgImg"];
+          let charBgImgURL = "url('" + bgImg + "')";
+          $("#char-bgpic").css("background-image", charBgImgURL);
+        }
+        if (msg.data["user_bkImg"] != undefined) {
+          var user_bkImg = msg.data["user_bkImg"];
+          let userBgImgURL = "url('" + user_bkImg + "')";
+          $("#user-bgpic").css("background-image", userBgImgURL);
+        }
+        var voice_text = msg.data["voice_text"];
+        var speaker = msg.data["speaker"];
+        var speak_tone = msg.data["speak_tone"];
+        var ttskey = msg.data["ttskey"];
+        var dynamic_picture = msg.data["dynamic_picture"];
+        var model_list = msg.data["model_list"];
+        var instruct_list = msg.data["instruct_list"];
+        var SD_model_list = msg.data["SD_model_list"];
+        changeModel(model_list);
+        changeInstr(instruct_list);
+        changeSDModel(SD_model_list);
+        toggleInputs(true);
+        add_msg({
+          message_input: message,
+          avatar_url: ai_avatar,
+          voice_text: voice_text,
+          speaker: speaker,
+          speak_tone: speak_tone,
+          ttskey: ttskey,
+          dynamic_picture: dynamic_picture,
+          server_reply_done: true,
+          from: "server",
+        });
+      }
+
+      function sendmsgtoserver() {
+        var textbox = document.getElementById("messageToSend");
+        let statechk = checkSendState();
+        var usermsg = textbox.value;
+        let windowSize = getWindowSize();
+        if (usermsg != "") {
+          toggleInputs(false);
+          userLastMsg = usermsg;
+          //var user_avatar = "/static/images/avatar/user_" + usergender + ".png";
+          var user_inputmsg = marked.parse(usermsg);
+          add_msg({
+            message_input: user_inputmsg,
+            avatar_url: user_looks,
+            from: "client",
+          });
+          var querydata = {
+            message: usermsg,
+            conid: conid,
+            isembbed: statechk.embswitcher,
+            istranslated: statechk.transswitcher,
+            windowRatio: windowSize.ratio,
+            socket_id: socket.id,
+          };
+
+          socket.emit("send_user_msg", { data: querydata });
+          textbox.value = "";
+          gsap.to($("#messageToSend"), {
+            duration: 0.7,
+            scale: 1,
+            ease: "elastic",
           });
         } else {
-          gsap.to($(".settingOpt"), {
-            duration: 0.2, 
-            opacity: 0,
-            onComplete: function() {
-              $(".settingOpt").css("display", "none");
-              $("#overLayer").css("display","none");
-              $("#overLayer").off('click');
-              $("#setTings").css("z-index",15);
-            }
+          gsap.to($("#messageToSend"), {
+            duration: 0.7,
+            scale: 1.1,
+            ease: "elastic",
           });
         }
-      });
-      
+      }
 
-      //Resize holder_box function
-      var startY, startHeight, containerHeight;
-      $('#drag-handle').on('mousedown', function(e) {
+      function onKeyUp(event) {
+        if (event.keyCode === 13) {
+          event.preventDefault();
+          console.log("keyup event triggered");
+          sendmsgtoserver();
+        }
+      }
+
+      function Server_Connected() {
+        if (initialstate) {
+          $("#message_box").empty();
+          $(".comic_msgbox").empty();
+          $("#comicMode").prop("checked", false).trigger("change");
+          $("#holder_box").css("display", "none");
+          var windowSize = getWindowSize();
+          var querydata = {
+            username: username,
+            user_sys_name: user_sys_name,
+            usergender: usergender,
+            user_facelooks: user_facelooks,
+            ai_role_name: ai_role_name,
+            conid: conid,
+            ai_is_uncensored: ai_is_uncensored,
+            windowRatio: windowSize.ratio,
+            socket_id: socket.id,
+          };
+          socket.emit("initialize_room", { data: querydata });
+        } else {
+          /* reconnect to server */
+          var querydata = {
+            conid: conid,
+            socket_id: socket.id,
+          };
+          socket.emit("reconnect_room", { data: querydata });
+        }
+      }
+
+      function debounce(func, wait) {
+        let timeout;
+
+        return function executedFunction() {
+          const context = this;
+          const args = arguments;
+
+          const later = function () {
+            timeout = null;
+            func.apply(context, args);
+          };
+
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      function switchVoiceController() {
+        let vs_check = $("#voiceswitcher").is(":checked");
+        if (vs_check && $(".voicePlayer").length > 0) {
+          $(".voiceController").css("display", "flex");
+        } else {
+          $(".voiceController").css("display", "none");
+        }
+      }
+
+      /*Document Ready Actions*/
+      $(document).ready(function () {
+        $("#load-chat-history").click(loadChatHistory);
+        $("#save-chat-history").click(saveChatHistory);
+        $("#submit").click(sendmsgtoserver);
+        $("#restart").click(resetChat);
+        $("#regenerate").click(regenReply);
+        $("#exitchat").click(exitChat);
+        $("#comicMode").change(dispModeSwitch);
+        $("#messageToSend").off("keyup").on("keyup", onKeyUp);
+        $("#voiceswitcher").change(switchVoiceController);
+        toggleInputs(false);
+        // Auto resize comic layout
+        $(".comic_msg_holder_char").draggable({
+          handle: ".msg-drag-handle",
+        });
+        $(".comic_msg_holder_user").draggable({
+          handle: ".msg-drag-handle",
+        });
+
+        var handleResize = debounce(function () {
+          if ($("#comicMode").is(":checked")) {
+            var width = $(window).width();
+            var height = $(window).height();
+            if (width > height) {
+              $("#char-wrapper")
+                .removeClass("wrapper-char")
+                .addClass("wrapper-char-horizon");
+              $("#char-bgpic")
+                .removeClass("char_bg")
+                .addClass("char_bg_horizon");
+              $("#user-wrapper")
+                .removeClass("wrapper-user")
+                .addClass("wrapper-user-horizon");
+              $("#user-bgpic")
+                .removeClass("user_bg")
+                .addClass("user_bg_horizon");
+              $("#char-dynpic-wrapper")
+                .removeClass("wrapper-char-dynpic")
+                .addClass("wrapper-char-dynpic-horizon");
+              $("#char-dynpic")
+                .removeClass("char_dynmicpic_bg")
+                .addClass("char_dynmicpic_bg_horizon");
+              $("#comic-msg-holder-char")
+                .addClass("comic_msg_holder_char_horizon")
+                .css({
+                  top: "50%",
+                  left: "80px",
+                });
+              $("#comic-msg-holder-user")
+                .addClass("comic_msg_holder_user_horizon")
+                .css({
+                  top: "50%",
+                  left: "calc(40% + 140px)",
+                });
+            } else {
+              $("#char-wrapper")
+                .removeClass("wrapper-char-horizon")
+                .addClass("wrapper-char");
+              $("#char-bgpic")
+                .removeClass("char_bg_horizon")
+                .addClass("char_bg");
+              $("#user-wrapper")
+                .removeClass("wrapper-user-horizon")
+                .addClass("wrapper-user");
+              $("#user-bgpic")
+                .removeClass("user_bg_horizon")
+                .addClass("user_bg");
+              $("#char-dynpic-wrapper")
+                .removeClass("wrapper-char-dynpic-horizon")
+                .addClass("wrapper-char-dynpic");
+              $("#char-dynpic")
+                .removeClass("char_dynmicpic_bg_horizon")
+                .addClass("char_dynmicpic_bg");
+              $("#comic-msg-holder-char")
+                .removeClass("comic_msg_holder_char_horizon")
+                .css({
+                  top: "40%",
+                  left: "80px",
+                });
+              $("#comic-msg-holder-user")
+                .removeClass("comic_msg_holder_user_horizon")
+                .css({
+                  top: "calc(40% + 300px)",
+                  left: "30%",
+                });
+            }
+          }
+        }, 250);
+        $(window).on("resize", handleResize);
+        //
+
+        $("#char-dynpic-wrapper")
+          .css("cursor", "pointer")
+          .on("click", function () {
+            $(this).fadeOut(200);
+            let backdynpic = $(this)
+              .find("#char-dynpic")
+              .css("background-image");
+            previewPic(backdynpic);
+          });
+
+        $(".chatSetUpBtn").on("click", function () {
+          if ($(".settingOpt").css("display") == "none") {
+            $("#overLayer").css("display", "flex");
+            $("#setTings").css("z-index", 1000);
+            $(".settingOpt").css("opacity", 0).css("display", "flex");
+            gsap.to($(".settingOpt"), {
+              duration: 0.4,
+              opacity: 1,
+              onComplete: function () {
+                $("#overLayer").on("click", function () {
+                  $(".settingOpt").css("display", "none");
+                  $(this).css("display", "none");
+                  $(this).off("click");
+                  $("#setTings").css("z-index", 15);
+                });
+              },
+            });
+          } else {
+            gsap.to($(".settingOpt"), {
+              duration: 0.2,
+              opacity: 0,
+              onComplete: function () {
+                $(".settingOpt").css("display", "none");
+                $("#overLayer").css("display", "none");
+                $("#overLayer").off("click");
+                $("#setTings").css("z-index", 15);
+              },
+            });
+          }
+        });
+
+        //Resize holder_box function
+        var startY, startHeight, containerHeight;
+        $("#drag-handle").on("mousedown", function (e) {
           startY = e.pageY;
-          startHeight = $('#holder_box').height();
-          containerHeight = $('.flexPage').height(); // 获取容器的高度
-          $(document).on('mousemove', mouseMove).on('mouseup', mouseUp);
+          startHeight = $("#holder_box").height();
+          containerHeight = $(".flexPage").height(); // 获取容器的高度
+          $(document).on("mousemove", mouseMove).on("mouseup", mouseUp);
           e.preventDefault();
-      });
+        });
 
-      function mouseMove(e) {
+        function mouseMove(e) {
           var newHeight = startHeight + (startY - e.pageY);
-          var minHeight = containerHeight * 0.3; 
-          var maxHeight = containerHeight * 0.9; 
-          newHeight = Math.max(newHeight, minHeight); 
-          newHeight = Math.min(newHeight, maxHeight); 
+          var minHeight = containerHeight * 0.3;
+          var maxHeight = containerHeight * 0.9;
+          newHeight = Math.max(newHeight, minHeight);
+          newHeight = Math.min(newHeight, maxHeight);
 
-          $('#holder_box').css('height', newHeight + 'px');
-      }
+          $("#holder_box").css("height", newHeight + "px");
+        }
 
-      function mouseUp() {
-          $(document).off('mousemove', mouseMove).off('mouseup', mouseUp);
-      }
+        function mouseUp() {
+          $(document).off("mousemove", mouseMove).off("mouseup", mouseUp);
+        }
 
-
-
-      /** mouth animation comments out
+        /** mouth animation comments out
       console.log("loaded doms");
       msttser.addEventListener("onPlay", (e) => {
         console.log("audio start playing...");
@@ -990,154 +1240,247 @@
       document.getElementById("mouthAni").style.backgroundImage =
         "url('" + img_path + "/viseme-id-0.png')";
         **/
-      let backgroundImage = "url('" + bkimg_path + "')";
-      $("#char-bgpic").css("background-image", backgroundImage);
+        let backgroundImage = "url('" + bkimg_path + "')";
+        $("#char-bgpic").css("background-image", backgroundImage);
 
-      socket = io.connect("/", {
-        path: "/chat",
-        pingTimeout: 180000,
-        query: {
-          username: username,
-          usergender: usergender,
-          ai_role_name: ai_role_name,
-          conid: conid,
-          ai_is_uncensored: ai_is_uncensored,
-        },
+        socket = io.connect("/", {
+          path: "/chat",
+          pingTimeout: 180000,
+          query: {
+            username: username,
+            usergender: usergender,
+            ai_role_name: ai_role_name,
+            conid: conid,
+            ai_is_uncensored: ai_is_uncensored,
+          },
+        });
+        socket.on("connect", Server_Connected);
+        socket.on("disconnect", function (reason) {
+          alert("Server Disconnected [" + reason + "]");
+        });
+        socket.on("room_reconnected", function () {
+          alert("Server Reconnected, You Can Continue To Chat Now");
+        });
+        socket.on("reconnect_and_recreate_room", function () {
+          alert("Room Removed, Needs To Be Initiated");
+          initialstate = true;
+          Server_Connected();
+        });
+        socket.on("status from server", showServerStatus);
+        socket.on("my response", msg_proc);
+        socket.on("model_change_result", model_loaded);
+        socket.on("exit_room_success", exitRoomSuccess);
+        socket.on("instruction_change_result", instruct_changed);
+        socket.on("SD_Model_change_result", SD_model_changed);
+        socket.on("xtts_result", xtts_audio_data);
       });
-      socket.on("connect", Server_Connected);
-      socket.on("disconnect", function(reason){
-        alert("Server Disconnected ["+reason+"]");
-      });
-      socket.on("room_reconnected", function(){
-        alert("Server Reconnected, You Can Continue To Chat Now");
-      });
-      socket.on("reconnect_and_recreate_room", function(){
-        alert("Room Removed, Needs To Be Initiated");
-        initialstate = true;
-        Server_Connected();
-      });
-      socket.on("status from server", showServerStatus);
-      socket.on("my response", msg_proc);
-      socket.on("model_change_result", model_loaded);
-      socket.on("exit_room_success", exitRoomSuccess);
-      socket.on("instruction_change_result", instruct_changed);
-      socket.on("SD_Model_change_result", SD_model_changed);
-      socket.on("xtts_result", xtts_audio_data);
-    });
-  </script>
-</head>
+    </script>
+  </head>
 
-<body>
-  <div class="flexPage">
-    <div class="comic-area">
-      <div id="char-wrapper" class="border-wrapper wrapper-char-fullscreen">
-        <div id="char-bgpic" class="char_bg_fullscreen">
+  <body>
+    <div class="flexPage">
+      <div class="comic-area">
+        <div id="char-wrapper" class="border-wrapper wrapper-char-fullscreen">
+          <div id="char-bgpic" class="char_bg_fullscreen"></div>
+        </div>
+        <div id="user-wrapper" class="border-wrapper wrapper-user-fullscreen">
+          <div id="user-bgpic" class="user_bg"></div>
+        </div>
+        <div
+          id="char-dynpic-wrapper"
+          class="border-wrapper wrapper-char-dynpic-fullscreen"
+        >
+          <div id="char-dynpic" class="char_dynmicpic_bg"></div>
+        </div>
+        <div class="comic_msg_holder_char" id="comic-msg-holder-char">
+          <div class="comic_msgbox_arrow_char"></div>
+          <div id="msg_box_comic_char" class="comic_msgbox"></div>
+          <div id="voiceController_comic" class="voiceController">
+            Play Voice
+          </div>
+          <div class="msg-drag-handle">
+            <svg
+              width="18px"
+              height="18px"
+              viewBox="0 0 64 64"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="3.5"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <line x1="32" y1="8" x2="32" y2="56"></line>
+                <line x1="56" y1="32" x2="8" y2="32"></line>
+                <polyline points="40 16 32 8 24 16"></polyline>
+                <polyline points="24 48 32 56 40 48"></polyline>
+                <polyline points="48 40 56 32 48 24"></polyline>
+                <polyline points="16 24 8 32 16 40"></polyline>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="comic_msg_holder_user" id="comic-msg-holder-user">
+          <div class="comic_msgbox_arrow_user"></div>
+          <div id="msg_box_comic_user" class="comic_msgbox"></div>
+          <div class="msg-drag-handle">
+            <svg
+              width="18px"
+              height="18px"
+              viewBox="0 0 64 64"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="3.5"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <line x1="32" y1="8" x2="32" y2="56"></line>
+                <line x1="56" y1="32" x2="8" y2="32"></line>
+                <polyline points="40 16 32 8 24 16"></polyline>
+                <polyline points="24 48 32 56 40 48"></polyline>
+                <polyline points="48 40 56 32 48 24"></polyline>
+                <polyline points="16 24 8 32 16 40"></polyline>
+              </g>
+            </svg>
+          </div>
         </div>
       </div>
-      <div id="user-wrapper" class="border-wrapper wrapper-user-fullscreen">
-        <div id="user-bgpic" class="user_bg">
+      <div id="setTings" class="chatSetting">
+        <div class="chatSetUpBtn">
+          <svg
+            width="24px"
+            height="24px"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            color="#ffffff"
+          >
+            <path
+              d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+              stroke="#ffffff"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+            <path
+              d="M19.6224 10.3954L18.5247 7.7448L20 6L18 4L16.2647 5.48295L13.5578 4.36974L12.9353 2H10.981L10.3491 4.40113L7.70441 5.51596L6 4L4 6L5.45337 7.78885L4.3725 10.4463L2 11V13L4.40111 13.6555L5.51575 16.2997L4 18L6 20L7.79116 18.5403L10.397 19.6123L11 22H13L13.6045 19.6132L16.2551 18.5155C16.6969 18.8313 18 20 18 20L20 18L18.5159 16.2494L19.6139 13.598L21.9999 12.9772L22 11L19.6224 10.3954Z"
+              stroke="#ffffff"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+        </div>
+        <div id="settingOption" class="settingOpt">
+          <div>
+            <input type="checkbox" id="comicMode" />
+            <span class="smallFonts">Comic Mode</span>
+          </div>
+          <div>
+            <input type="checkbox" id="translateSwitcher" checked />
+            <span class="smallFonts">EN/CN</span>
+          </div>
+          <select id="model_selector" class="topSelect" name="chatParam">
+            <option value="No Select">Models Selector</option>
+          </select>
+          <select id="instr_selector" class="topSelect" name="instrParam">
+            <option value="No Select">instru Selector</option>
+          </select>
+          <select id="sd_selector" class="topSelect" name="instrParam">
+            <option value="No Select">SD Selector</option>
+          </select>
         </div>
       </div>
-      <div id="char-dynpic-wrapper" class="border-wrapper wrapper-char-dynpic-fullscreen">
-        <div id="char-dynpic" class="char_dynmicpic_bg">
-        </div>
+      <div id="ai_intro">
+        <div>{{ainame}}</div>
       </div>
-      <div class="comic_msg_holder_char" id="comic-msg-holder-char">  
-        <div class="comic_msgbox_arrow_char"></div>
-        <div id="msg_box_comic_char" class="comic_msgbox"></div>
-        <div class="msg-drag-handle"><svg width="18px" height="18px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ffffff" stroke-width="3.5"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><line x1="32" y1="8" x2="32" y2="56"></line><line x1="56" y1="32" x2="8" y2="32"></line><polyline points="40 16 32 8 24 16"></polyline><polyline points="24 48 32 56 40 48"></polyline><polyline points="48 40 56 32 48 24"></polyline><polyline points="16 24 8 32 16 40"></polyline></g></svg></div>
-      </div>
-      <div class="comic_msg_holder_user" id="comic-msg-holder-user">
-        <div class="comic_msgbox_arrow_user"></div>
-        <div id="msg_box_comic_user" class="comic_msgbox"></div>
-        <div class="msg-drag-handle"><svg width="18px" height="18px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ffffff" stroke-width="3.5"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><line x1="32" y1="8" x2="32" y2="56"></line><line x1="56" y1="32" x2="8" y2="32"></line><polyline points="40 16 32 8 24 16"></polyline><polyline points="24 48 32 56 40 48"></polyline><polyline points="48 40 56 32 48 24"></polyline><polyline points="16 24 8 32 16 40"></polyline></g></svg></div>
-      </div>
-    </div>
-    <div id="setTings" class="chatSetting">
-      <div class="chatSetUpBtn"><svg width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff"><path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19.6224 10.3954L18.5247 7.7448L20 6L18 4L16.2647 5.48295L13.5578 4.36974L12.9353 2H10.981L10.3491 4.40113L7.70441 5.51596L6 4L4 6L5.45337 7.78885L4.3725 10.4463L2 11V13L4.40111 13.6555L5.51575 16.2997L4 18L6 20L7.79116 18.5403L10.397 19.6123L11 22H13L13.6045 19.6132L16.2551 18.5155C16.6969 18.8313 18 20 18 20L20 18L18.5159 16.2494L19.6139 13.598L21.9999 12.9772L22 11L19.6224 10.3954Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
-      <div id="settingOption" class="settingOpt">
-        <div>
-          <input type="checkbox" id="comicMode">
-          <span class="smallFonts">Comic Mode</span>
-        </div>
-        <div>
-          <input type="checkbox" id="translateSwitcher" checked>
-          <span class="smallFonts">EN/CN</span>
-        </div>
-        <select id="model_selector" class="topSelect" name="chatParam">
-          <option value="No Select">Models Selector</option>
-        </select>
-        <select id="instr_selector" class="topSelect" name="instrParam">
-          <option value="No Select">instru Selector</option>
-        </select>
-        <select id="sd_selector" class="topSelect" name="instrParam">
-          <option value="No Select">SD Selector</option>
-        </select>
-      </div>
-    </div>
-    <div id="ai_intro">
-      <div>{{ainame}}</div>
-    </div>
-    <div class="free-space"></div>
-    <div id="holder_box">
-      <div id="drag-handle"></div>
-      <div id="message_box"></div>
-      <!-- <div id="ai_human">
+      <div class="free-space"></div>
+      <div id="holder_box">
+        <div id="drag-handle"></div>
+        <div id="message_box"></div>
+        <!-- <div id="ai_human">
         <div id="mouthAni"></div>
         <div id="bodyAni"></div>
       </div> -->
-      <div id="inputArea">
-        <div id="chat-history-buttons">
-          <button id="load-chat-history">Load chat history</button>
-          <button id="save-chat-history">Save chat history</button>
-        </div>
-        <div class="messageInputBox"><input type="text" id="messageToSend" /></div>
-        <div class="messageOptions">
-          <div class="subButtonsGroup">
-            <button id="submit">Submit</button>
-            <button id="regenerate">Regen</button>
-            <button id="restart">Restart</button>
-            <button id="exitchat">Exit</button>
+        <div id="inputArea">
+          <div id="chat-history-buttons">
+            <button id="load-chat-history">Load chat history</button>
+            <button id="save-chat-history">Save chat history</button>
           </div>
-          <div class="sub_options">
-            <div>
-              <input id="voiceswitcher" type="checkbox" />
-              <span class="smallFonts">Voice Output</span>
+          <div class="messageInputBox">
+            <input type="text" id="messageToSend" />
+          </div>
+          <div class="messageOptions">
+            <div class="subButtonsGroup">
+              <button id="submit">Submit</button>
+              <button id="regenerate">Regen</button>
+              <button id="restart">Restart</button>
+              <button id="exitchat">Exit</button>
             </div>
-            {% if ai_role_name == 'Psychologist' or ai_role_name == 'Doctor' -%}
-            <div>
-              <input id="embeddingswitcher" type="checkbox" />
-              <span class="smallFonts">Reference First</span>
+            <div class="sub_options">
+              <div>
+                <input id="voiceswitcher" type="checkbox" />
+                <span class="smallFonts">Voice Output</span>
+              </div>
+              {% if ai_role_name == 'Psychologist' or ai_role_name == 'Doctor'
+              -%}
+              <div>
+                <input id="embeddingswitcher" type="checkbox" />
+                <span class="smallFonts">Reference First</span>
+              </div>
+              {% endif -%}
             </div>
-            {% endif -%}
           </div>
         </div>
       </div>
-    </div>
-    
-    <div id="templates_box" style="display: none">
-      <div id="msg_container">
-        <div class="avatar"></div>
-        <div class="message"></div>
-      </div>
-    </div>
-    <div class="overlay" id="overLayer">
-      <div class="overlay-content">
-        <div class="loadingSvg"><svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-            fill='#FFFFFF'>
-            <path
-              d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z">
-              <animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12"
-                repeatCount="indefinite" />
-            </path>
-          </svg></div>
-        <div class="loadingText"></div>
-      </div>
-      <div class="overlay-dynpic">
-        <div id="closePreview">Close Preview</div>
-      </div>
-    </div>
-  </div>
-</body>
 
+      <div id="templates_box" style="display: none">
+        <div id="msg_container">
+          <div class="avatar"></div>
+          <div class="message"></div>
+        </div>
+      </div>
+      <div class="overlay" id="overLayer">
+        <div class="overlay-content">
+          <div class="loadingSvg">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="#FFFFFF"
+            >
+              <path
+                d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  dur="0.75s"
+                  values="0 12 12;360 12 12"
+                  repeatCount="indefinite"
+                />
+              </path>
+            </svg>
+          </div>
+          <div class="loadingText"></div>
+        </div>
+        <div class="overlay-dynpic">
+          <div id="closePreview">Close Preview</div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

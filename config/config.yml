@@ -1,7 +1,7 @@
 #Chat server Settings
 server_address: 0.0.0.0
 server_port: 5500
-debug_mode: False
+debug_mode: True
 sentimodelpath: "touch20032003/xuyuan-trial-sentiment-bert-chinese"
 #TabbyAPI Configuration
 api_key: "0764ee6f39280e8b485e9a18668f6a62"

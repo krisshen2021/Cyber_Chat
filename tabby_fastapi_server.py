@@ -142,7 +142,7 @@ class tabby_fastapi:
                     self.model_load_data["gpu_split_auto"] = False
                     gpu_split = []
                     for gpu in gpu_info["GPU Info"]:
-                        gpu_split.append(int(gpu["GPU_Memory"]*0.8))
+                        gpu_split.append(int(gpu["GPU_Memory"]*0.7))
                     self.model_load_data["gpu_split"] = gpu_split
                     print(f"The Gpu Split to: {gpu_split}")
         except Exception as e:

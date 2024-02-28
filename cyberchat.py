@@ -379,6 +379,7 @@ def xtts_audio_generate(client_msg):
     speaker_wav = client_msg["data"]["speaker_wav"]
     language = client_msg["data"]["language"]
     conversation_id = client_msg["data"]["socket_id"]
+    voice_uid = client_msg["data"]["voice_uid"]
     url = config_data["openai_api_chat_base"]+"/xtts"
     headers = {
         'accept': 'audio/wav',
@@ -398,7 +399,8 @@ def xtts_audio_generate(client_msg):
         else:
             audio_data = False
         data_to_send = {
-                'audio_data': audio_data
+                'audio_data': audio_data,
+                'voice_uid': voice_uid
             }
         socketio.emit('xtts_result', {'data': data_to_send}, room=conversation_id)
     except Exception as e:
