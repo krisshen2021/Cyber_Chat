@@ -60,7 +60,20 @@ chapters:
       *Chapter - "Digital Climax"*
   - name: |
       *Chapter - "Become Human"*
-max_new_tokens: 300
 generate_dynamic_picture: true
 prompt_to_load: "Alpaca_RP"
 match_words_cata: "NSFW"
+completions_data:
+  max_tokens: 200
+  top_k: 50
+  top_p: 0.8
+  min_p: 0.01
+  tfs: 0.95
+  frequency_penalty: 0
+  presence_penalty: 1.25
+  repetition_penalty: 1.05
+  mirostat_mode: 0
+  mirostat_tau: 1.5
+  mirostat_eta: 0.1
+  temperature_last: true
+  smoothing_factor: 0.75

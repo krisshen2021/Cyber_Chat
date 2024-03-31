@@ -3,11 +3,12 @@ from datetime import datetime
 import json
 
 class SQLiteDB:
-    def __init__(self):
+    def __init__(self,database:str):
+        self.database = database
         pass
 
     def create_table(self):
-        self.conn = sqlite3.connect("cyberchat.db")
+        self.conn = sqlite3.connect(self.database)
         self.cursor = self.conn.cursor()
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -37,7 +38,7 @@ class SQLiteDB:
         self.conn.close()
 
     def create_new_user(self, username: str, nickname:str, gender: str, password: str, email: str, credits: int, avatar:str, facelooks:str):
-        self.conn = sqlite3.connect("cyberchat.db")
+        self.conn = sqlite3.connect(self.database)
         self.cursor = self.conn.cursor()
         try:
             user_query = '''
@@ -59,13 +60,45 @@ class SQLiteDB:
         finally:
             self.conn.close()
 
-    def get_user(self, username: str, password:str):
-        self.conn = sqlite3.connect("cyberchat.db")
+    def edit_user(
+        self,
+        username: str,
+        nickname: str,
+        gender: str,
+        email: str,
+        avatar: str,
+        facelooks: str,
+    ):
+        self.conn = sqlite3.connect(self.database)
+        self.cursor = self.conn.cursor()
+        try:
+            user_query = '''
+                UPDATE users SET Nickname = ?, Gender = ?, Email = ?, Avatar = ?, Facelooks = ? WHERE Name = ?
+            '''
+            self.cursor.execute(user_query,(nickname,gender,email,avatar,facelooks,username))
+        except sqlite3.IntegrityError as e:
+            error_message = str(e)
+            if "Email" in error_message:
+                return "Email already exists"
+            else:
+                return "Unknown_Errors"
+        else:
+            self.conn.commit()
+            return True
+        finally:
+            self.conn.close()
+
+    def get_user(self, username: str='admin', password:str='admin', needpassword=True):
+        self.conn = sqlite3.connect(self.database)
         self.cursor = self.conn.cursor()
         unique_id = self.get_unique_id(username)
         if unique_id:
-            user_query = "SELECT * FROM users WHERE Name = ? AND Password = ?"
-            result = self.cursor.execute(user_query, (username,password)).fetchone()
+            if needpassword:
+                user_query = "SELECT * FROM users WHERE Name = ? AND Password = ?" 
+                result = self.cursor.execute(user_query, (username,password)).fetchone()
+            else:
+                user_query = f"SELECT * FROM users WHERE Name = ?" 
+                result = self.cursor.execute(user_query,(username,)).fetchone()
             if result:
                 keys = ["unique_id", "username", "nickname", "gender", "password", "email", "credits", "avatar", "facelooks"]
                 user = dict(zip(keys, result))
@@ -80,7 +113,7 @@ class SQLiteDB:
             return "User is not available"
 
     def save_chat_records(self, username: str, character: str, chat_data: list):
-        self.conn = sqlite3.connect("cyberchat.db")
+        self.conn = sqlite3.connect(self.database)
         self.cursor = self.conn.cursor()
         content = json.dumps(chat_data)
         timestamp = datetime.now().replace(microsecond=0)
@@ -101,9 +134,9 @@ class SQLiteDB:
             print("没有找到用户")
             self.conn.close()
             return False
-        
+
     def delete_chat_records(self, username: str, character: str):
-        self.conn = sqlite3.connect("cyberchat.db")
+        self.conn = sqlite3.connect(self.database)
         self.cursor = self.conn.cursor()
         unique_id = self.get_unique_id(username)
         if unique_id:
@@ -127,7 +160,7 @@ class SQLiteDB:
             return False
 
     def get_chat_records(self, username: str, character: str):
-        self.conn = sqlite3.connect("cyberchat.db")
+        self.conn = sqlite3.connect(self.database)
         self.cursor = self.conn.cursor()
         unique_id = self.get_unique_id(username)
         if unique_id:

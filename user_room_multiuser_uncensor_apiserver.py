@@ -1,34 +1,24 @@
 import os, random, re, io, base64, yaml, copy, requests, markdown
 from airole_creator_uncensor import airole
-from googlecloudtrans import googletransClass
+from modules.googlecloudtrans import googletransClass
 # from azure_translator import azuretransClass
 # from deepltrans import deepltransClass
 from tabbyAPI_class_pd import tabbyAPI
 from PIL import Image
-from yeelight import discover_bulbs, Bulb
-from sqliteclass import SQLiteDB
+from modules.global_sets import (
+    database,
+    config_data,
+    sentiment_pipeline,
+    bulb
+)
 
-database = SQLiteDB()
 # load server address from config.yml
 dir_path = os.path.dirname(os.path.realpath(__file__))
-config_path = os.path.join(dir_path, 'config', 'config.yml')
-with open(config_path, 'r') as file:
-            config_data = yaml.safe_load(file)
-try:
-    bulb = Bulb(config_data["yeelight_url"], auto_on=True, effect="smooth", duration=1000)
-    print(f"Bulb Power: {bulb.get_properties()['power']}")
-except Exception as e:
-            print(f"Error during turn on Bulb: {e}")
-            class bulb_null:
-                def __init__(self) -> None:
-                    pass
-                def set_hsv(self,r,g,b)-> None:
-                    pass
-            bulb = bulb_null()
+
 
 image_payload = {
             "hr_scale" : 1.5,
-            "hr_second_pass_steps" : 10,
+            "hr_second_pass_steps" : 20,
             "seed" :-1,
             "enable_hr" : False,
             "width" : 256,
@@ -80,7 +70,7 @@ state = {
 }
 
 #Read prompt template
-dir_path = os.path.dirname(os.path.realpath(__file__))
+# dir_path = os.path.dirname(os.path.realpath(__file__))
 prompt_template_path = os.path.join(dir_path, "config", "prompts", "prompt_template.yaml")
 with open(prompt_template_path, 'r') as file:
     prompts_templates = yaml.safe_load(file)
@@ -98,7 +88,7 @@ def markdownText(text):
 
 #the main room class
 class chatRoom_unsensor:
-    def __init__(self,user_sys_name, ai_role_name, username, usergender, user_facelooks, conid, conversation_id, sentiment_pipeline, windowRatio, send_msg_websocket) -> None:
+    def __init__(self,user_sys_name, ai_role_name, username, usergender, user_facelooks, conid, conversation_id, windowRatio, send_msg_websocket) -> None:
         self.send_msg_websocket = send_msg_websocket
         self.user_sys_name = user_sys_name
         self.ai_role_name = ai_role_name
@@ -121,6 +111,7 @@ class chatRoom_unsensor:
         self.sentiment_pipeline = sentiment_pipeline
         self.dynamic_picture = ''
         self.windowRatio = windowRatio
+        self.state = copy.deepcopy(state)
         self.initialization_start = False
 
     def extract_text(self,text):
@@ -153,7 +144,7 @@ class chatRoom_unsensor:
 
     def initialize(self):
         self.initialization_start = True
-        self.state = copy.deepcopy(state)
+        # self.state = copy.deepcopy(state)
         self.ai_role=airole(roleselector=self.ai_role_name,username=self.username,usergender=self.usergender)
         self.start_stats()
         #customize state
@@ -243,8 +234,8 @@ class chatRoom_unsensor:
     def gen_avatar(self,tabbyGen,char_avatar,emotion,is_save=True):
         tabbyGen.image_payload['enable_hr'] = True
         tabbyGen.image_payload['hr_scale'] = 1.25
-        tabbyGen.image_payload['width'] = 256
-        tabbyGen.image_payload['height'] = 256
+        tabbyGen.image_payload['width'] = 512
+        tabbyGen.image_payload['height'] = 512
         tabbyGen.image_payload['steps'] = 20
         char_avatar = char_avatar.replace('<|emotion|>',emotion)
         print(">>>Generate avatar\n")
@@ -286,8 +277,8 @@ class chatRoom_unsensor:
         self.my_generate.image_payload['height'] = 768 if self.windowRatio <= 1 else 512
         self.my_generate.image_payload['enable_hr'] = True
         self.my_generate.image_payload['steps'] = 40
-        self.my_generate.image_payload['hr_scale'] = 1.25
-        self.my_generate.state['temperature'] = random.choice([0.71, 0.72, 0.73])
+        self.my_generate.image_payload['hr_scale'] = 1.5
+        self.my_generate.state['temperature'] = random.choice([0.75, 0.82, 0.93])
         self.send_msg_websocket({"name":"chatreply","msg":"Generate Response"}, self.conversation_id)
         result_text, picture = self.my_generate.fetch_results(prompt,input_text)
         if result_text == None:

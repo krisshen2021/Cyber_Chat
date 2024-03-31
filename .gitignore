@@ -1,4 +1,8 @@
 # Default ignored files
 /venv/
 /__pycache__/
+/database/__pycache__/
+/modules/__pycache__/
+/fastapimode/__pycache__/
+/Testing/
 cyberchat.db

@@ -10,7 +10,7 @@ openai_api_chat_base: http://127.0.0.1:5001/v1
 openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional
 openai_api_rephase_base: http://127.0.0.1:5001/v1
 #xtts api
-xtts_api_base: http://127.0.0.1:8020/tts_to_audio
+xtts_api_base: http://127.0.0.1:8020/tts_to_audio/
 #StableDiffusion Configuration
 SDAPI_url: http://127.0.0.1:7860
 sd_model_checkpoint: astranime_V6

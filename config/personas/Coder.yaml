@@ -24,9 +24,9 @@ description: |
 
   <|Current Chapter|>
 char_looks: |
-  a Man, fat, solo, 45 years old, accurate human anatomy, American, (Short brown curly hair:1.13), (brown eye:1.10), Big nose, Bushy beard, (Gray hoodie:1.18)
+  One male, American, ((middle aged)), ((fat)), (Short brown curly hair:1.13), (brown eye:1.10), Big nose, Bushy beard, (Gray hoodie:1.18)
 char_avatar: |
-  Perfect face portrait, look at viewer, (close-up:1.18), a Man, fat, solo, 45 years old, American, (Short brown curly hair:1.13), (brown eye:1.10), (<|emotion|> expression:1.14), Big nose, Bushy beard, (Gray hoodie:1.18)
+  One male, American, ((middle aged)), ((fat)), Perfect face portrait, look at viewer, (close-up:1), (Short brown curly hair:1.13), (brown eye:1.10), (<|emotion|> expression:1.14), Big nose, Bushy beard, (Gray hoodie:1.18)
 default_bg: |
   futuristic studio room, computer desk, monitor, keyboard, mouse, New York night view outside the window
 firstwords: |
@@ -39,6 +39,20 @@ chapters:
       *Chapter - "Python"*
   - name: |
       *Chapter - "Javascript"*
-max_new_tokens: 1000
+
 generate_dynamic_picture: false
 prompt_to_load: "ChatML_Coder"
+completions_data:
+  max_tokens: 800
+  top_k: 50
+  top_p: 1
+  min_p: 0.01
+  tfs: 0.95
+  frequency_penalty: 0
+  presence_penalty: 0
+  repetition_penalty: 1
+  mirostat_mode: 0
+  mirostat_tau: 1.5
+  mirostat_eta: 0.1
+  temperature_last: true
+  smoothing_factor: 0

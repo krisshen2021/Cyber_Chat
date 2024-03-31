@@ -1,5 +1,5 @@
 import threading
-from global_sets import chatRoomList
+from modules.global_sets import chatRoomList
 
 class DelRoom:
     def __init__(self, conid):

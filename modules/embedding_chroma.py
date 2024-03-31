@@ -4,14 +4,11 @@ import yaml
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from deep_translator import GoogleTranslator
+from modules.global_sets import config_data
 
 sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
     model_name="paraphrase-multilingual-mpnet-base-v2"
 )
-dir_path = os.path.dirname(os.path.realpath(__file__))
-config_path = os.path.join(dir_path, 'config', 'config.yml')
-with open(config_path, 'r') as file:
-    config_data = yaml.safe_load(file)
 chroma_client = chromadb.Client(
     Settings(
         chroma_api_impl="rest",

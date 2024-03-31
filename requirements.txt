@@ -18,3 +18,7 @@ gevent-websocket
 pymdown-extensions
 pygments
 pydantic[email]
+multipart
+aiofiles
+fastapi
+colorlog

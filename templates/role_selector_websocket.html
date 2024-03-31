@@ -3,7 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+  <link rel="icon" href="/static/favicon.ico" />
   <link rel="stylesheet" type="text/css" href="/static/css/login.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,11 +24,20 @@
     var conid;
     var userdata;
     var login_status = false;
-    var socket = Object;
+    // var socket = Object;
+    var ws = Object;
+    const clientID = "{{ cookid_server }}";
+    const timestamp = "{{ timestamp }}";
+    console.log("Client ID: " + clientID);
 
-    function initialize() {
-      console.log("Server connected with socket id: " + socket.id);
+    function wsData(wsevent, querydata) {
+      let messagebody = {
+        wsevent_client: wsevent,
+        data: querydata
+      }
+      return JSON.stringify(messagebody)
     }
+
     function setCookie(name, value, days) {
       var expires = "";
       if (days) {
@@ -143,12 +152,13 @@
     function login() {
       if (form_validation("login_form")) {
         toggleInputs(false);
-        var querydata = {
+        let querydata = {
           username: $("#login_username").val(),
           password: $("#login_password").val(),
-          socket_id: socket.id,
+          // socket_id: socket.id,
         };
-        socket.emit("client_login", { data: querydata });
+        // socket.emit("client_login", { data: querydata });
+        ws.send(wsData("client_login", querydata));
       }
     }
     function sign_up() {
@@ -174,9 +184,10 @@
             password: $("#sign_password").val(),
             gender: $("input[name='sign_gender']:checked").val(),
             facelooks: user_looks,
-            socket_id: socket.id,
+            // socket_id: socket.id,
           };
-          socket.emit("client_signup", { data: querydata });
+          // socket.emit("client_signup", { data: querydata });
+          ws.send(wsData("client_signup", querydata));
         } else {
           $("label[for='sign_repassword']")
             .find("span")
@@ -204,15 +215,17 @@
           email: $("#edit_email").val(),
           gender: $("input[name='edit_gender']:checked").val(),
           facelooks: user_looks,
-          socket_id: socket.id
+          // socket_id: socket.id
         };
         console.log(querydata);
-        socket.emit("client_edit_profile", { data: querydata });
+        // socket.emit("client_edit_profile", { data: querydata });
+        ws.send(wsData("client_edit_profile", querydata))
       }
     }
 
     function ProcessServerStatus(msgData) {
       let msg = msgData.data["message"];
+      console.log(msg);
       if (msg["name"] == "signup_validation") {
         toggleInputs(true);
         let error_fields = msg["msg"]["data"];
@@ -304,6 +317,7 @@
       login_status = true;
       setCookie("userData", JSON.stringify(userdata), 1);
     }
+
     function update_profile_bar(userdata) {
       $(".user_profile")
         .find(".profile_avatar")
@@ -376,7 +390,7 @@
           ai_role_name: ai_role_name,
           ainame: ainame,
           is_uncensored: is_uncensored,
-          conid: conid,
+          clientID: clientID,
         };
 
         $.each(fields, function (key, value) {
@@ -423,9 +437,8 @@
 
       //role list constructor
       $.each(roleslist_items, function (index, item) {
-        // console.log(index + "  " + item);
         let roleContent = $("#roleholder_template").find(".roleholder").clone(true);
-        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item + '/none.png)')
+        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item + '/none.png?nocache='+timestamp+')')
           .on('mouseover', function () {
             gsap.to($(this), { duration: 0.3, backgroundSize: "130%", ease: "back", });
           })
@@ -598,25 +611,66 @@
       } else {
         console.log("User not login");
       }
-      deleteCookie("uid");
-      var cookid = getCookie("uid");
-      if (!cookid) {
-        cookid = "{{cookid_server}}";
-        setCookie("uid", cookid, 1);
-      }
-      console.log("Cookid: " + cookid);
-      conid = cookid;
 
-      //socket behaviors
-      socket = io.connect("/", {
-        path: "/chat",
-        pingTimeout: 180000,
-      });
-      socket.on("connect", initialize);
-      socket.on("status from server", ProcessServerStatus);
-      window.addEventListener("beforeunload", function (e) {
-        socket.disconnect();
-      });
+      //WebSocket Process
+      let websocket;
+      let retryCount = 0;
+      const maxRetryLimit = 10;
+      let retryDelay = 1000;
+      const maxRetryDelay = 60000;
+      
+      function connectWebSocket() {
+
+        ws = new WebSocket(`ws://${window.location.host}/ws/${clientID}`);
+        ws.onopen = (e) => {
+          retryCount = 0;
+          retryDelay = 1000;
+          console.log("Connected to Websocket...");
+          let querydata = {
+            from: clientID,
+            msg: {
+              message: "CyberChat Index Page Connected",
+              status: 200
+            }
+          }
+          ws.send(wsData('connect to server', querydata))
+        }
+        //process server feedback
+        ws.onmessage = (e) => {
+          let serverData = JSON.parse(e.data);
+          console.log(serverData.wsevent_server);
+          switch (serverData.wsevent_server) {
+            case "after_connect":
+              console.log(serverData.data.message.msg.data);
+              break;
+            case "status_from_server":
+              ProcessServerStatus(serverData);
+              break;
+          }
+
+        }
+        ws.onerror = (e) => {
+          console.log("Websocket error observed: " + e)
+        }
+        ws.onclose = (e) => {
+          console.log("Connect closed");
+          let closeReason = e.code === 1006 ? ", Server Shutdown ?" : ", Reason: " + e.reason
+          console.log("Code: " + e.code + closeReason);
+          if (retryCount < maxRetryLimit) {
+            setTimeout(reconnect, retryDelay);
+            retryDelay = Math.min(maxRetryDelay, retryDelay * 2); // 延迟翻倍，但不超过最大延迟
+          }
+
+        }
+
+      }
+      function reconnect() {
+        retryCount++;
+        console.log(`Attempting to reconnect... (Attempt: ${retryCount})`);
+        connectWebSocket();
+      }
+      connectWebSocket();
+
     });
   </script>
   <meta charset="UTF-8" />

@@ -1,12 +1,8 @@
-import json
-import os
-import yaml
+import os,yaml
+from modules.global_sets import roleconf
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-roles_path = os.path.join(dir_path, 'config', 'roles.json')
 yaml_dir_path = os.path.join(dir_path, 'config', 'personas')
-with open(roles_path, 'r', encoding='utf-8') as f:
-    roleconf = json.load(f)
 
 class airole:
     def __init__(self, roleselector,username,usergender):

@@ -1,0 +1,13 @@
+words:
+  - <Picture_Scene>
+results:
+  - Intense Battle Action
+  - Explicit Sex
+  - Specific Location
+lora:
+  explicit sex: lewd, horny expression, panels layout:1.2, panels composition:1.2, speed lines overlayer
+summary_prompt: |
+  You are an subject summarization robot, you will judge if the contexts provided involves : intense battle actions or explicit sex or specific locations,
+  Select only ONE of the following options for output, Do not output any reasoning process. 
+  Options: <Intense Battle Action>, <Explicit Sex>, <Specific Location>
+  if nothing matched, output <Speech Content> only, Do not output any reasoning process, Do not output any thoughts too.

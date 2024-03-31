@@ -4,8 +4,10 @@ from openai import OpenAI
 import random
 import re
 from airole_creator import airole,summaryTool
-from embedding_chroma import chroma_embedding
-
+from modules.embedding_chroma import chroma_embedding
+from modules.global_sets import (
+    sentiment_pipeline
+)
 # set the shared settings
 dir_path = os.path.dirname(os.path.realpath(__file__))
 openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
@@ -24,7 +26,7 @@ except Exception as e:
 
 #the main room class
 class chatRoom:
-    def __init__(self,user_sys_name,ai_role_name,username, usergender, user_facelooks, conid, conversation_id, sentiment_pipeline, send_msg_websocket:callable = None) -> None:
+    def __init__(self,user_sys_name,ai_role_name,username, usergender, user_facelooks, conid, conversation_id, send_msg_websocket:callable = None) -> None:
         self.send_msg_websocket = send_msg_websocket
         self.user_sys_name = user_sys_name
         self.ai_role_name = ai_role_name

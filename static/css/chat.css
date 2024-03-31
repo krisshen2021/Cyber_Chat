@@ -558,7 +558,8 @@ body {
   padding: 0 0.5rem;
   color: antiquewhite;
 }
-.voiceController{
+
+.voiceController {
   justify-content: center;
   align-items: center;
   flex-direction: row;
@@ -575,10 +576,12 @@ body {
   align-self: flex-end;
 
 }
-.voicePlayer{
+
+.voicePlayer {
   display: none;
 }
-.voiceController:hover{
+
+.voiceController:hover {
   background: #cb5118;
 
 }
@@ -621,8 +624,8 @@ body {
 
 .avatar {
   border-radius: 50%;
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   min-width: 80px;
   min-height: 80px;
   background-size: cover;
@@ -646,7 +649,7 @@ body {
   line-height: 24px;
   font-weight: 400;
   font-style: normal;
-  gap:1rem;
+  gap: 1rem;
 }
 
 .message-comic {
@@ -786,7 +789,19 @@ input[type="checkbox"]:checked::after {
 input[type="checkbox"]:hover {
   cursor: pointer;
 }
+.stream_text{
+  color:rgb(196, 196, 196)
+}
 
+.stream_hint {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.3rem;
+  background-color: rgb(123, 27, 227);
+  margin-left: 5px;
+  vertical-align: text-bottom;
+  border-radius: 2px;
+}
 
 /*Media Query Blocks*/
 @media only screen and (max-width: 430px) {

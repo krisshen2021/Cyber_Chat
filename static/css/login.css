@@ -30,6 +30,7 @@ body{
     min-height: 100%;
     background-image: url('/static/images/bg/chatroom.png');
     background-size:cover;
+    background-position: center;
     background-repeat: no-repeat;
 }
 .settings{
@@ -42,8 +43,56 @@ body{
     background-color: rgba(21, 21, 21, 0.164);
     backdrop-filter: blur(10px);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    gap:5px
+    gap:5px;
+    z-index: 1;
 }
+
+.user_profile_edit_menu {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.3rem;
+  margin-right: auto;
+  background: #eee;
+  color:black;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  display: none;
+}
+.user_profile_edit_menu svg{
+  cursor: pointer;
+}
+.user_profile_drop_menu {
+  position: absolute;
+  left: 1px;
+  top: 3rem;
+  width: auto;
+  height: auto;
+  min-width: 5rem;
+  background-color: #eee;
+  display: none;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  border-radius: 0.3rem;
+  padding:1rem;
+}
+.profile_submenu{
+  width:max-content;
+  font-size: 1rem;
+  font-weight: 500;
+  color:#280149;
+  border-radius: 0.3rem;
+  padding: 0.3rem;
+}
+.profile_submenu:hover{
+  color: antiquewhite;
+  background: #280149;
+  cursor: pointer;
+}
+
 .top_buttons{
     padding: 5px 20px;
     font-size: 1rem;
@@ -60,6 +109,8 @@ body{
   gap:5px;
   /* margin-right: 20px; */
 }
+
+
 .user_profile .profile_avatar{
   width: 35px;
   height: 35px;
@@ -87,8 +138,8 @@ body{
 
 .headline {
     padding: 40px 0px;
-    text-shadow: 0px 0px 10px #000000;
-    font-size: 3rem;
+    text-shadow: 0px 0px 5px  #000000;
+    font-size: 6rem;
     font-family: 'Philosopher', sans-serif; 
 }
 
@@ -189,10 +240,10 @@ body{
     align-items: center;
     flex-direction: column;
     backdrop-filter: blur(5px); 
-    z-index: 9999;
+    z-index: 2;
     overflow-y: auto;
   }
-  #signup_form, #login_form{
+  #signup_form, #login_form, #edit_profile_form{
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -205,7 +256,7 @@ body{
     width: 300px;
   }
 
-  #signup_form .top_bar, #login_form .top_bar{
+  #signup_form .top_bar, #login_form .top_bar, #edit_profile_form .top_bar{
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -216,17 +267,17 @@ body{
     border-top-right-radius: 1rem;
     
   }
-  #signup_form .top_bar .title, #login_form .top_bar .title{
+  #signup_form .top_bar .title, #login_form .top_bar .title, #edit_profile_form .title{
     font-weight: 600;
     font-size: 1.3rem;
     color: rgba(52, 7, 104, 0.7);
   }
 
-  #signup_form #sign_author, #login_form #login_author{
+  #signup_form #sign_author, #login_form #login_author, #edit_profile_form #edit_author{
     display: none;
   }
 
-  #signup_form .main_body, #login_form .main_body{
+  #signup_form .main_body, #login_form .main_body, #edit_profile_form .main_body{
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -239,7 +290,7 @@ body{
     padding: 10px;
     
   }
-  #signup_form .info_row{
+  #signup_form .info_row, #edit_profile_form .info_row{
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -247,7 +298,7 @@ body{
     gap:10px;
     width: 100%;
   }
-  #sign_profile, #sign_charlooks{
+  #sign_profile, #sign_charlooks,#edit_profile, #edit_charlooks{
     display: flex;
     width: 60%;
     flex-direction: column;
@@ -255,26 +306,26 @@ body{
     align-items: center;
     gap:10px
   }
-  #sign_charlooks{
+  #sign_charlooks, #edit_charlooks{
     width: 40%;
     background: rgba(61, 29, 87, 0.9);
     border-radius: 10px;
     padding: 15px;
   }
-  #signup_form label, #login_form label, #sign_charlooks span, #sign_charlooks label{
+  #signup_form label, #login_form label, #edit_profile_form label, #sign_charlooks span, #sign_charlooks label, #edit_charlooks span, #edit_charlooks label{
     align-self: flex-start;
     font-size: 0.8rem;
   }
-  #sign_charlooks span{
+  #sign_charlooks span, #edit_charlooks span{
     font-size: 1rem;
   }
-  #sign_profile .gender_bar{
+  #sign_profile .gender_bar, #edit_profile .gender_bar{
     display: flex;
     flex-direction: row;
     width: 100%;
     align-items: center;
   }
-  #sign_profile .gender_bar label{
+  #sign_profile .gender_bar label,#edit_profile .gender_bar label{
     align-self: center;
   }
   .btn_close{
@@ -325,8 +376,23 @@ body{
     font-size: 1rem;
     font-weight: 600;
     padding: 0.2rem 1rem;
-    color:#280149
+    color:#280149;
+    cursor: pointer;
   }
+
+  .Main_footer{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 10px;
+    background-color: rgba(39, 13, 71, 0.401);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    gap:5px;
+    margin-top: auto;
+}
   /*Media Query Blocks*/
   @media only screen and (max-width: 360px){
     .avatarbk {
@@ -346,7 +412,7 @@ body{
     }
     .headline {
       padding: 1rem 0px;
-      text-shadow: 0px 0px 2rem #000000;
+      text-shadow: 0px 0px 5px #000000;
       font-size: 2.5rem;
       font-family: 'Philosopher', sans-serif; 
     }
@@ -369,13 +435,13 @@ body{
       padding-top: 2rem;
       padding-bottom: 2rem;
     }
-    #login_form, #signup_form{
+    #login_form, #signup_form, #edit_profile_form{
       width: calc(100vw - 4rem);
     }
-    #signup_form .info_row{
+    #signup_form .info_row, #edit_profile_form .info_row{
       flex-direction: column;
     }
-    #sign_profile, #sign_charlooks{
+    #sign_profile, #sign_charlooks, #edit_profile, #edit_charlooks{
       width: 100%;
     }
   }
@@ -388,7 +454,7 @@ body{
     }
     .headline {
       padding: 1rem 0px;
-      text-shadow: 0px 0px 2rem #000000;
+      text-shadow: 0px 0px 5px #000000;
       font-size: 2.5rem;
       font-family: 'Philosopher', sans-serif; 
     }
@@ -411,13 +477,13 @@ body{
       padding-top: 2rem;
       padding-bottom: 2rem;
     }
-    #login_form, #signup_form{
+    #login_form, #signup_form, #edit_profile_form{
       width: calc(100vw - 4rem);
     }
-    #signup_form .info_row{
+    #signup_form .info_row, #edit_profile_form .info_row{
       flex-direction: column;
     }
-    #sign_profile, #sign_charlooks{
+    #sign_profile, #sign_charlooks, #edit_profile, #edit_charlooks{
       width: 100%;
     }
 }

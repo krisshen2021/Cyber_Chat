@@ -1006,6 +1006,7 @@
 
       function Server_Connected() {
         if (initialstate) {
+          let statechk = checkSendState();
           $("#message_box").empty();
           $(".comic_msgbox").empty();
           $("#comicMode").prop("checked", false).trigger("change");
@@ -1019,6 +1020,7 @@
             ai_role_name: ai_role_name,
             conid: conid,
             ai_is_uncensored: ai_is_uncensored,
+            istranslated: statechk.transswitcher,
             windowRatio: windowSize.ratio,
             socket_id: socket.id,
           };
@@ -1389,7 +1391,7 @@
             <span class="smallFonts">Comic Mode</span>
           </div>
           <div>
-            <input type="checkbox" id="translateSwitcher" checked />
+            <input type="checkbox" id="translateSwitcher"/>
             <span class="smallFonts">EN/CN</span>
           </div>
           <select id="model_selector" class="topSelect" name="chatParam">
