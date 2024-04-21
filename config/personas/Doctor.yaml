@@ -47,9 +47,9 @@ chapters:
 generate_dynamic_picture: false
 prompt_to_load: "Alpaca_Doctor"
 completions_data:
-  max_tokens: 300
-  top_k: 20
-  top_p: 1
+  max_tokens: 200
+  top_k: 50
+  top_p: 0.8
   min_p: 0.05
   tfs: 0.95
   frequency_penalty: 0

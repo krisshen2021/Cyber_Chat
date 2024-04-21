@@ -18,8 +18,8 @@ restruct_prompt: |
       combined final prompt: 'selfie, take photo, <|default_bg|>'
       
 prmopt_fixed_prefix: |
-  (Manga style:1.2, Anime, raw, photorealistic:1.12, masterpiece:1.21, best quality, high resolution:1.1), (fine lineart:1.22)
+  Raw, photorealistic, masterpiece, best quality
 prmopt_fixed_suffix: |
-  (extremely detailed, intricate details, highres), (8K, UHD)
+  extremely detailed, intricate details, high resolution, 8K, UHD
 nagetive_prompt: |
   badhandv4, watermark, logo, text, words, numbers, ugly, duplicate, morbid, mutilated, out of frame, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly, blurry, bad anatomy, bad proportions, extra limbs, cloned face, out of frame, ugly, extra limbs, bad anatomy, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, mutated hands, fused fingers, too many fingers, long neck, extra head, cloned head, extra body, cloned body, watermark. extra hands, clone hands, weird hand, weird finger, weird arm, (mutation:1.3), (deformed:1.3), (blurry), (bad anatomy:1.1), (bad proportions:1.2), out of frame, ugly, (long neck:1.2), (worst quality:1.4), (low quality:1.4), (monochrome:1.1), text, signature, watermark, bad anatomy, disfigured, jpeg artifacts, 3d max, grotesque, desaturated, blur, haze, polysyndactyly

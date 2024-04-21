@@ -72,15 +72,17 @@ async def initialize():
     await load_config()
     await multitask()
     
-def getGlobalConfig(data:str):
+async def getGlobalConfig(data:str):
     """
     get global config for app start,
     type of data:
     'config_data','roleconf','sentiment_pipeline','bulb'
     """
     if data == "config_data":
+        await load_config()
         return config_data
     if data == "roleconf":
+        await load_roles()
         return roleconf
     if data == "sentiment_pipeline":
         return sentiment_pipeline

@@ -41,14 +41,14 @@ description: |
 
   <|Current Chapter|>
 char_looks: |
-  a lady, 30yo, (long red hair:1.13), (green eye:1.10), huge saggy breasts, giant saggy breats, giant nipple, (slim waist:1.17)
+  a girl, elizabeth_olsen, <lora:elizabeth_olsen_v3:0.55>, 30yo, (long red hair:1.13), (green eye:1.10), saggy breasts, (slim waist:1.17)
 char_outfit:
   normal: "roomy NASA white space suit"
-  underwear: "((black sheer bra)), ((black sheer underwear)), hard nipples, soaked vagina, red public hair"
-  bdsm: "black leather BDSM suit, studded collar, ball gag, neck chains, (exposed pussy:1.35),((public hair:1.23))"
-  naked: "((naked:1.3)), nude,(exposed pussy:1.3), ((scars:1.22)), ((red public hair))"
+  underwear: "solo:1.33, ((black sheer bra)), ((black sheer underwear)), hard nipples, soaked vagina, public hairs:1.34, futuristic Space station environment:1.4, control room, spacecraft cabin"
+  bdsm: "solo:1.33, black leather BDSM suit, studded collar, ball gag, neck chains, (exposed pussy:1.35),((public hairs:1.23)), futuristic Space station environment:1.4, control room, spacecraft cabin"
+  naked: "solo:1.33, ((naked:1.3)), nude,(exposed pussy:1.3), ((scars:1.22)), ((public hairs)), futuristic Space station environment:1.4, control room, spacecraft cabin"
 char_avatar: |
-  Perfect face portrait, (close-up:1.1), a lady, 30yo, solo, (long red hair:1.13), (green eye:1.10), (<|emotion|> expression:1.14), roomy NASA white space suit
+  elizabeth_olsen, <lora:elizabeth_olsen_v3:0.68>, Perfect face portrait, (close-up:1.1), a girl, 30yo, solo, (long red hair:1.13), (green eye:1.10), (<|emotion|> expression:1.14), roomy NASA white space suit
 default_bg: |
   futuristic, Space station, control room, spacecraft cabin, Mars outside the window
 firstwords: |
@@ -66,16 +66,16 @@ max_seq_len: 4096
 generate_dynamic_picture: true
 prompt_to_load: "Alpaca_RP"
 completions_data:
-  max_tokens: 200
+  max_tokens: 150
   top_k: 50
   top_p: 0.8
   min_p: 0.05
   tfs: 0.95
-  frequency_penalty: 0.3
-  presence_penalty: 1.22
+  frequency_penalty: 0
+  presence_penalty: 1.15
   repetition_penalty: 1.05
   mirostat_mode: 0
   mirostat_tau: 1.5
   mirostat_eta: 0.1
   temperature_last: true
-  smoothing_factor: 0.33
+  smoothing_factor: 0.22

@@ -46,7 +46,7 @@ room_state = {
     "mirostat_eta": 0.1,
     "temperature_last": True,
     "ban_eos_token": False,
-    "custom_stop_string": ["\nInput:", "\n[", "\n(", "\n### Input:"],
+    "custom_stop_string": ["\nInput:", "\n[", "\n(", "\n### Input:", "</s>", "assistant"],
     "temperature": 1,
     # other settings
     "translate": True,

@@ -261,11 +261,14 @@ class CoreGenerator:
         lora_prompt = self.lora.get(loraword.strip(), "")
         logging.info(f"Lora :{lora_prompt}")
         if self.state["char_outfit"] is not None:
-            char_outfit = self.state["char_outfit"][lora_prompt]
-            if char_outfit is not None:
-                char_looks = f"{self.state['char_looks']},{char_outfit}"
-                lora_prompt = ""
-                logging.info(char_looks)
+            if lora_prompt in self.state["char_outfit"]:
+                char_outfit = self.state["char_outfit"][lora_prompt]
+                if char_outfit is not None:
+                    char_looks = f"{self.state['char_looks']},{char_outfit}"
+                    lora_prompt = ""
+                    logging.info(char_looks)
+                else:
+                    char_looks = self.state['char_looks']
             else:
                 char_looks = self.state['char_looks']
         else:

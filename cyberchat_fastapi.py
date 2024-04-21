@@ -6,8 +6,10 @@ from modules.global_sets_async import (
     database,
     conn_ws_mgr,
     logging,
+    roleconf,
+    config_data
 )
-import uvicorn, uuid, json, markdown, base64, httpx, os, time
+import uvicorn, uuid, json, markdown, os
 from datetime import datetime
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import Response
@@ -18,8 +20,8 @@ from modules.PydanticModels import EnterRoom, as_form
 from fastapimode.room_uncensor_websocket import chatRoom_unsensor
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 
-config_data = None
-roleconf = None
+config_data = config_data
+roleconf = roleconf
 templates_path = os.path.join(project_root, "templates")
 static_path = os.path.join(project_root, "static")
 templates = Jinja2Templates(directory=templates_path)
@@ -58,9 +60,10 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 @app.on_event("startup")
 async def startup():
     # await initialize()
-    global roleconf, config_data
-    roleconf = getGlobalConfig("roleconf")
-    config_data = getGlobalConfig("config_data")
+    # global roleconf, config_data
+    # roleconf = getGlobalConfig("roleconf")
+    # config_data = getGlobalConfig("config_data")
+    pass
 
 
 def non_cache_response(template_name: str, context: dict) -> Response:
@@ -78,6 +81,7 @@ async def initpage(request: Request):
     cookid_server = uuid.uuid1()
     ainame = []
     ai_is_uncensored = []
+    roleconf = await getGlobalConfig("roleconf")
     for key, value in roleconf.items():
         ainame.append(value.get("ai_name"))
         ai_is_uncensored.append(value.get("if_uncensored"))
@@ -103,7 +107,7 @@ async def enter_room(
     facelooks = json.loads(form_data.facelooks)
     space = " " if facelooks["hair_color"] != "" else ""
     ends = ", " if facelooks["beard"] != "" else ""
-    facelooks_str = f"one {facelooks['gender']}, {facelooks['race']}, {facelooks['age']}, {facelooks['hair_color']}{space}{facelooks['hair_style']}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
+    facelooks_str = f"One {facelooks['gender']}, {facelooks['race']}, {facelooks['age']}, {facelooks['hair_color']}{space}{facelooks['hair_style']}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
     context = form_data.dict()
     context["facelooks"] = facelooks_str
     context["request"] = request

@@ -3,17 +3,35 @@
     "if_uncensored": "Yes",
     "ai_name": "Steve Jobs",
     "ai_speaker": "zh-CN-YunyeNeural",
+    "ai_speaker_en": "en_stevejobs"
+  },
+  "FrenchBullDog": {
+    "if_uncensored": "Yes",
+    "ai_name": "Doggie Bean",
+    "ai_speaker": "zh-CN-XiaomoNeural",
+    "ai_speaker_en": "en_female_04"
+  },
+  "Celebrity": {
+    "if_uncensored": "Yes",
+    "ai_name": "Keanu",
+    "ai_speaker": "zh-CN-XiaomoNeural",
+    "ai_speaker_en": "en_keanu"
+  },
+  "Coder": {
+    "if_uncensored": "Yes",
+    "ai_name": "CTO Dolphin",
+    "ai_speaker": "zh-CN-YunyeNeural",
     "ai_speaker_en": "en-US-JasonNeural"
   },
   "SlaveDream": {
     "if_uncensored": "Yes",
-    "ai_name": "Mary",
+    "ai_name": "Elizabeth",
     "ai_speaker": "zh-cn_qingling",
     "ai_speaker_en": "en_female_04"
   },
   "FreakGirl": {
     "if_uncensored": "Yes",
-    "ai_name": "Celia",
+    "ai_name": "Emma",
     "ai_speaker": "zh-CN-XiaomoNeural",
     "ai_speaker_en": "en_female_04"
   },
@@ -25,20 +43,15 @@
   },
   "CyberBitch": {
     "if_uncensored": "Yes",
-    "ai_name": "Cyborg Cynthia",
+    "ai_name": "Anya",
     "ai_speaker": "zh-CN-XiaomoNeural",
     "ai_speaker_en": "en_female_01"
   },
   "IELTSTeacher": {
     "if_uncensored": "Yes",
-    "ai_name": "Mrs. Taylor",
+    "ai_name": "Lilith",
     "ai_speaker": "zh-CN-XiaomoNeural",
     "ai_speaker_en": "en_female_04"
-  },
-  "Coder": {
-    "if_uncensored": "Yes",
-    "ai_name": "CTO Dolphin",
-    "ai_speaker": "zh-CN-YunyeNeural",
-    "ai_speaker_en": "en-US-JasonNeural"
   }
+  
 }
