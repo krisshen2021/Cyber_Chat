@@ -7,7 +7,7 @@ from modules.global_sets_async import (
     conn_ws_mgr,
     logging,
     roleconf,
-    config_data
+    config_data,
 )
 import uvicorn, uuid, json, markdown, os
 from datetime import datetime
@@ -19,7 +19,10 @@ from modules.user_validation import Validation
 from modules.PydanticModels import EnterRoom, as_form
 from fastapimode.room_uncensor_websocket import chatRoom_unsensor
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
+from fastapimode.Generator_websocket import load_prompts
+from modules.payload_state import sd_payload
 
+sd_payload = sd_payload
 config_data = config_data
 roleconf = roleconf
 templates_path = os.path.join(project_root, "templates")
@@ -51,6 +54,16 @@ def markdownText(text):
         extensions=["pymdownx.superfences", "pymdownx.highlight", "pymdownx.magiclink"],
     )
     return Mtext
+
+
+async def load_prompt_param():
+    (
+        _,
+        prompt_prefix,
+        prompt_suffix,
+        nagetive_prompt,
+    ) = await load_prompts("prompts.yaml")
+    return prompt_prefix, prompt_suffix, nagetive_prompt
 
 
 app = FastAPI(title="cyberchat")
@@ -105,9 +118,12 @@ async def enter_room(
     form_data: EnterRoom = Depends(as_form(EnterRoom), use_cache=False),
 ):
     facelooks = json.loads(form_data.facelooks)
-    space = " " if facelooks["hair_color"] != "" else ""
+    if facelooks["hair_color"] != "":
+        hair_style = f"({facelooks['hair_color']} {facelooks['hair_style']}:1.13)"
+    else:
+        hair_style = f"({facelooks['hair_style']}:1.13)"
     ends = ", " if facelooks["beard"] != "" else ""
-    facelooks_str = f"One {facelooks['gender']}, {facelooks['race']}, {facelooks['age']}, {facelooks['hair_color']}{space}{facelooks['hair_style']}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
+    facelooks_str = f"(One {facelooks['gender']}:1.15), {facelooks['race']}, {facelooks['age']}, {hair_style}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
     context = form_data.dict()
     context["facelooks"] = facelooks_str
     context["request"] = request
@@ -353,9 +369,7 @@ async def change_model(client_msg, client_id):
     userCurrentRoom.conversation_id = client_id
     unloadresp = await userCurrentRoom.my_generate.tabby_server.unload_model()
     if unloadresp:
-        response = await userCurrentRoom.my_generate.tabby_server.load_model(
-            name=model
-        )
+        response = await userCurrentRoom.my_generate.tabby_server.load_model(name=model)
         if response == "Success":
             await send_status({"name": "initialization", "msg": "DONE"}, client_id)
         data_to_send = {"message": response}
@@ -432,7 +446,9 @@ async def reply_user_query(client_msg, client_id):
     userCurrentRoom.state["translate"] = True if transswitcher else False
     userCurrentRoom.windowRatio = round(float(windowRatio), 2)
     userCurrentRoom.iscreatedynimage = iscreatedynimage
-    ai_text,voice_text,speaker,speak_tone,avatar_url,dynamic_picture = await userCurrentRoom.server_reply(usermsg)
+    ai_text, voice_text, speaker, speak_tone, avatar_url, dynamic_picture = (
+        await userCurrentRoom.server_reply(usermsg)
+    )
     user_ai_text = markdownText(ai_text)
     data_to_send = {
         "message": user_ai_text,
@@ -441,10 +457,9 @@ async def reply_user_query(client_msg, client_id):
         "speaker": speaker,
         "speak_tone": speak_tone,
         "ttskey": userCurrentRoom.ttskey,
-        "dynamic_picture": dynamic_picture
+        "dynamic_picture": dynamic_picture,
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
-
 
 
 # Regen message
@@ -458,7 +473,9 @@ async def regen_msg(client_msg, client_id):
     userCurrentRoom.state["translate"] = True if transswitcher else False
     userCurrentRoom.windowRatio = round(float(windowRatio), 2)
     userCurrentRoom.iscreatedynimage = iscreatedynimage
-    ai_text,voice_text,speaker,speak_tone,avatar_url,dynamic_picture = await userCurrentRoom.regen_msg(usermsg)
+    ai_text, voice_text, speaker, speak_tone, avatar_url, dynamic_picture = (
+        await userCurrentRoom.regen_msg(usermsg)
+    )
     user_ai_text = markdownText(ai_text)
     data_to_send = {
         "message": user_ai_text,
@@ -467,17 +484,20 @@ async def regen_msg(client_msg, client_id):
         "speaker": speaker,
         "speak_tone": speak_tone,
         "ttskey": userCurrentRoom.ttskey,
-        "dynamic_picture": dynamic_picture
+        "dynamic_picture": dynamic_picture,
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
+
 # Exit room
-async def exit_room(client_msg,client_id):
+async def exit_room(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     username = userCurrentRoom.username
     data_to_send = {"message": f"{username}, See you later"}
     await send_datapackage("exit_room_success", data_to_send, client_id)
 
+
+# Xtts audio
 async def xtts_audio_generate(client_msg, client_id):
     text = client_msg["data"]["text"]
     speaker_wav = client_msg["data"]["speaker_wav"]
@@ -485,37 +505,82 @@ async def xtts_audio_generate(client_msg, client_id):
     voice_uid = client_msg["data"]["voice_uid"]
     url = config_data["openai_api_chat_base"] + "/xtts"
     server_url = config_data["xtts_api_base"]
-    audio_data = await tabby_fastapi.xtts_audio(url,text,speaker_wav,language,server_url)
+    audio_data = await tabby_fastapi.xtts_audio(
+        url, text, speaker_wav, language, server_url
+    )
     data_to_send = {"audio_data": audio_data, "voice_uid": voice_uid}
     if audio_data:
         await send_datapackage("xtts_result", data_to_send, client_id)
     else:
         logging.info("Failed to get audio data")
 
+
+# preview avatar
+async def preview_avatar(client_info, client_id):
+    facelooks = client_info["data"]["facelooks"]
+    avatar_for = client_info["data"]["avatar_for"]
+    if facelooks["hair_color"] != "":
+        hair_style = f"({facelooks['hair_color']} {facelooks['hair_style']}:1.13)"
+    else:
+        hair_style = f"({facelooks['hair_style']}:1.13)"
+    ends = ", " if facelooks["beard"] != "" else ""
+    facelooks_str = f"(One {facelooks['gender']}:1.15), {facelooks['race']}, {facelooks['age']}, {hair_style}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
+    logging.info(facelooks_str)
+    prompt_prefix, prompt_suffix, nagetive_prompt = await load_prompt_param()
+    prompt_str = (
+        prompt_prefix
+        + ", (face portrait:1.12), "
+        + facelooks_str
+        + ", plain orange-color background, "
+        + prompt_suffix
+    )
+    sd_payload["negative_prompt"] = nagetive_prompt
+    sd_payload["hr_negative_prompt"] = nagetive_prompt
+    sd_payload["hr_prompt"] = prompt_str
+    sd_payload["prompt"] = prompt_str
+    sd_payload["enable_hr"] = True
+    sd_payload["hr_scale"] = 1.25
+    sd_payload["steps"] = 20
+    sd_payload["width"] = 512
+    sd_payload["height"] = 512
+    # logging.info(sd_payload)
+    avatar_data = await tabby_fastapi.SD_image(payload=sd_payload)
+    avatar_data_url = "data:image/png;base64,"+avatar_data
+    data_to_send = {"avatar_img":avatar_data_url, "avatar_for":avatar_for}
+    if avatar_data:
+        await send_datapackage("preview_avatar_result", data_to_send, client_id)
+    else:
+        logging.info("Failed to get avatar image")
+
+
 ws_events_dict = {
     "connect to server": client_connect,
-    "client_login":client_login,
-    "client_signup":client_signup,
-    "client_edit_profile":client_edit_profile,
-    "initialize_room":initialize_room,
-    "restart":restart_room,
-    "change_model":change_model,
-    "change_instruction":change_instruction,
-    "change_SD_Model":change_SD_Model,
-    "save_chat_history":save_chat_history,
-    "load_chat_history":load_chat_history,
-    "send_user_msg":reply_user_query,
-    "regen_msg":regen_msg,
-    "exit_room":exit_room,
-    "xtts_audio_gen": xtts_audio_generate
+    "client_login": client_login,
+    "client_signup": client_signup,
+    "client_edit_profile": client_edit_profile,
+    "initialize_room": initialize_room,
+    "restart": restart_room,
+    "change_model": change_model,
+    "change_instruction": change_instruction,
+    "change_SD_Model": change_SD_Model,
+    "save_chat_history": save_chat_history,
+    "load_chat_history": load_chat_history,
+    "send_user_msg": reply_user_query,
+    "regen_msg": regen_msg,
+    "exit_room": exit_room,
+    "xtts_audio_gen": xtts_audio_generate,
+    "preview_avatar": preview_avatar,
 }
-async def execute_function(event_name, *args,**kwargs ):
+
+
+async def execute_function(event_name, *args, **kwargs):
     func = ws_events_dict.get(event_name)
     if func:
-        await func(*args,**kwargs)
+        await func(*args, **kwargs)
     else:
         logging.info("No matched function")
-        
+
+
 # Websocket connection process
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
@@ -524,9 +589,10 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             while True:
                 client_info = await conn_ws_mgr.getdata(client_id)
                 ws_event_client = client_info["wsevent_client"]
-                await execute_function(ws_event_client,client_info,client_id)
+                await execute_function(ws_event_client, client_info, client_id)
         except WebSocketDisconnect:
             logging.info(f"<< Client >> {client_id} disconnected")
+
 
 if __name__ == "__main__":
     host = "127.0.0.1"

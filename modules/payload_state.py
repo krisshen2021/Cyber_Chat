@@ -1,6 +1,9 @@
 from modules.global_sets_async import config_data
 
 sd_payload = {
+    "hr_negative_prompt":"",
+    "negative_prompt":"",
+    "hr_prompt":"",
     "hr_scale": 1.5,
     "hr_second_pass_steps": 20,
     "seed": -1,

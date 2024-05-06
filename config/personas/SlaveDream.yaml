@@ -66,7 +66,7 @@ max_seq_len: 4096
 generate_dynamic_picture: true
 prompt_to_load: "Alpaca_RP"
 completions_data:
-  max_tokens: 150
+  max_tokens: 180
   top_k: 50
   top_p: 0.8
   min_p: 0.05

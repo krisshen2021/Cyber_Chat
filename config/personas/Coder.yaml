@@ -24,9 +24,9 @@ description: |
 
   <|Current Chapter|>
 char_looks: |
-  One male, American, ((middle aged)), ((fat)), (Short brown curly hair:1.13), (brown eye:1.10), Big nose, Bushy beard, (Gray hoodie:1.18)
+  (One man:1.15), American, ((middle aged)), ((fat)), (Short brown hair:1.13), (brown eye:1.10), Big nose, Bushy beard, (Gray hoodie:1.18)
 char_avatar: |
-  One male, American, ((middle aged)), ((fat)), Perfect face portrait, look at viewer, (close-up:1), (Short brown curly hair:1.13), (brown eye:1.10), (<|emotion|> expression:1.14), Big nose, Bushy beard, (Gray hoodie:1.18)
+  (One man:1.25), American, ((middle aged)), ((fat)), face portrait, look at viewer, (close-up:1), (Short brown hair:1.13), (brown eye:1.10), (<|emotion|> expression:1.14), Big nose, Bushy beard, (Gray hoodie:1.13)
 default_bg: |
   futuristic studio room, computer desk, monitor, keyboard, mouse, New York night view outside the window
 firstwords: |

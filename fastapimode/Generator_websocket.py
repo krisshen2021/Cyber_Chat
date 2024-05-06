@@ -44,10 +44,10 @@ async def load_prompts(file_path):
     async with aiofiles.open(yaml_file_path, "r") as file:
         content = await file.read()
         prompts_data = yaml.safe_load(content)
-        restruct_prompt = prompts_data["restruct_prompt"]
-        prmopt_fixed_prefix = prompts_data["prmopt_fixed_prefix"]
-        prmopt_fixed_suffix = prompts_data["prmopt_fixed_suffix"]
-        nagetive_prompt = prompts_data["nagetive_prompt"]
+        restruct_prompt = prompts_data["restruct_prompt"].strip("\n")
+        prmopt_fixed_prefix = prompts_data["prmopt_fixed_prefix"].strip("\n")
+        prmopt_fixed_suffix = prompts_data["prmopt_fixed_suffix"].strip("\n")
+        nagetive_prompt = prompts_data["nagetive_prompt"].strip("\n")
     return restruct_prompt, prmopt_fixed_prefix, prmopt_fixed_suffix, nagetive_prompt
 
 

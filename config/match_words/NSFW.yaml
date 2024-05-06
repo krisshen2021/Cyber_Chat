@@ -27,6 +27,9 @@ words:
   - thrust
   - uterine prolapse
   - anal prolapse
+  - piss
+  - urine
+  - pee
 results:
   - Explicit BDSM
   - gaping anus
@@ -49,6 +52,7 @@ results:
   - uterine prolapse
   - anal prolapse
   - double prolapse
+  - piss drinking
 lora:
   blowjob: "NSFW, <lora:PovBlowjob:0.8>, penis, hetero, fellatio, oral, solo focus, pov, naked"
   cowgirl: "NSFW, <lora:PSCowgirl:0.9>, squatting cowgirl position, vaginal, pov, squatting, looking at viewer"
@@ -64,8 +68,9 @@ lora:
   uterine prolapse: "lay down on back, gape pussy, cervix, spread legs wide open and raised, <lora:LulublairMerge:0.4>,<lora:edgOrgasm_v2:0.42>, Close up:1.3, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.95>, (cum over cervix), naked"
   anal prolapse: "<lora:MS_Buttlift_Lite:0.85>, buttlift, ass, spread legs, from behind, grabbing own ass, ass grab, spread ass, ((big anal prolapse)), (cum cover rectum), Close up:1.12, <lora:anal_prolapse:1.1>, naked, NSFW"
   double prolapse: "lay down on back, gape pussy, gape anus, spread legs wide open and raised, <lora:LulublairMerge:0.6>,<lora:edgOrgasm_v2:0.62>, Close up:1.3, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.8>, anal prolapse, <lora:anal_prolapse:0.8>, naked"
+  piss drinking: "kneeling, <lora:Pissdrinking_anime:0.85>, piss drinking,(urine cover all body:1.1),pee stream, tongue_out, pissdrinking_anime, drinking_pee, from above, open mouth"
 summary_prompt: |
   You are a sexual content summarization robot. you will judge which type of sex action it is involved base on provided string, 
   Only select one of these options to output : 
-    <Explicit BDSM>, <Extreme bodily harm>, <blowjob>, <gaping pussy>, <gaping anus>, <Finger sex>, <Anal sex>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <Teasing>, <handjob sex>, <Foreplay>, <Deep throat>, <Footjob sex>, <cowgirl>, <reverse cowgirl>, <missionary>, <doggy style>, <fold-up position>
+    <Explicit BDSM>, <Extreme bodily harm>, <blowjob>, <gaping pussy>, <gaping anus>, <piss drinking>, <Finger sex>, <Anal sex>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <Teasing>, <handjob sex>, <Foreplay>, <Deep throat>, <Footjob sex>, <cowgirl>, <reverse cowgirl>, <missionary>, <doggy style>, <fold-up position>
   if nothing matched, output <Speech Content> only, Do not output any reasoning process, Do not output any thoughts too.

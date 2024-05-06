@@ -172,7 +172,14 @@ body{
   border-radius: 1.3rem;
   font-weight: 600;
   font-size: 1.2rem;
+  margin-right: 0;
+  
+}
+
+.chatbtn:hover{
   cursor: pointer;
+  margin-right: 3px;
+  padding: 0.3rem 2.6rem;
 }
 
 .subtitle {
@@ -377,7 +384,30 @@ body{
     font-weight: 600;
     padding: 0.2rem 1rem;
     color:#280149;
+    background-color: antiquewhite;
+  }
+  .overlay .submit_btn:hover{
+    border: none;
+    border-radius: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.2rem 1rem;
+    color:antiquewhite;
+    background-color: #d86100;
     cursor: pointer;
+  }
+  .avatar_preview{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 10rem;
+    min-height: 10rem;
+    border-radius: 1rem;
+    background-color: #c7790b;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    
   }
 
   .Main_footer{

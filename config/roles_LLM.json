@@ -37,7 +37,7 @@
   },
   "Doctor": {
     "if_uncensored": "Yes",
-    "ai_name": "Dr. Samantha",
+    "ai_name": "Samantha",
     "ai_speaker": "zh-cn_yufeihong",
     "ai_speaker_en": "en_female_02"
   },
@@ -50,6 +50,12 @@
   "IELTSTeacher": {
     "if_uncensored": "Yes",
     "ai_name": "Lilith",
+    "ai_speaker": "zh-CN-XiaomoNeural",
+    "ai_speaker_en": "en_female_04"
+  },
+  "HumanPet": {
+    "if_uncensored": "Yes",
+    "ai_name": "Hannah",
     "ai_speaker": "zh-CN-XiaomoNeural",
     "ai_speaker_en": "en_female_04"
   }

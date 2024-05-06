@@ -374,6 +374,61 @@
       login_status = false;
     }
 
+    function preview_avatar(looks) {
+      let user_looks;
+      let avatar_for;
+      switch (looks) {
+        case "signup":
+          avatar_for = "signup";
+          user_looks = {
+            gender: $("input[name='sign_gender']:checked").val(),
+            race: $("#sign_char_race").val(),
+            age: $("#sign_char_age").val(),
+            hair_color: $("#sign_char_hair_color").val(),
+            hair_style: $("#sign_char_hair_style").val(),
+            eye_color: $("#sign_char_eye_color").val(),
+            beard: $("#sign_char_beard").val(),
+          };
+          $("#sign_charlooks").find(".avatar_preview").html("Generating...");
+          break;
+        case "edit":
+          avatar_for = "edit";
+          user_looks = {
+            gender: $("input[name='edit_gender']:checked").val(),
+            race: $("#edit_char_race").val(),
+            age: $("#edit_char_age").val(),
+            hair_color: $("#edit_char_hair_color").val(),
+            hair_style: $("#edit_char_hair_style").val(),
+            eye_color: $("#edit_char_eye_color").val(),
+            beard: $("#edit_char_beard").val(),
+          };
+          $("#edit_charlooks").find(".avatar_preview").html("Generating...");
+          break;
+      }
+      console.log(user_looks);
+      let querydata = {
+        facelooks: user_looks,
+        avatar_for: avatar_for,
+      };
+      ws.send(wsData("preview_avatar", querydata))
+
+    }
+
+    function changePreviewAvatar(serverData) {
+      let bkImg = serverData.data["avatar_img"];
+      let avatar_for = serverData.data["avatar_for"];
+      switch (avatar_for) {
+        case "signup":
+          $("#sign_charlooks").find(".avatar_preview").html("");
+          $("#sign_charlooks").find(".avatar_preview").css({ "background-image": "url(" + bkImg + ")" });
+          break;
+        case "edit":
+          $("#edit_charlooks").find(".avatar_preview").html("");
+          $("#edit_charlooks").find(".avatar_preview").css({ "background-image": "url(" + bkImg + ")" });
+          break;
+      }
+    }
+
     function start_chat() {
       if (login_status) {
         var form = $("<form></form>");
@@ -438,7 +493,7 @@
       //role list constructor
       $.each(roleslist_items, function (index, item) {
         let roleContent = $("#roleholder_template").find(".roleholder").clone(true);
-        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item + '/none.png?nocache='+timestamp+')')
+        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item + '/none.png?nocache=' + timestamp + ')')
           .on('mouseover', function () {
             gsap.to($(this), { duration: 0.3, backgroundSize: "130%", ease: "back", });
           })
@@ -518,10 +573,18 @@
       let btn_login_submit = $("#btn_login_submit");
       let btn_start_chat = $("#btn_start_chat");
       let btn_edit_profile_submit = $("#btn_edit_submit");
+      let btn_avatar_preview_signup = $("#btn_avatar_preview_signup");
+      let btn_avatar_preview_edit = $("#btn_avatar_preview_edit");
       btn_signup_submit.on("click", sign_up);
       btn_login_submit.on("click", login);
       btn_start_chat.on("click", start_chat);
-      btn_edit_profile_submit.on('click', profile_submit)
+      btn_edit_profile_submit.on('click', profile_submit);
+      btn_avatar_preview_signup.on('click', function () {
+        preview_avatar("signup");
+      });
+      btn_avatar_preview_edit.on('click', function () {
+        preview_avatar("edit");
+      });
 
       //password view switcher
       let icon_pwd_types = $(".pwd_type");
@@ -618,7 +681,7 @@
       const maxRetryLimit = 10;
       let retryDelay = 1000;
       const maxRetryDelay = 60000;
-      
+
       function connectWebSocket() {
 
         ws = new WebSocket(`ws://${window.location.host}/ws/${clientID}`);
@@ -645,6 +708,9 @@
               break;
             case "status_from_server":
               ProcessServerStatus(serverData);
+              break;
+            case "preview_avatar_result":
+              changePreviewAvatar(serverData);
               break;
           }
 
@@ -789,6 +855,10 @@
             </div>
             <div id="sign_charlooks">
               <span>Portrait Looks</span>
+              <div class="avatar_preview">preview</div>
+              <button type="button" class="submit_btn" id="btn_avatar_preview_signup">
+                Preview avatar
+              </button>
               <label for="sign_char_race">Race</label>
               <select id="sign_char_race">
                 <option value="Asian">Asian</option>
@@ -919,6 +989,10 @@
             </div>
             <div id="edit_charlooks">
               <span>Portrait Looks</span>
+              <div class="avatar_preview">preview</div>
+              <button type="button" class="submit_btn" id="btn_avatar_preview_edit">
+                Preview avatar
+              </button>
               <label for="edit_char_race">Race</label>
               <select id="edit_char_race">
                 <option value="Asian">Asian</option>
