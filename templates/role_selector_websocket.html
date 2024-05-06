@@ -83,7 +83,7 @@
     }
 
     function toggleInputs(input_switcher) {
-      let all_inputs = $("input, button");
+      let all_inputs = $("input, button, select, option");
       all_inputs.each(function () {
         if (input_switcher) {
           $(this).removeAttr("disabled");
@@ -405,6 +405,7 @@
           $("#edit_charlooks").find(".avatar_preview").html("Generating...");
           break;
       }
+      toggleInputs(false);
       console.log(user_looks);
       let querydata = {
         facelooks: user_looks,
@@ -417,14 +418,17 @@
     function changePreviewAvatar(serverData) {
       let bkImg = serverData.data["avatar_img"];
       let avatar_for = serverData.data["avatar_for"];
+      toggleInputs(true);
       switch (avatar_for) {
         case "signup":
           $("#sign_charlooks").find(".avatar_preview").html("");
           $("#sign_charlooks").find(".avatar_preview").css({ "background-image": "url(" + bkImg + ")" });
+          gsap.from($("#sign_charlooks").find(".avatar_preview"), { duration: 0.3, backgroundSize: "140%",  });
           break;
         case "edit":
           $("#edit_charlooks").find(".avatar_preview").html("");
           $("#edit_charlooks").find(".avatar_preview").css({ "background-image": "url(" + bkImg + ")" });
+          gsap.from($("#edit_charlooks").find(".avatar_preview"), { duration: 0.3, backgroundSize: "140%",  });
           break;
       }
     }
