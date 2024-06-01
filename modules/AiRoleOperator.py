@@ -51,14 +51,18 @@ class AiRoleOperator:
     async def create_role(airole_dict: dict):
         result = database.create_new_airole(airole_dict)
         if result is True:
-            bg_img, avatar_img = await AiRoleOperator.buildup_images(airole_dict=airole_dict)
+            bg_img, avatar_img = await AiRoleOperator.buildup_images(
+                airole_dict=airole_dict
+            )
         return (result, bg_img, avatar_img)
 
     @staticmethod
     async def modify_role(airole_dict: dict):
         result = database.edit_airole(airole_dict)
         if result is True:
-            bg_img, avatar_img = await AiRoleOperator.buildup_images(airole_dict=airole_dict)
+            bg_img, avatar_img = await AiRoleOperator.buildup_images(
+                airole_dict=airole_dict
+            )
         return (result, bg_img, avatar_img)
 
     @staticmethod
@@ -69,12 +73,26 @@ class AiRoleOperator:
     @staticmethod
     async def list_all_airole():
         result = database.list_data_airole(
-            ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored"]
+            [
+                "Name",
+                "Ai_name",
+                "Ai_speaker",
+                "Ai_speaker_en",
+                "is_Uncensored",
+                "Creator_ID",
+            ]
         )
         rolelist = {}
         for row in result:
             roleName = row.pop("Name")
-            rolelist[roleName] = row
+            rolelist[roleName] = {}
+            rolelist[roleName]["if_uncensored"] = (
+                "Yes" if row["is_Uncensored"] == 1 else "No"
+            )
+            rolelist[roleName]["ai_name"] = row["Ai_name"]
+            rolelist[roleName]["ai_speaker"] = row["Ai_speaker"]
+            rolelist[roleName]["ai_speaker_en"] = row["Ai_speaker_en"]
+            rolelist[roleName]["Creator_ID"] = row["Creator_ID"]
         return rolelist
 
     @staticmethod

@@ -51,7 +51,7 @@ async def load_roles():
     # global roleconf
     # roleconf = json.loads(contents)
     result = database.list_data_airole(
-        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored"]
+        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored", "Creator_ID"]
     )
     rolelist = {}
     for row in result:
@@ -61,6 +61,7 @@ async def load_roles():
         rolelist[roleName]['ai_name'] = row['Ai_name']
         rolelist[roleName]['ai_speaker'] = row['Ai_speaker']
         rolelist[roleName]['ai_speaker_en'] = row['Ai_speaker_en']
+        rolelist[roleName]['Creator_ID'] = row['Creator_ID']
     global roleconf
     roleconf = rolelist.copy()
 

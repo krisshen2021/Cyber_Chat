@@ -524,8 +524,8 @@ async def preview_avatar(client_info, client_id):
     sd_payload["height"] = 512
     # logging.info(sd_payload)
     avatar_data = await tabby_fastapi.SD_image(payload=sd_payload)
-    avatar_data_url = "data:image/png;base64,"+avatar_data
-    data_to_send = {"avatar_img":avatar_data_url, "avatar_for":avatar_for}
+    avatar_data_url = "data:image/png;base64," + avatar_data
+    data_to_send = {"avatar_img": avatar_data_url, "avatar_for": avatar_for}
     if avatar_data:
         await send_datapackage("preview_avatar_result", data_to_send, client_id)
     else:

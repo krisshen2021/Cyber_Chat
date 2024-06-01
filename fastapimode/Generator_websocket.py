@@ -2,13 +2,12 @@
 from fastapimode.sys_path import project_root
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 import json, os, tiktoken, yaml, httpx, aiofiles
-from modules.global_sets_async import logging, config_data, timeout
+from modules.global_sets_async import logging, config_data, timeout, prompt_params
 from modules.payload_state import completions_data
 
 dir_path = project_root
 
 
-# dir_path = os.path.dirname(os.path.realpath(__file__))
 # get models
 async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key: str):
     headers = {
@@ -29,26 +28,13 @@ async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key
                 model_name = datas["id"]
                 return model_name
             else:
-                logging.info("请求失败，状态码：", response.status_code)
+                logging.info(f"请求失败，状态码：{response.status_code}")
     except Exception as e:
         logging.info(
             f"Error to get model from {api_base}, \nPlease set up the {model_type} model address in config.yml before chatting"
         )
     finally:
         return model_name
-
-
-# Load prompts for generating'
-async def load_prompts(file_path):
-    yaml_file_path = os.path.join(dir_path, "config", "prompts", file_path)
-    async with aiofiles.open(yaml_file_path, "r") as file:
-        content = await file.read()
-        prompts_data = yaml.safe_load(content)
-        restruct_prompt = prompts_data["restruct_prompt"].strip("\n")
-        prmopt_fixed_prefix = prompts_data["prmopt_fixed_prefix"].strip("\n")
-        prmopt_fixed_suffix = prompts_data["prmopt_fixed_suffix"].strip("\n")
-        nagetive_prompt = prompts_data["nagetive_prompt"].strip("\n")
-    return restruct_prompt, prmopt_fixed_prefix, prmopt_fixed_suffix, nagetive_prompt
 
 
 # Load Words dictionary
@@ -123,12 +109,10 @@ class CoreGenerator:
         self.vocabulary, self.resultslist, self.lora, self.summary_prompt = (
             await load_vocabulary(self.state["match_words_cata"])
         )
-        (
-            self.restruct_prompt,
-            self.prmopt_fixed_prefix,
-            self.prmopt_fixed_suffix,
-            self.nagetive_prompt,
-        ) = await load_prompts("prompts.yaml")
+        self.restruct_prompt = prompt_params["restruct_prompt"]
+        self.prmopt_fixed_prefix = prompt_params["prmopt_fixed_prefix"]
+        self.prmopt_fixed_suffix = prompt_params["prmopt_fixed_suffix"]
+        self.nagetive_prompt = prompt_params["nagetive_prompt"]
         self.restruct_prompt = self.restruct_prompt.replace(
             "<|default_bg|>", self.state["env_setting"]
         )
@@ -268,11 +252,11 @@ class CoreGenerator:
                     lora_prompt = ""
                     logging.info(char_looks)
                 else:
-                    char_looks = self.state['char_looks']
+                    char_looks = self.state["char_looks"]
             else:
-                char_looks = self.state['char_looks']
+                char_looks = self.state["char_looks"]
         else:
-            char_looks = self.state['char_looks']
+            char_looks = self.state["char_looks"]
         if self.send_msg_websocket is not None:
             await self.send_msg_websocket(
                 {"name": "chatreply", "msg": "Generating Scene Image"},
@@ -289,7 +273,7 @@ class CoreGenerator:
         return image
 
     # Process for chat message
-    async def message_process(self, system_prompt:str):
+    async def message_process(self, system_prompt: str):
         response_text = await self.get_chat_response(
             system_prompt=system_prompt, stream=True
         )
