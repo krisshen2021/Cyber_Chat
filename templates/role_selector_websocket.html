@@ -198,7 +198,7 @@
 
     function profile_submit() {
       if (form_validation("edit_profile_form")) {
-        toggleInputs(false);
+
         let user_looks = {
           gender: $("input[name='edit_gender']:checked").val(),
           race: $("#edit_char_race").val(),
@@ -215,11 +215,10 @@
           email: $("#edit_email").val(),
           gender: $("input[name='edit_gender']:checked").val(),
           facelooks: user_looks,
-          // socket_id: socket.id
         };
         console.log(querydata);
-        // socket.emit("client_edit_profile", { data: querydata });
-        ws.send(wsData("client_edit_profile", querydata))
+        ws.send(wsData("client_edit_profile", querydata));
+        toggleInputs(false);
       }
     }
 
@@ -405,13 +404,14 @@
           $("#edit_charlooks").find(".avatar_preview").html("Generating...");
           break;
       }
-      toggleInputs(false);
+
       console.log(user_looks);
       let querydata = {
         facelooks: user_looks,
         avatar_for: avatar_for,
       };
-      ws.send(wsData("preview_avatar", querydata))
+      ws.send(wsData("preview_avatar", querydata));
+      toggleInputs(false);
 
     }
 
@@ -423,12 +423,12 @@
         case "signup":
           $("#sign_charlooks").find(".avatar_preview").html("");
           $("#sign_charlooks").find(".avatar_preview").css({ "background-image": "url(" + bkImg + ")" });
-          gsap.from($("#sign_charlooks").find(".avatar_preview"), { duration: 0.3, backgroundSize: "140%",  });
+          gsap.from($("#sign_charlooks").find(".avatar_preview"), { duration: 0.3, backgroundSize: "140%", });
           break;
         case "edit":
           $("#edit_charlooks").find(".avatar_preview").html("");
           $("#edit_charlooks").find(".avatar_preview").css({ "background-image": "url(" + bkImg + ")" });
-          gsap.from($("#edit_charlooks").find(".avatar_preview"), { duration: 0.3, backgroundSize: "140%",  });
+          gsap.from($("#edit_charlooks").find(".avatar_preview"), { duration: 0.3, backgroundSize: "140%", });
           break;
       }
     }

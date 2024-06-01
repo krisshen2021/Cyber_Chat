@@ -1,4 +1,10 @@
-from modules.global_sets_async import database, sentiment_pipeline, bulb, logging
+from modules.global_sets_async import (
+    database,
+    sentiment_pipeline,
+    bulb,
+    logging,
+    prompt_templates,
+)
 import os, random, re, io, base64, yaml, copy, markdown, asyncio, aiofiles
 from fastapimode.airole_creator_uncensor_websocket import airole
 from modules.TranslateAsync import AsyncTranslator
@@ -7,24 +13,18 @@ from PIL import Image
 from modules.payload_state import sd_payload, room_state
 from fastapimode.sys_path import project_root
 
-
-# dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path = project_root
 image_payload = sd_payload
 state = room_state
 
+
 # Read prompt template
 async def get_instr_temp_list():
-    prompt_template_path = os.path.join(
-    dir_path, "config", "prompts", "prompt_template.yaml"
-    )
-    async with aiofiles.open(prompt_template_path, mode="r") as f:
-        contents = await f.read()
-        prompts_templates = yaml.safe_load(contents)
-        instr_temp_list = []
-        for templates in prompts_templates.keys():
-            instr_temp_list.append(templates)
-        return prompts_templates, instr_temp_list
+    instr_temp_list = []
+    for templates in prompt_templates.keys():
+        instr_temp_list.append(templates)
+    return instr_temp_list
+
 
 myTrans = AsyncTranslator()
 
@@ -37,6 +37,17 @@ def markdownText(text):
     return Mtext
 
 
+def create_userfaceprompt(facelooks: dict):
+    if facelooks["hair_color"] != "":
+        hair_style = f"{facelooks['hair_color']} {facelooks['hair_style']}"
+    else:
+        hair_style = f"{facelooks['hair_style']}"
+    ends = ", " if facelooks["beard"] != "" else ""
+    facelooks_prompt = f"(One {facelooks['gender']}:1.22), {facelooks['race']}, {facelooks['age']}, ({hair_style}:1.15), {facelooks['eye_color']}{ends}{facelooks['beard']}"
+    facelooks_desc = f"One {facelooks['gender']}, {facelooks['race']}, {facelooks['age']}, {hair_style}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
+    return {"prompt": facelooks_prompt, "desc": facelooks_desc}
+
+
 # the main room class
 class chatRoom_unsensor:
     def __init__(
@@ -45,7 +56,7 @@ class chatRoom_unsensor:
         ai_role_name: str = None,
         username: str = None,
         usergender: str = None,
-        user_facelooks: str = None,
+        user_facelooks: dict = None,
         conversation_id: str = None,
         windowRatio: float = None,
         send_msg_websocket: callable = None,
@@ -55,7 +66,7 @@ class chatRoom_unsensor:
         self.ai_role_name = ai_role_name
         self.username = username
         self.usergender = usergender
-        self.user_facelooks = user_facelooks
+        self.user_facelooks = create_userfaceprompt(user_facelooks)
         self.windowRatio = windowRatio
         self.iscreatedynimage = False
         self.conversation_id = conversation_id
@@ -79,7 +90,6 @@ class chatRoom_unsensor:
         )
         self.my_generate = CoreGenerator()
         self.initialization_start = False
-    
 
     async def initialize(self):
         self.initialization_start = True
@@ -89,7 +99,7 @@ class chatRoom_unsensor:
         )
         self.initialization_start = False
         return True
-    
+
     async def serialize_data(self):
         # ai role data
         await self.ai_role.async_init()
@@ -103,9 +113,10 @@ class chatRoom_unsensor:
         await self.create_chat_generator()
         # char enviroment arts
         await self.create_envart()
-        
+
     async def preparation(self):
-        self.prompts_templates, self.instr_temp_list = await get_instr_temp_list()
+        self.prompts_templates = prompt_templates
+        self.instr_temp_list = await get_instr_temp_list()
         self.iscreatedynimage = self.ai_role.generate_dynamic_picture
         self.state["prompts_templates"] = self.prompts_templates
         self.state["conversation_id"] = self.conversation_id
@@ -115,7 +126,7 @@ class chatRoom_unsensor:
         self.state["generate_dynamic_picture"] = self.ai_role.generate_dynamic_picture
         self.state["match_words_cata"] = self.ai_role.match_words_cata
         self.state["char_outfit"] = self.ai_role.char_outfit
-        
+
     async def start_stats(self):
         self.chathistory.clear()
         self.messages = ""
@@ -128,7 +139,7 @@ class chatRoom_unsensor:
         self.G_voice_text = self.extract_text(self.G_ai_text)
         self.ai_speakers = self.ai_role.ai_speaker
         self.speaker_tone = "affectionate"
-        
+
     async def create_custom_comp_data(self):
         self.state["custom_stop_string"] = state["custom_stop_string"] + [
             f"{self.username}:",
@@ -156,9 +167,10 @@ class chatRoom_unsensor:
             self.state["temperature_last"] = self.ai_role.custom_comp_data[
                 "temperature_last"
             ]
-            self.state["smoothing_factor"] = self.ai_role.custom_comp_data["smoothing_factor"]
-    
-        
+            self.state["smoothing_factor"] = self.ai_role.custom_comp_data[
+                "smoothing_factor"
+            ]
+
     async def create_chat_generator(self):
         await self.my_generate.async_init(
             state=self.state,
@@ -177,14 +189,17 @@ class chatRoom_unsensor:
             self.state["prompt_template"] = self.ai_role.prompt_to_load
             self.my_generate.state["prompt_template"] = self.ai_role.prompt_to_load
             self.my_generate.get_rephrase_template()
-        
+
     async def create_envart(self):
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Preparing A.I Role..."},
             self.conversation_id,
         )
         bgimg_base64 = await self.gen_bgImg(
-            self.my_generate, self.state["char_looks"], self.state["env_setting"], char_outfit=self.state["char_outfit"]
+            self.my_generate,
+            self.state["char_looks"],
+            self.state["env_setting"],
+            char_outfit=self.state["char_outfit"],
         )
         self.bkImg = "data:image/png;base64," + bgimg_base64
         await self.send_msg_websocket(
@@ -193,7 +208,7 @@ class chatRoom_unsensor:
         )
         bgimg_base64 = await self.gen_bgImg(
             self.my_generate,
-            self.user_facelooks,
+            self.user_facelooks['prompt'],
             self.state["env_setting"],
             False,
             True,
@@ -214,18 +229,18 @@ class chatRoom_unsensor:
         )
         userlooksprefix = ", Perfect face portrait, (close-up:0.8)"
         avatarimg_base64 = await self.gen_avatar(
-            self.my_generate, self.user_facelooks + userlooksprefix, "smile", False
+            self.my_generate, self.user_facelooks['prompt'] + userlooksprefix, "smile", False
         )
         self.G_userlooks_url = "data:image/png;base64," + avatarimg_base64
         return True
-    
+
     # assistant functions
     async def create_role_desc_msg(self, istranslated: bool = True):
         self.char_desc_system = (
             self.ai_role.ai_system_role.replace(
                 r"<|Current Chapter|>", self.ai_role.chapters[0]["name"]
             )
-            .replace(r"<|User_Looks|>", self.user_facelooks)
+            .replace(r"<|User_Looks|>", self.user_facelooks['desc'])
             .replace(r"{{char}}", self.ainame)
             .replace(r"{{user}}", self.username)
         )
@@ -245,7 +260,6 @@ class chatRoom_unsensor:
         else:
             self.chathistory[0] = self.messages
 
-
     @staticmethod
     def save_image_sync(image_data, file_path):
         image_save = Image.open(io.BytesIO(base64.b64decode(image_data)))
@@ -261,7 +275,13 @@ class chatRoom_unsensor:
         )
 
     async def gen_bgImg(
-        self, tabbyGen, char_looks, bgImgstr, is_save=True, is_user=False, char_outfit=None
+        self,
+        tabbyGen,
+        char_looks,
+        bgImgstr,
+        is_save=True,
+        is_user=False,
+        char_outfit=None,
     ):
         logging.info(f">>>The window ratio[w/h]: {self.windowRatio}")
         tabbyGen.image_payload["enable_hr"] = True
@@ -269,14 +289,16 @@ class chatRoom_unsensor:
         if not is_user:
             if char_outfit is not None:
                 char_looks = f"{char_looks},{char_outfit['normal']}"
-                
+
             tabbyGen.image_payload["hr_scale"] = 1.5
             tabbyGen.image_payload["width"] = 1024 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload["height"] = int(
                 tabbyGen.image_payload["width"] / self.windowRatio
             )
             tabbyGen.image_payload["steps"] = 20
-            portraitprefix = ", body portrait, looking directly at the camera, front view"
+            portraitprefix = (
+                ", body portrait, looking directly at the camera, front view"
+            )
             logging.info(
                 f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             )
@@ -298,7 +320,7 @@ class chatRoom_unsensor:
 
         bkImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
-            char_looks=f'({char_looks})' + portraitprefix,
+            char_looks=f"({char_looks})" + portraitprefix,
             env_setting=bgImgstr,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
         )
@@ -342,8 +364,7 @@ class chatRoom_unsensor:
             await self.save_image_async(avatarImg, img_path)
 
         return avatarImg
-    
-    
+
     # Main Server Reply Blocks
     async def server_reply(self, usermsg):
         input_text = (
@@ -468,18 +489,18 @@ class chatRoom_unsensor:
             self.G_avatar_url,
             self.dynamic_picture,
         )
-    
+
     # Assistant functions for server reply function
     async def async_sentiment_analysis(self, text):
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, lambda: self.sentiment_pipeline(text))
         return result
-    
+
     @staticmethod
     def is_chinese(text):
         clean_text = re.sub(r"[^\u4e00-\u9fa5]", "", text)
         return len(clean_text) > 0
-    
+
     @staticmethod
     def extract_text(text):
         clean_text = re.sub(r"\*[^*]*\*", "", text)
@@ -491,8 +512,8 @@ class chatRoom_unsensor:
         pt = template.replace(r"<|character|>", ainame).replace(r"<|user|>", username)
         self.my_generate.get_rephrase_template()
         return pt
-    
-    # Regeneration reply 
+
+    # Regeneration reply
     async def regen_msg(self, user_msg):
         # for i in range(2):
         #     del self.chathistory[-1]
@@ -513,8 +534,8 @@ class chatRoom_unsensor:
             speak_tone,
             avatar_url,
             dynamic_picture,
-        )  
-        
+        )
+
     # Chat history operations
     def chat_history_op(self, operation: str):
         if operation == "save":
@@ -581,4 +602,3 @@ class chatRoom_unsensor:
                 username=self.user_sys_name, character=self.ai_role_name
             )
             return delete_result
-        

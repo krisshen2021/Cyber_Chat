@@ -6,8 +6,8 @@ from modules.global_sets_async import (
     database,
     conn_ws_mgr,
     logging,
-    roleconf,
     config_data,
+    prompt_params,
 )
 import uvicorn, uuid, json, markdown, os
 from datetime import datetime
@@ -19,12 +19,10 @@ from modules.user_validation import Validation
 from modules.PydanticModels import EnterRoom, as_form
 from fastapimode.room_uncensor_websocket import chatRoom_unsensor
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
-from fastapimode.Generator_websocket import load_prompts
 from modules.payload_state import sd_payload
 
 sd_payload = sd_payload
 config_data = config_data
-roleconf = roleconf
 templates_path = os.path.join(project_root, "templates")
 static_path = os.path.join(project_root, "static")
 templates = Jinja2Templates(directory=templates_path)
@@ -54,16 +52,6 @@ def markdownText(text):
         extensions=["pymdownx.superfences", "pymdownx.highlight", "pymdownx.magiclink"],
     )
     return Mtext
-
-
-async def load_prompt_param():
-    (
-        _,
-        prompt_prefix,
-        prompt_suffix,
-        nagetive_prompt,
-    ) = await load_prompts("prompts.yaml")
-    return prompt_prefix, prompt_suffix, nagetive_prompt
 
 
 app = FastAPI(title="cyberchat")
@@ -117,15 +105,7 @@ async def enter_room(
     request: Request,
     form_data: EnterRoom = Depends(as_form(EnterRoom), use_cache=False),
 ):
-    facelooks = json.loads(form_data.facelooks)
-    if facelooks["hair_color"] != "":
-        hair_style = f"({facelooks['hair_color']} {facelooks['hair_style']}:1.13)"
-    else:
-        hair_style = f"({facelooks['hair_style']}:1.13)"
-    ends = ", " if facelooks["beard"] != "" else ""
-    facelooks_str = f"(One {facelooks['gender']}:1.15), {facelooks['race']}, {facelooks['age']}, {hair_style}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
     context = form_data.dict()
-    context["facelooks"] = facelooks_str
     context["request"] = request
     timestamp = generate_timestamp()
     context["timestamp"] = timestamp
@@ -526,16 +506,15 @@ async def preview_avatar(client_info, client_id):
     ends = ", " if facelooks["beard"] != "" else ""
     facelooks_str = f"(One {facelooks['gender']}:1.15), {facelooks['race']}, {facelooks['age']}, {hair_style}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
     logging.info(facelooks_str)
-    prompt_prefix, prompt_suffix, nagetive_prompt = await load_prompt_param()
     prompt_str = (
-        prompt_prefix
+        prompt_params["prmopt_fixed_prefix"]
         + ", (face portrait:1.12), "
         + facelooks_str
         + ", plain orange-color background, "
-        + prompt_suffix
+        + prompt_params["prmopt_fixed_suffix"]
     )
-    sd_payload["negative_prompt"] = nagetive_prompt
-    sd_payload["hr_negative_prompt"] = nagetive_prompt
+    sd_payload["negative_prompt"] = prompt_params["nagetive_prompt"]
+    sd_payload["hr_negative_prompt"] = prompt_params["nagetive_prompt"]
     sd_payload["hr_prompt"] = prompt_str
     sd_payload["prompt"] = prompt_str
     sd_payload["enable_hr"] = True

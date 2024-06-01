@@ -98,7 +98,7 @@
     var username = "{{nickname}}";
     var user_sys_name = "{{username}}";
     var user_avatar = "{{avatar}}";
-    var user_facelooks = "{{facelooks}}";
+    var user_facelooks = JSON.parse('{{ facelooks | safe }}');
     var usergender = "{{gender}}";
     var credits = "{{credits}}";
     var ai_role_name = "{{ai_role_name}}";

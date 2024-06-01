@@ -11,12 +11,16 @@ logging = logger
 dir_path = Path(__file__).parents[1]
 config_path = os.path.join(dir_path, "config", "config.yml")
 database_path = os.path.join(dir_path, "database", "cyberchat.db")
+prompt_temp_path = os.path.join(dir_path, "config","prompts","prompt_template.yaml")
+prompt_param_path = os.path.join(dir_path, "config","prompts","prompts.yaml")
 roles_path = os.path.join(dir_path, "config", "roles_LLM.json")
 
 conn_ws_mgr = ConnectionManager()
 database = SQLiteDB(database_path)
 chatRoomList = {}
 Remove_pending_roomlist = {}
+prompt_templates = None
+prompt_params = None
 config_data = None
 roleconf = None
 sentiment_pipeline = None
@@ -28,13 +32,37 @@ async def load_config():
         contents = await f.read()
     global config_data
     config_data = yaml.safe_load(contents)
-
-
-async def load_roles():
-    async with aiofiles.open(roles_path, mode="r", encoding="utf-8") as f:
+    
+async def load_prompts_template():
+    async with aiofiles.open(prompt_temp_path, mode="r") as f:
         contents = await f.read()
+    global prompt_templates
+    prompt_templates = yaml.safe_load(contents)
+    
+async def load_prompts_params():
+    async with aiofiles.open(prompt_param_path, mode="r") as f:
+        contents = await f.read()
+    global prompt_params
+    prompt_params = yaml.safe_load(contents)
+    
+async def load_roles():
+    # async with aiofiles.open(roles_path, mode="r", encoding="utf-8") as f:
+    #     contents = await f.read()
+    # global roleconf
+    # roleconf = json.loads(contents)
+    result = database.list_data_airole(
+        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored"]
+    )
+    rolelist = {}
+    for row in result:
+        roleName = row.pop("Name")
+        rolelist[roleName] = {}
+        rolelist[roleName]['if_uncensored'] = "Yes" if row["is_Uncensored"] == 1 else "No"
+        rolelist[roleName]['ai_name'] = row['Ai_name']
+        rolelist[roleName]['ai_speaker'] = row['Ai_speaker']
+        rolelist[roleName]['ai_speaker_en'] = row['Ai_speaker_en']
     global roleconf
-    roleconf = json.loads(contents)
+    roleconf = rolelist.copy()
 
 
 async def gen_sentimodel(model_path):
@@ -64,9 +92,11 @@ async def conn_bulb(yeelight_url):
 
 async def multitask():
     roles = asyncio.create_task(load_roles())
+    func_prompt_temp = asyncio.create_task(load_prompts_template())
+    func_prompt_param = asyncio.create_task(load_prompts_params())
     sentiment = asyncio.create_task(gen_sentimodel(config_data["sentimodelpath"]))
     bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
-    await asyncio.gather(roles,sentiment,bulbstatus)
+    await asyncio.gather(roles,func_prompt_temp,func_prompt_param, sentiment,bulbstatus)
     
 async def initialize():
     await load_config()
@@ -84,6 +114,12 @@ async def getGlobalConfig(data:str):
     if data == "roleconf":
         await load_roles()
         return roleconf
+    if data == "prompt_templates":
+        await load_prompts_template()
+        return prompt_templates
+    if data == "prompt_params":
+        await load_prompts_params()
+        return prompt_params
     if data == "sentiment_pipeline":
         return sentiment_pipeline
     if data == "bulb":
