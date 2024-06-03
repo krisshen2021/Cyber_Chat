@@ -83,7 +83,7 @@
     }
 
     function toggleInputs(input_switcher) {
-      let all_inputs = $("input, button, select, option");
+      let all_inputs = $("input, button, select, option, textarea");
       all_inputs.each(function () {
         if (input_switcher) {
           $(this).removeAttr("disabled");
@@ -124,6 +124,14 @@
             scale: 0.5,
             ease: "elastic",
           });
+        } else if (form_id == "createchar") {
+          $("#create_character_form").css("display", "flex");
+          gsap.from("#create_character_form", {
+            duration: 1,
+            opacity: 0,
+            scale: 0.5,
+            ease: "elastic",
+          });
         }
       } else {
         let all_hints = $(".form_hint");
@@ -133,11 +141,25 @@
         $("#signup_form").hide();
         $("#login_form").hide();
         $("#edit_profile_form").hide();
+        $("#create_character_form").hide();
         $("#sign_author").hide().html("");
         $("#login_author").hide().html("");
+        $("#createchar_author").hide().html("");
         let signup_inputs = $("#signup_form").find("input");
         let login_inputs = $("#login_form").find("input");
+        let editprofile_inputs = $("#edit_profile_form").find("input");
+        let createchar_inputs = $("#create_character_form").find("input");
         signup_inputs.each(function () {
+          if ($(this).attr("type") != "radio") {
+            $(this).val("");
+          }
+        });
+        editprofile_inputs.each(function () {
+          if ($(this).attr("type") != "radio") {
+            $(this).val("");
+          }
+        });
+        createchar_inputs.each(function () {
           if ($(this).attr("type") != "radio") {
             $(this).val("");
           }
@@ -415,6 +437,50 @@
 
     }
 
+    //wizard function
+    function createchar_wizard(task) {
+      let wizardstr;
+      switch (task) {
+        case "char_persona":
+          wizardstr = $("#char_persona").val();
+          break;
+        case "char_looks":
+          wizardstr = $("#char_persona").val();
+          break;
+        case "char_outfit":
+          wizardstr= "{% raw %}{{char}}'s persona:\n{% endraw %}"+$("#char_persona").val();+"\n\n{% raw %}{{char}}'s looks:\n{% endraw %}"+$("#char_looks").val();
+          break;
+        case "user_persona":
+          wizardstr = $("#user_persona").val();
+          break;
+        case "prologue":
+          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}" + $("#user_persona").val();
+          break;
+        case "chapters":
+          wizardstr = $("#story_prologue").val();
+          break;
+        case "chat_bg":
+          wizardstr = $("#story_prologue").val();
+          break;
+        case "firstwords":
+          wizardstr = $("#story_prologue").val();
+          break;
+      }
+      if (wizardstr.length > 0) {
+        // console.log(wizardstr);
+        let querydata = {
+          wizardstr: wizardstr,
+          task: task,
+        };
+        ws.send(wsData("createchar_wizard", querydata));
+        toggleInputs(false);
+      } else {
+        alert("Please enter a valid input");
+        return;
+      }
+
+    }
+
     function changePreviewAvatar(serverData) {
       let bkImg = serverData.data["avatar_img"];
       let avatar_for = serverData.data["avatar_for"];
@@ -431,6 +497,29 @@
           gsap.from($("#edit_charlooks").find(".avatar_preview"), { duration: 0.3, backgroundSize: "140%", });
           break;
       }
+    }
+    //wizard update function
+    function createcharWizardUpdate(serverData) {
+      let wizardstr = serverData.data["result"];
+      let task = serverData.data["task"];
+      switch (task) {
+        case "char_persona":
+          $("#char_persona").val(wizardstr);
+          break;
+        case "char_looks":
+          $("#char_looks").val(wizardstr);
+          break;
+        case "prologue":
+          $("#story_prologue").val(wizardstr);
+          break;
+        case "chapters":
+          $("#story_chapters").val(wizardstr);
+          break;
+        case "firstwords":
+          $("#story_firstwords").val(wizardstr);
+          break;
+      }
+      toggleInputs(true);
     }
 
     function start_chat() {
@@ -475,6 +564,9 @@
         let target = $(e.target).data("endpoint");
         if (target == "editprofile") {
           toggle_forms("editprofile");
+        }
+        if (target == "createchar") {
+          toggle_forms("createchar");
         }
       });
       $(".user_profile_edit_menu")
@@ -545,6 +637,25 @@
         stagger: 0.2,
       });
 
+      //Textarea auto indent functions
+      $('textarea').on('keydown', function (event) {
+        if (event.key === 'Enter') {
+          const textarea = this;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const value = textarea.value;
+
+          const currentLine = value.substring(0, start).split('\n').pop();
+          const indent = currentLine.match(/^\s*/)[0];
+
+          const newValue = value.substring(0, start) + '\n' + indent + value.substring(end);
+          textarea.value = newValue;
+
+          textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
+
+          event.preventDefault();
+        }
+      });
 
 
       //button event functions
@@ -563,6 +674,7 @@
       let btn_signup_form_close = $("#btn_signup_form_close");
       let btn_login_form_close = $("#btn_login_form_close");
       let btn_edit_form_close = $("#btn_profile_form_close");
+      let btn_character_form_close = $("#btn_character_form_close");
       btn_signup_form_close.on("click", function () {
         toggle_forms("close");
       });
@@ -572,6 +684,9 @@
       btn_edit_form_close.on("click", function () {
         toggle_forms("close");
       });
+      btn_character_form_close.on("click", function () {
+        toggle_forms("close");
+      });
 
       let btn_signup_submit = $("#btn_signup_submit");
       let btn_login_submit = $("#btn_login_submit");
@@ -579,6 +694,14 @@
       let btn_edit_profile_submit = $("#btn_edit_submit");
       let btn_avatar_preview_signup = $("#btn_avatar_preview_signup");
       let btn_avatar_preview_edit = $("#btn_avatar_preview_edit");
+      let btn_char_persona_wizard = $("#btn_char_persona_wizard");
+      let btn_char_looks_wizard = $("#btn_char_looks_wizard");
+      let btn_char_outfit_wizard = $("#btn_char_outfit_wizard");
+      let btn_user_persona_wizard = $("#btn_user_persona_wizard");
+      let btn_prologue_wizard = $("#btn_prologue_wizard");
+      let btn_chapters_wizard = $("#btn_chapters_wizard");
+      let btn_chat_bg_wizard = $("#btn_chat_bg_wizard");
+      let btn_firstwords_wizard = $("#btn_firstwords_wizard");
       btn_signup_submit.on("click", sign_up);
       btn_login_submit.on("click", login);
       btn_start_chat.on("click", start_chat);
@@ -588,6 +711,32 @@
       });
       btn_avatar_preview_edit.on('click', function () {
         preview_avatar("edit");
+      });
+
+      //wizard buttons
+      btn_char_persona_wizard.on('click', function () {
+        createchar_wizard("char_persona");
+      });
+      btn_char_looks_wizard.on('click', function () {
+        createchar_wizard("char_looks");
+      });
+      btn_char_outfit_wizard.on('click', function () {
+        createchar_wizard("char_outfit");
+      });
+      btn_user_persona_wizard.on('click', function () {
+        createchar_wizard("user_persona");
+      });
+      btn_chat_bg_wizard.on('click', function () {
+        createchar_wizard("chat_bg");
+      });
+      btn_prologue_wizard.on('click', function () {
+        createchar_wizard("prologue");
+      });
+      btn_chapters_wizard.on('click', function () {
+        createchar_wizard("chapters");
+      });
+      btn_firstwords_wizard.on('click', function () {
+        createchar_wizard("firstwords");
       });
 
       //password view switcher
@@ -715,6 +864,9 @@
               break;
             case "preview_avatar_result":
               changePreviewAvatar(serverData);
+              break;
+            case "createchar_wizard_result":
+              createcharWizardUpdate(serverData);
               break;
           }
 
@@ -858,7 +1010,7 @@
               </div>
             </div>
             <div id="sign_charlooks">
-              <span>Portrait Looks</span>
+              <span class="looks_title">Portrait Looks</span>
               <div class="avatar_preview">preview</div>
               <button type="button" class="submit_btn" id="btn_avatar_preview_signup">
                 Preview avatar
@@ -992,7 +1144,7 @@
               </div>
             </div>
             <div id="edit_charlooks">
-              <span>Portrait Looks</span>
+              <span class="looks_title">Portrait Looks</span>
               <div class="avatar_preview">preview</div>
               <button type="button" class="submit_btn" id="btn_avatar_preview_edit">
                 Preview avatar
@@ -1050,6 +1202,197 @@
           </div>
           <button type="button" class="submit_btn" id="btn_edit_submit">
             Submit New Profile
+          </button>
+        </div>
+      </div>
+      <div id="create_character_form">
+        <div class="top_bar">
+          <label class="title">Create Character</label>
+          <div id="btn_character_form_close" class="btn_close">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="#340768" xmlns="http://www.w3.org/2000/svg"
+              color="#340768" stroke-width="1.5">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M3.6 2.25C2.85442 2.25 2.25 2.85441 2.25 3.6V20.4C2.25 21.1456 2.85441 21.75 3.6 21.75H20.4C21.1456 21.75 21.75 21.1456 21.75 20.4V3.6C21.75 2.85442 21.1456 2.25 20.4 2.25H3.6ZM10.409 9.34835C10.1161 9.05546 9.64121 9.05546 9.34831 9.34835C9.05542 9.64124 9.05542 10.1161 9.34831 10.409L10.9393 12L9.34831 13.591C9.05542 13.8839 9.05542 14.3588 9.34831 14.6517C9.64121 14.9445 10.1161 14.9445 10.409 14.6517L12 13.0607L13.591 14.6517C13.8838 14.9445 14.3587 14.9445 14.6516 14.6517C14.9445 14.3588 14.9445 13.8839 14.6516 13.591L13.0606 12L14.6516 10.409C14.9445 10.1161 14.9445 9.64124 14.6516 9.34835C14.3587 9.05546 13.8838 9.05546 13.591 9.34835L12 10.9393L10.409 9.34835Z"
+                fill="#340768"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="main_body">
+          <div class="info_row">
+            <div id="createchar_profile">
+              <div id="createchar_author" class="form_hint">
+                Authorization feedback
+              </div>
+              <label for="char_unique_id">Character unique id<span class="form_hint"></span></label>
+              <input name="unique_name" id="char_unique_id" />
+              <label for="char_ai_name">Character name<span class="form_hint"></span></label>
+              <input name="ai_name" id="char_ai_name" />
+              <label for="char_persona">Character persona<span class="form_hint"></span></label>
+              <span class="textarea_hint">character persona descriptive prompt, fill at least 4 fields to use
+                wizard:</span>
+              <textarea name="persona_ai" id="char_persona" rows="8">
+Place of birth:
+Age:
+Gender:
+Ancestry:
+Hair:
+Eyes:
+Height:
+Weight:
+Hobbies:
+Personality:
+Likes:
+Dislikes:
+Fears:
+Speaking Tone:
+Mantra:
+Affiliation:
+Job Position:</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_char_persona_wizard">
+                Character persona wizard
+              </button>
+              <label for="char_looks">Character looks<span class="form_hint"></span></label>
+              <span class="textarea_hint">character looks descriptive prompt, can use wizard once complete character
+                persona, for example:</span>
+              <textarea name="looks_ai" id="char_looks"
+                rows="2">a girl, 30yo, (long red hair:1.13), (green eye:1.10), saggy breasts, (slim waist:1.17)</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_char_looks_wizard">
+                Character looks wizard
+              </button>
+              <label for="char_outfit">Character outfit<span class="form_hint"></span></label>
+              <span class="textarea_hint">character outfit json data, can use wizard once character persona and looks
+                set, do not change the format:</span>
+              <textarea name="outfit_ai" id="char_outfit" rows="6">
+{
+    "normal": "",
+    "underwear": "",
+    "bdsm": "",
+    "naked": ""
+}</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_char_outfit_wizard">
+                Character outfit wizard
+              </button>
+              <label for="user_persona">User persona<span class="form_hint"></span></label>
+              <span class="textarea_hint">user persona descriptive prompt, fill some fields to use wizard:</span>
+              <textarea name="persona_user" id="user_persona" rows="8">
+Place of birth:
+Hobbies:
+Personality:
+Likes:
+Dislikes:
+Skills:
+Affiliation:
+Job Position:</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_user_persona_wizard">
+                User persona wizard
+              </button>
+              <label for="story_prologue">Story prologue<span class="form_hint"></span></label>
+              <span class="textarea_hint">story prologue descriptive prompt, can use wizard once character persona and
+                user persona are complete, for example:</span>
+              <textarea name="prologue_story" id="story_prologue"
+                rows="8">{% raw %}{{char}} and {{user}} have been cooperating tacitly for 2 years since landing on the 'Eros' Mars space station{% endraw %}</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_prologue_wizard">
+                Prologue wizard
+              </button>
+              <label for="story_chapters">Story Chapters<span class="form_hint"></span></label>
+              <span class="textarea_hint">story chapters descriptive prompt, use ',' to separate multiple chapters, can
+                use wizard once story prologue is complete, for example:</span>
+              <textarea name="chapters_story" id="story_chapters"
+                rows="2">chapter 1 title, chapter 2 title, chapter 3 title</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_chapters_wizard">
+                Chapter wizard
+              </button>
+              <label for="default_bg">Chat Enviornment<span class="form_hint"></span></label>
+              <span class="textarea_hint">Chat Background Enviornment prompt, can use wizard once prologue set,
+                example:</span>
+              <textarea name="bg_default" id="default_bg"
+                rows="2">futuristic, Space station, control room, spacecraft cabin, Mars outside the window</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_chat_bg_wizard">
+                Chat Enviornment wizard
+              </button>
+              <label for="story_firstwords">First line spokens<span class="form_hint"></span></label>
+              <span class="textarea_hint">The first line spoken by the character at the beginning, can use wizard once
+                story prologue is complete, for example:</span>
+              <textarea name="firstwords_story" id="story_firstwords"
+                rows="4">{% raw %}*I'm on my way to Luna Ltd., i find {{user}} is in front of me* Hi!~ {{user}}, how's doing? go to company or somewhere else? would you like to grab some coffee together? *{{char}} smile~*{% endraw %}</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_firstwords_wizard">
+                First line spokens wizard
+              </button>
+              <label for="prompt_to_load">Prompt to load</label>
+              <select id="prompt_to_load">
+                <option value="Alpaca_RP">Alpaca_RP</option>
+                <option value="Cohere_RP">Cohere_RP</option>
+                <option value="ChatML_RP">ChatML_RP</option>
+              </select>
+              <label for="ai_speaker_cn">Ai Speaker CN</label>
+              <select id="ai_speaker_cn">
+                <option value="zh-cn_qingling">zh-cn_qingling</option>
+                <option value="zh-CN-XiaomoNeural">zh-cn_qingling</option>
+              </select>
+              <label for="ai_speaker_en">Ai Speaker EN</label>
+              <select id="ai_speaker_en">
+                <option value="en_female_01">en_female_01</option>
+                <option value="en_female_02">en_female_02</option>
+                <option value="en_female_03">en_female_03</option>
+                <option value="en_female_04">en_female_04</option>
+                <option value="en_keanu">en_keanu</option>
+                <option value="en_stevejobs">en_stevejobs</option>
+              </select>
+              <div class="full_bar">
+                <label>Uncensored</label>
+                <input type="radio" id="uncensored_yes" name="uncensored_switch" value="yes" checked />
+                <label for="uncensored_yes">Yes</label>
+                <input type="radio" id="uncensored_no" name="uncensored_switch" value="no" />
+                <label for="uncensored_no">No</label>
+              </div>
+              <div class="full_bar">
+                <label>NSFW</label>
+                <input type="radio" id="NSFW_yes" name="NSFW_switch" value="NSFW" checked />
+                <label for="NSFW_yes">Yes</label>
+                <input type="radio" id="NSFW_no" name="NSFW_switch" value="SFW" />
+                <label for="NSFW_no">No</label>
+              </div>
+              <div class="full_bar">
+                <label>Generate Dynamic Picture</label>
+                <input type="radio" id="GDP_yes" name="GDP_switch" value="yes" checked />
+                <label for="GDP_yes">Yes</label>
+                <input type="radio" id="GDP_no" name="GDP_switch" value="no" />
+                <label for="GDP_no">No</label>
+              </div>
+              <label for="char_avatarprefix">Character avatar prefix<span class="form_hint"></span></label>
+              <textarea name="avatarprefix_ai" id="char_avatarprefix"
+                rows="2">Perfect face portrait, (close-up:1.12), (&lt;|emotion|&gt; expression),</textarea>
+              <label for="completions_data">Completions parameters<span class="form_hint"></span></label>
+              <span class="textarea_hint">The json parameters used to infer the model, Do not change the format:</span>
+              <textarea name="data_completions" id="completions_data" rows="15">
+{
+  "max_tokens": 160,
+  "top_k": 50,
+  "top_p": 0.8,
+  "min_p": 0.05,
+  "tfs": 0.95,
+  "frequency_penalty": 0,
+  "presence_penalty": 1.15,
+  "repetition_penalty": 1.05,
+  "mirostat_mode": 0,
+  "mirostat_tau": 1.5,
+  "mirostat_eta": 0.1,
+  "temperature_last": true,
+  "smoothing_factor": 0.55
+}</textarea>
+            </div>
+            <div id="createchar_charlooks">
+              <span class="looks_title">Preview character Looks</span>
+              <span class="textarea_hint">can use to preview character looks once character looks fields are
+                filled</span>
+              <div class="createchar_preview">preview</div>
+              <button type="button" class="submit_btn preview_btn" id="btn_createchar_preview">
+                Preview Character
+              </button>
+            </div>
+          </div>
+          <button type="button" class="submit_btn" id="btn_character_submit">
+            Save Character
           </button>
         </div>
       </div>

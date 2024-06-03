@@ -8,6 +8,7 @@ from modules.global_sets_async import (
     logging,
     config_data,
     prompt_params,
+    prompt_templates,
 )
 import uvicorn, uuid, json, markdown, os
 from datetime import datetime
@@ -19,10 +20,11 @@ from modules.user_validation import Validation
 from modules.PydanticModels import EnterRoom, as_form
 from fastapimode.room_uncensor_websocket import chatRoom_unsensor
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
-from modules.payload_state import sd_payload
+from modules.payload_state import sd_payload, completions_data
 
-sd_payload = sd_payload
-config_data = config_data
+sd_payload = sd_payload.copy()
+config_data = config_data.copy()
+completions_data = completions_data.copy()
 templates_path = os.path.join(project_root, "templates")
 static_path = os.path.join(project_root, "static")
 templates = Jinja2Templates(directory=templates_path)
@@ -532,6 +534,111 @@ async def preview_avatar(client_info, client_id):
         logging.info("Failed to get avatar image")
 
 
+# create chars wizard
+async def createchar_wizard(client_info, client_id):
+    task = client_info["data"]["task"]
+    wizardstr = client_info["data"]["wizardstr"]
+    wizard_prompt_template = prompt_templates["Alpaca_Rephrase"]
+
+    def char_persona():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["char_persona"]
+        userinstruct = f"The given basic information of character are: \n{wizardstr}\n\nThe final output of created character persona will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+
+    def char_looks():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["char_looks"]
+        userinstruct = f"The given character persona is: \n{wizardstr}\n\nThe final output of created text2img prompt for character looks will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+
+    def prologue():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["prologue"]
+        userinstruct = f"The given characters' persona are: \n{wizardstr}\n\nThe final output of created prologue will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+
+    def chapters():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["chapters"]
+        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created titles for 3 chapters will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+
+    def firstwords():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["firstwords"]
+        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created first words that speaking by {{{{char}}}} will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+    
+    def char_outfit():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["char_outfit"]
+        userinstruct = f"The given character persona and looks are: \n{wizardstr}\n\nThe final output of created JSON formated strings for character outfit will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+    
+    def user_persona():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["user_persona"]
+        userinstruct = f"The given basic information of character are: \n{wizardstr}\n\nThe final output of created user persona will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+    
+    def chat_bg():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["chat_bg"]
+        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created text2img prompt for chat background will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+
+    def default_task():
+        return "Invalid task"
+
+    wizardfunc = {
+        "char_persona": char_persona,
+        "char_looks": char_looks,
+        "prologue": prologue,
+        "chapters": chapters,
+        "firstwords": firstwords,
+        "char_outfit": char_outfit,
+        "user_persona": user_persona,
+        "chat_bg": chat_bg
+    }
+
+    def switchfunc(task):
+        return wizardfunc.get(task, default_task)()
+
+    result = switchfunc(task)
+    if result != "Invalid task":
+        wizard_prompt = wizard_prompt_template.replace(
+            r"<|system_prompt|>", result["sysinstruct"]
+        ).replace(r"<|user_prompt|>", result["userinstruct"])
+        # logging.info(wizard_prompt)
+        completions_data.update(
+            {
+                "stream": False,
+                "stop": ["###"],
+                "max_tokens": 250,
+                "token_healing": True,
+                "temperature": 0.7,
+                "temperature_last": True,
+                "top_k": 50,
+                "top_p": 0.8,
+                "top_a": 0,
+                "typical": 1,
+                "min_p": 0.01,
+                "tfs": 0.95,
+                "frequency_penalty": 0,
+                "presence_penalty": 1.15,
+                "repetition_penalty": 1.05,
+                "repetition_decay": 0,
+                "mirostat_mode": 0,
+                "mirostat_tau": 1.5,
+                "mirostat_eta": 0.1,
+                "add_bos_token": True,
+                "ban_eos_token": False,
+                "repetition_range": -1,
+                "smoothing_factor": 0,
+                "prompt": wizard_prompt,
+            }
+        )
+        wizard_result = await tabby_fastapi.pure_inference(payloads=completions_data)
+        # logging.info(wizard_result)
+        data_to_send = {"result": wizard_result, "task": task}
+        await send_datapackage("createchar_wizard_result", data_to_send, client_id)
+    else:
+        logging.info("Invalid task")
+
+
 ws_events_dict = {
     "connect to server": client_connect,
     "client_login": client_login,
@@ -549,6 +656,7 @@ ws_events_dict = {
     "exit_room": exit_room,
     "xtts_audio_gen": xtts_audio_generate,
     "preview_avatar": preview_avatar,
+    "createchar_wizard": createchar_wizard,
 }
 
 

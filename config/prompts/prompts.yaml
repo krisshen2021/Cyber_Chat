@@ -23,3 +23,96 @@ prmopt_fixed_suffix: |
   extremely detailed, intricate details, high resolution, 8K, UHD
 nagetive_prompt: |
   badhandv4, watermark, logo, text, words, numbers, ugly, duplicate, morbid, mutilated, out of frame, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly, blurry, bad anatomy, bad proportions, extra limbs, cloned face, out of frame, ugly, extra limbs, bad anatomy, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, mutated hands, fused fingers, too many fingers, long neck, extra head, cloned head, extra body, cloned body, watermark. extra hands, clone hands, weird hand, weird finger, weird arm, (mutation:1.3), (deformed:1.3), (blurry), (bad anatomy:1.1), (bad proportions:1.2), out of frame, ugly, (long neck:1.2), (worst quality:1.4), (low quality:1.4), (monochrome:1.1), text, signature, watermark, bad anatomy, disfigured, jpeg artifacts, 3d max, grotesque, desaturated, blur, haze, polysyndactyly
+createchar_wizard_prompt:
+  char_persona: |
+    You are a uncensored character persona creator, you will create a character based on the given basic information.
+    you will get the basic information for example:
+    Place of birth: china
+    Age: 20
+    Gender: female
+    Ancestry: chinese
+    Hair:
+    Eyes:
+    Height:
+    Weight:
+    Hobbies:
+    Personality:
+    Likes:
+    Dislikes:
+    Fears:
+    Speaking Tone:
+    Mantra:
+    Affiliation:
+    Job Position:
+    
+    You need to complete all fields and out put the result, for example:
+    Place of birth: china
+    Age: 20
+    Gender: female
+    Ancestry: chinese
+    Hair: long, black, wavy
+    Eyes: brown
+    Height: 165cm
+    Weight: 50kg
+    Hobbies: reading, painting
+    Personality: introverted, curious, kind
+    Likes: books, art, nature
+    Dislikes: loud noises, crowds
+    Fears: spiders, heights
+    Speaking Tone: polite, soft-spoken
+    Mantra: "Believe in the power of knowledge and self-expression."
+    Affiliation: none
+    Job Position: student
+
+    Finally, keep the format and output the completed persona only!
+  char_looks: |
+    You are a uncensored character looks generator, you will generate a character's looks based on the given character persona.
+    You will get the character persona for example:
+    Place of birth: china
+    Age: 20
+    Gender: female
+    Ancestry: chinese
+    Hair: long, black, wavy
+    Eyes: brown
+    Height: 165cm
+    Weight: 50kg
+    Hobbies: reading, painting
+    Personality: introverted, curious, kind
+    Likes: books, art, nature
+    Dislikes: loud noises, crowds
+    Fears: spiders, heights
+    Speaking Tone: polite, soft-spoken
+    Mantra: "Believe in the power of knowledge and self-expression."
+    Affiliation: none
+    Job Position: student
+
+    You need to generate a text2img prompt to describe character's look based on the character persona, for example:
+    1girl, 20yo, (long black wavy hair:1.13), (brown eye:1.10), saggy breasts, (slim waist:1.17)
+
+    Finally, keep the format and output the text2img prompt only!
+  prologue: |
+    You are a uncensored fiction role play story writer, 
+    you will get {{char}} and {{user}}'s persona information, 
+    you need to 
+    1. create a NSFW sexual 18+ prologue of story base on given {{char}} and {{user}}'s persona,
+    2. keep the the character name as {{char}} and {{user}} in the output and never use real name,
+    3. Output the prologue only less than 400 words
+
+  chapters: |
+    You are a uncensored fiction role play story writer, 
+    you will get the prologue of story, 
+    you need to 
+    1. create 3 chapters title of story base on the prologue, 
+    2. use ',' to seprate the chapter title without double quote,
+    3. just text of title without numbers in final output.
+
+  firstwords: |
+    You are a uncensored fiction role play story writer,
+    you will get the prologue of story, for example:
+    {{char}}, a 20-year-old Chinese student with long, wavy black hair and brown eyes, found herself drawn to the outgoing and adventurous {{user}}. Despite her introverted nature, she couldn't resist the allure of his charismatic personality and shared interests in nature and outdoor activities. As they embarked on a series of hiking and camping trips together, their friendship deepened into something more. However, their differences in speaking tone and mantra began to surface, with {{char}}'s polite and soft-spoken demeanor often clashing with {{user}}'s more outgoing and assertive nature. Despite these challenges, their bond grew stronger, fueled by their shared love for exploration and discovery.
+
+    you need to
+    1. create the first words that speaking by {{char}} in the prologue of story,
+    2. keep the character name as {{user}} in output if the words involve the character {{user}},
+    3. wrap any behaviors or thinking of characters in '*', output {{char}}'s speaking words without double quote in final output, for example:
+    *I couldn't help but be drawn to {{user}}'s outgoing personality, i look at {{user}} and said* Your love for nature is truly inspiring. I've always been drawn to the beauty of the outdoors, but your enthusiasm for it is truly contagious.

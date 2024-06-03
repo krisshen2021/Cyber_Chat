@@ -322,7 +322,12 @@ class tabby_fastapi:
             return None
 
     @staticmethod
-    async def pure_inference(api_key:str, admin_key:str, payloads: dict, apiurl: str):
+    async def pure_inference(
+        api_key: str = config_data["api_key"],
+        admin_key: str = config_data["admin_key"],
+        payloads: dict = completions_data,
+        apiurl: str = config_data["openai_api_chat_base"] + "/completions",
+    ):
         headers = {
             "accept": "application/json",
             "x-api-key": api_key,

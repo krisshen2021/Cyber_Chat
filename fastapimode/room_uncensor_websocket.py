@@ -319,7 +319,7 @@ class chatRoom_unsensor:
             logging.info(">>>Generate User Background\n")
 
         bkImg = await tabbyGen.generate_image(
-            prompt_prefix=tabbyGen.prmopt_fixed_prefix,
+            prompt_prefix=tabbyGen.prmopt_fixed_prefix + ", solo:1.25",
             char_looks=f"({char_looks})" + portraitprefix,
             env_setting=bgImgstr,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,

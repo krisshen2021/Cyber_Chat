@@ -133,25 +133,29 @@ class CoreGenerator:
         apiurl: str = None,
         stream: bool = False,
     ) -> str:
-        self.completions_data["temperature"] = (
-            self.state["temperature"] if temperature is None else temperature
+        self.completions_data.update(
+            {
+                "temperature": (
+                    self.state["temperature"] if temperature is None else temperature
+                ),
+                "stream": stream,
+                "prompt": system_prompt,
+                "stop": self.state["custom_stop_string"],
+                "max_tokens": self.state["max_tokens"],
+                "top_k": self.state["top_k"],
+                "top_p": self.state["top_p"],
+                "min_p": self.state["min_p"],
+                "tfs": self.state["tfs"],
+                "frequency_penalty": self.state["frequency_penalty"],
+                "presence_penalty": self.state["presence_penalty"],
+                "repetition_penalty": self.state["repetition_penalty"],
+                "mirostat_mode": self.state["mirostat_mode"],
+                "mirostat_tau": self.state["mirostat_tau"],
+                "mirostat_eta": self.state["mirostat_eta"],
+                "temperature_last": self.state["temperature_last"],
+                "smoothing_factor": self.state["smoothing_factor"],
+            }
         )
-        self.completions_data["stream"] = stream
-        self.completions_data["prompt"] = system_prompt
-        self.completions_data["stop"] = self.state["custom_stop_string"]
-        self.completions_data["max_tokens"] = self.state["max_tokens"]
-        self.completions_data["top_k"] = self.state["top_k"]
-        self.completions_data["top_p"] = self.state["top_p"]
-        self.completions_data["min_p"] = self.state["min_p"]
-        self.completions_data["tfs"] = self.state["tfs"]
-        self.completions_data["frequency_penalty"] = self.state["frequency_penalty"]
-        self.completions_data["presence_penalty"] = self.state["presence_penalty"]
-        self.completions_data["repetition_penalty"] = self.state["repetition_penalty"]
-        self.completions_data["mirostat_mode"] = self.state["mirostat_mode"]
-        self.completions_data["mirostat_tau"] = self.state["mirostat_tau"]
-        self.completions_data["mirostat_eta"] = self.state["mirostat_eta"]
-        self.completions_data["temperature_last"] = self.state["temperature_last"]
-        self.completions_data["smoothing_factor"] = self.state["smoothing_factor"]
         payloads = self.completions_data
         response = await self.tabby_server.inference(payloads=payloads, apiurl=apiurl)
         if response is not None:
@@ -179,7 +183,7 @@ class CoreGenerator:
     # Generate SD prompt and image
     async def generate_prompt_main(self, response_to_reprompt: str):
         system_prompt = self.restruct_prompt
-        user_prompt = f'The subject needs to generate a final text2image prompt is: "{response_to_reprompt}"'
+        user_prompt = f'The subject needs to generate a final text2image prompt is: "{response_to_reprompt}",\nplease generate the restructured prompt according to the rules in instruction prompt, and return the result directly without any explanation or double-quoted characters.'
         response_text = await self.get_rephase_response(
             system_prompt=system_prompt, user_msg=user_prompt
         )
@@ -241,23 +245,16 @@ class CoreGenerator:
 
     # Process if trigger key words
     async def generate_picture_by_sdapi(self, prompt: str = "", loraword: str = ""):
-        recived_prompt = prompt
         lora_prompt = self.lora.get(loraword.strip(), "")
         logging.info(f"Lora :{lora_prompt}")
-        if self.state["char_outfit"] is not None:
-            if lora_prompt in self.state["char_outfit"]:
-                char_outfit = self.state["char_outfit"][lora_prompt]
-                if char_outfit is not None:
-                    char_looks = f"{self.state['char_looks']},{char_outfit}"
-                    lora_prompt = ""
-                    logging.info(char_looks)
-                else:
-                    char_looks = self.state["char_looks"]
-            else:
-                char_looks = self.state["char_looks"]
-        else:
-            char_looks = self.state["char_looks"]
-        if self.send_msg_websocket is not None:
+        char_looks = self.state["char_looks"]
+        if self.state["char_outfit"] and lora_prompt in self.state["char_outfit"]:
+            char_outfit = self.state["char_outfit"][lora_prompt]
+            if char_outfit:
+                char_looks = f"{char_looks},{char_outfit}"
+                lora_prompt = ""
+                logging.info(char_looks)
+        if self.send_msg_websocket:
             await self.send_msg_websocket(
                 {"name": "chatreply", "msg": "Generating Scene Image"},
                 self.conversation_id,
@@ -266,7 +263,7 @@ class CoreGenerator:
         image = await self.generate_image(
             prompt_prefix=self.prmopt_fixed_prefix,
             char_looks=char_looks,
-            prompt_main=recived_prompt,
+            prompt_main=prompt,
             prompt_suffix=self.prmopt_fixed_suffix,
             lora_prompt=lora_prompt,
         )
@@ -277,32 +274,34 @@ class CoreGenerator:
         response_text = await self.get_chat_response(
             system_prompt=system_prompt, stream=True
         )
-        if response_text is not None:
-            self.last_context.append(f"{self.state['char_name']}: {response_text}")
-            if (
-                self.state["generate_dynamic_picture"] is True
-                and self.iscreatedynimage is True
-            ):
-                self.last_context = self.last_context[-4:]
-                repharse_text = "\n".join(self.last_context)
-                user_msg = f"Output your selection base on following context: \n< {repharse_text} >"
-                response = await self.get_rephase_response(
-                    system_prompt=self.summary_prompt, user_msg=user_msg
-                )
-                logging.info(f">>>The rephase result is {response}")
-                is_word_triggered, match_result = contains_vocabulary(
-                    response, self.resultslist
-                )
-                if is_word_triggered is True:
-                    logging.info(f">>>Matched result is: {match_result}")
-                    text_to_image = response_text.replace("\n", ". ").strip()
-                    result_picture = await self.generate_picture_by_sdapi(
-                        prompt=text_to_image, loraword=match_result
-                    )
-                    return response_text, result_picture
-            return response_text, False
-        else:
+
+        if response_text is None:
             return None
+
+        self.last_context.append(f"{self.state['char_name']}: {response_text}")
+
+        if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
+            self.last_context = self.last_context[-4:]
+            rephrased_text = "\n".join(self.last_context)
+            user_msg = f"Output your selection based on the following context: \n< {rephrased_text} >"
+            response = await self.get_rephase_response(
+                system_prompt=self.summary_prompt, user_msg=user_msg
+            )
+            logging.info(f">>>The rephrased result is {response}")
+
+            is_word_triggered, match_result = contains_vocabulary(
+                response, self.resultslist
+            )
+
+            if is_word_triggered:
+                logging.info(f">>>Matched result is: {match_result}")
+                text_to_image = response_text.replace("\n", ". ").strip()
+                result_picture = await self.generate_picture_by_sdapi(
+                    prompt=text_to_image, loraword=match_result
+                )
+                return response_text, result_picture
+
+        return response_text, False
 
     async def fetch_results(
         self, prompt: str, user_last_msg: str, iscreatedynimage: bool = True
@@ -311,21 +310,13 @@ class CoreGenerator:
         self.last_context.append(f"{self.state['user_name']}: {self.user_last_msg}")
         self.iscreatedynimage = iscreatedynimage
         result = await self.message_process(system_prompt=prompt)
+
         if isinstance(result, tuple):
-            # 假定返回了字符串和图像对象
-            string_value, image_object = result
+            return result
         elif isinstance(result, str):
-            # 只返回了图像对象base64 string
-            image_object = result
-            string_value = "OK~, here is what you asked for~ *i send back a picture*"
+            return "OK~, here is what you asked for~ *i send back a picture*", result
         else:
-            # 处理其他意外情况
-            image_object = None
-            string_value = None
-        return string_value, image_object
-        # except Exception as e:
-        #     logging.info(f"Error during eval: {e}")
-        #     return None, None
+            return None, None
 
     def count_token_numbers(self, string: str) -> int:
         """Returns the number of tokens in a text string."""

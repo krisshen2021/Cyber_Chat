@@ -1,50 +1,52 @@
-*{
-    box-sizing: border-box;
+* {
+  box-sizing: border-box;
 }
 
 html,
 body {
-    margin: 0px;
-    padding: 0px;
-    height: 100vh;
-    /* font-family: 'Philosopher', sans-serif; */
-    font-size: 100%;
-    width: 100vw;
-    font-family: "Barlow", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    color:antiquewhite;
-    
+  margin: 0px;
+  padding: 0px;
+  height: 100vh;
+  /* font-family: 'Philosopher', sans-serif; */
+  font-size: 100%;
+  width: 100vw;
+  font-family: "Barlow", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: antiquewhite;
+
 }
-body{
+
+body {
   font-size: 1rem;
 }
 
-.placeholder{
-    /* background-color: aqua; */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    height: auto;
-    min-height: 100%;
-    background-image: url('/static/images/bg/chatroom.png');
-    background-size:cover;
-    background-position: center;
-    background-repeat: no-repeat;
+.placeholder {
+  /* background-color: aqua; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  height: auto;
+  min-height: 100%;
+  background-image: url('/static/images/bg/chatroom.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-.settings{
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 15px 10px;
-    background-color: rgba(21, 21, 21, 0.164);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    gap:5px;
-    z-index: 1;
+
+.settings {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 15px 10px;
+  background-color: rgba(21, 21, 21, 0.164);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  gap: 5px;
+  z-index: 1;
 }
 
 .user_profile_edit_menu {
@@ -53,7 +55,7 @@ body{
   border-radius: 0.3rem;
   margin-right: auto;
   background: #eee;
-  color:black;
+  color: black;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -61,9 +63,11 @@ body{
   position: relative;
   display: none;
 }
-.user_profile_edit_menu svg{
+
+.user_profile_edit_menu svg {
   cursor: pointer;
 }
+
 .user_profile_drop_menu {
   position: absolute;
   left: 1px;
@@ -77,41 +81,44 @@ body{
   justify-content: flex-start;
   align-items: flex-start;
   border-radius: 0.3rem;
-  padding:1rem;
+  padding: 1rem;
 }
-.profile_submenu{
-  width:max-content;
+
+.profile_submenu {
+  width: max-content;
   font-size: 1rem;
   font-weight: 500;
-  color:#280149;
+  color: #280149;
   border-radius: 0.3rem;
   padding: 0.3rem;
 }
-.profile_submenu:hover{
+
+.profile_submenu:hover {
   color: antiquewhite;
   background: #280149;
   cursor: pointer;
 }
 
-.top_buttons{
-    padding: 5px 20px;
-    font-size: 1rem;
-    border-radius: 15px;
-    background-color: rgba(52, 7, 104, 0.7);
-    height:fit-content;
-    cursor: pointer;
+.top_buttons {
+  padding: 5px 20px;
+  font-size: 1rem;
+  border-radius: 15px;
+  background-color: rgba(52, 7, 104, 0.7);
+  height: fit-content;
+  cursor: pointer;
 }
-.user_profile{
+
+.user_profile {
   display: none;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap:5px;
+  gap: 5px;
   /* margin-right: 20px; */
 }
 
 
-.user_profile .profile_avatar{
+.user_profile .profile_avatar {
   width: 35px;
   height: 35px;
   border-radius: 50%;
@@ -119,28 +126,31 @@ body{
   background-position: center center;
   background-size: 100%;
 }
-.user_profile .username{
+
+.user_profile .username {
   font-weight: 300;
 }
-.user_profile .credits{
+
+.user_profile .credits {
   font-size: 0.7rem;
-  color:#c7660b;
+  color: #c7660b;
   font-weight: 300;
   display: flex;
   flex-direction: row;
-  gap:5px;
+  gap: 5px;
   justify-content: flex-start;
   align-items: center;
 }
-.user_profile #btn_logout{
+
+.user_profile #btn_logout {
   cursor: pointer;
 }
 
 .headline {
-    padding: 40px 0px;
-    text-shadow: 0px 0px 5px  #000000;
-    font-size: 6rem;
-    font-family: 'Philosopher', sans-serif; 
+  padding: 40px 0px;
+  text-shadow: 0px 0px 5px #000000;
+  font-size: 6rem;
+  font-family: 'Philosopher', sans-serif;
 }
 
 #logindiv {
@@ -155,366 +165,524 @@ body{
   backdrop-filter: blur(3px);
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
   border-radius: 1rem;
-  gap:1rem;
+  gap: 1rem;
   padding: 1rem;
   margin-bottom: 2rem;
 }
 
-.chatbtn{
+.chatbtn {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
   background-color: antiquewhite;
-  color:#280149;
+  color: #280149;
   gap: 0.2rem;
   padding: 0.3rem 1.5rem;
   border-radius: 1.3rem;
   font-weight: 600;
   font-size: 1.2rem;
   margin-right: 0;
-  
+
 }
 
-.chatbtn:hover{
+.chatbtn:hover {
   cursor: pointer;
   margin-right: 3px;
   padding: 0.3rem 2.6rem;
 }
 
 .subtitle {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    width: 100%;
-    background-color: rgba(52, 7, 104, 0.7);
-    padding: 0.5rem 1rem;
-    border-radius: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  width: 100%;
+  background-color: rgba(52, 7, 104, 0.7);
+  padding: 0.5rem 1rem;
+  border-radius: 1.5rem;
 }
 
 .rolelist {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap:wrap; 
-    width: 100%;
-    gap: 1rem;
-    
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 1rem;
+
 }
+
 .roleholder {
-    align-items: center;
-    justify-content: center;
-    display: flex;
-    flex-direction: column;
-    padding: 5px;
-    gap:5px;
-    background-color: rgba(5, 5, 5, 0.5);
-    border-radius: 0.5rem;
-    font-size: 1rem;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  gap: 5px;
+  background-color: rgba(5, 5, 5, 0.5);
+  border-radius: 0.5rem;
+  font-size: 1rem;
 }
+
 .roleholder_selected {
-    box-shadow: 0px 0px 15px rgba(218, 56, 255, 0.7);
+  box-shadow: 0px 0px 15px rgba(218, 56, 255, 0.7);
 }
+
 .avatarbk {
-    width:10rem;
-    height:10rem;
+  width: 10rem;
+  height: 10rem;
+  display: flex;
+  background-position: center center;
+  background-size: 100%;
+  border-radius: 0.4rem;
+  box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+
+}
+
+.roleRadios {
+  display: none
+}
+
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: none;
+  opacity: 100;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  backdrop-filter: blur(5px);
+  z-index: 2;
+  overflow-y: auto;
+}
+
+#signup_form,
+#login_form,
+#edit_profile_form,
+#create_character_form {
+  display: none;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 80%;
+  border-radius: 1rem;
+  box-shadow: 0px 0px 25px -5px rgba(153, 0, 254, 0.5);
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+}
+#login_form {
+  width: 300px;
+}
+
+#signup_form .top_bar,
+#login_form .top_bar,
+#edit_profile_form .top_bar,
+#create_character_form .top_bar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-between;
+  padding: 10px;
+  background: rgba(255, 255, 255, 1);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+
+}
+
+#signup_form .top_bar .title,
+#login_form .top_bar .title,
+#edit_profile_form .title,
+#create_character_form .title {
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: rgba(52, 7, 104, 0.7);
+}
+
+#signup_form #sign_author,
+#login_form #login_author,
+#edit_profile_form #edit_author,
+#create_character_form #createchar_author {
+  display: none;
+}
+
+#signup_form .main_body,
+#login_form .main_body,
+#edit_profile_form .main_body,
+#create_character_form .main_body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  background: rgba(52, 7, 104, 0.7);
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  padding: 10px;
+
+}
+
+#signup_form .info_row,
+#edit_profile_form .info_row,
+#create_character_form .info_row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+#sign_profile,
+#sign_charlooks,
+#edit_profile,
+#edit_charlooks,
+#createchar_profile,
+#createchar_charlooks {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px
+}
+
+#sign_charlooks,
+#edit_charlooks,
+#createchar_charlooks {
+  background: rgba(61, 29, 87, 0.9);
+  border-radius: 10px;
+  padding: 15px;
+}
+
+#signup_form label,
+#login_form label,
+#edit_profile_form label,
+#sign_charlooks span,
+#sign_charlooks label,
+#edit_charlooks span,
+#edit_charlooks label,
+#create_character_form label,
+#createchar_charlooks span,
+#createchar_charlooks label {
+  align-self: flex-start;
+  font-size: 0.8rem;
+}
+
+#sign_charlooks .looks_title,
+#edit_charlooks .looks_title,
+#createchar_charlooks .looks_title {
+  font-size: 1rem;
+}
+
+#sign_profile .gender_bar,
+#edit_profile .gender_bar,
+#createchar_profile .full_bar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  align-items: center;
+}
+
+#sign_profile .gender_bar label,
+#edit_profile .gender_bar label,
+#createchar_profile .full_bar label {
+  align-self: center;
+}
+
+#createchar_profile textarea {
+  width: 100%;
+  border-radius: 10px;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.2rem;
+  resize: vertical;
+  background-color: #1e0d2d;
+  color: #f9f4d4;
+  border: 0px;
+}
+textarea::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+textarea::-webkit-scrollbar-track {
+  background:#1e0d2d;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background:#d2b2fc;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background:#c7790b;
+}
+textarea::-webkit-resizer {
+  background:#1e0d2d; 
+}
+
+#createchar_profile .wizard_btn {
+  align-self: flex-end;
+  font-size: 0.7rem;
+  background-color: #d2b2fc;
+}
+#createchar_charlooks .preview_btn{
+  align-self: center;
+  font-size: 0.7rem;
+  background-color: #d2b2fc;
+}
+.btn_close {
+  cursor: pointer;
+}
+
+.pwd_type {
+  margin: 0 10px;
+}
+
+.form_hint {
+  font-size: 10px;
+  font-weight: 600;
+  font-style: italic;
+  color: #c7660b;
+  align-self: flex-start;
+}
+
+#createchar_profile .textarea_hint,  #createchar_charlooks .textarea_hint {
+  font-size: 10px;
+  font-weight: 600;
+  font-style: italic;
+  color: #d2b2fc;
+  align-self: flex-start;
+}
+
+.overlay input,
+.overlay select {
+  border-style: solid;
+  border-width: 2px;
+  border-color: rgb(25, 3, 52);
+  border-bottom-color: rgb(87, 36, 164);
+  border-right-color: rgb(67, 20, 137);
+  border-radius: 15px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-size: 1rem;
+  color: rgba(52, 7, 104);
+  width: 100%
+}
+
+.overlay select {
+  font-size: 0.8rem;
+}
+
+.overlay input[type="radio"] {
+  appearance: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background-color: #eee;
+}
+
+.overlay input[type="radio"]:hover {
+  background-color: #280149;
+}
+
+.overlay input[type="radio"]:checked {
+  background-color: #c7660b;
+}
+
+.overlay .submit_btn {
+  border: none;
+  border-radius: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.2rem 1rem;
+  color: #280149;
+  background-color: antiquewhite;
+}
+
+.overlay .submit_btn:hover {
+  border: none;
+  border-radius: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.2rem 1rem;
+  color: antiquewhite;
+  background-color: #d86100;
+  cursor: pointer;
+}
+#createchar_profile .submit_btn:hover, #createchar_charlooks .submit_btn:hover {
+  color: antiquewhite;
+  background-color: #c7790b;
+  cursor: pointer;
+}
+
+.avatar_preview, .createchar_preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 10rem;
+  min-height: 10rem;
+  border-radius: 1rem;
+  background-color: #c7790b;
+  background-size: 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.3);
+}
+.createchar_preview{
+  min-width: 512px;
+  min-height: 512px;
+}
+
+.Main_footer {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 10px;
+  background-color: rgba(39, 13, 71, 0.401);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  gap: 5px;
+  margin-top: auto;
+}
+
+/*Media Query Blocks*/
+@media only screen and (max-width: 360px) {
+  .avatarbk {
+    width: calc(100vw / 2 - 2.5rem);
+    height: calc(100vw / 2 - 2.5rem);
     display: flex;
     background-position: center center;
     background-size: 100%;
     border-radius: 0.4rem;
     box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.7);
     cursor: pointer;
-    
+  }
 }
 
-.roleRadios {
-    display: none
-}
-
-
-.overlay {
-    position: fixed; 
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8); 
-    display: none; 
-    opacity: 100;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    backdrop-filter: blur(5px); 
-    z-index: 2;
-    overflow-y: auto;
-  }
-  #signup_form, #login_form, #edit_profile_form{
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 500px;
-    border-radius: 1rem;
-    box-shadow: 0px 0px 25px -5px rgba(153, 0, 254, 0.5);
-  }
-  #login_form{
-    width: 300px;
+@media only screen and (max-width: 430px) {
+  body {
+    font-size: 1.1rem;
   }
 
-  #signup_form .top_bar, #login_form .top_bar, #edit_profile_form .top_bar{
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-between;
-    padding: 10px;
-    background: rgba(255, 255, 255, 1);
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
-    
-  }
-  #signup_form .top_bar .title, #login_form .top_bar .title, #edit_profile_form .title{
-    font-weight: 600;
-    font-size: 1.3rem;
-    color: rgba(52, 7, 104, 0.7);
+  .headline {
+    padding: 1rem 0px;
+    text-shadow: 0px 0px 5px #000000;
+    font-size: 2.5rem;
+    font-family: 'Philosopher', sans-serif;
   }
 
-  #signup_form #sign_author, #login_form #login_author, #edit_profile_form #edit_author{
-    display: none;
-  }
-
-  #signup_form .main_body, #login_form .main_body, #edit_profile_form .main_body{
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    width: 100%;
-    gap:10px;
-    background: rgba(52, 7, 104, 0.7);
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-    padding: 10px;
-    
-  }
-  #signup_form .info_row, #edit_profile_form .info_row{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
-    gap:10px;
-    width: 100%;
-  }
-  #sign_profile, #sign_charlooks,#edit_profile, #edit_charlooks{
-    display: flex;
-    width: 60%;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    gap:10px
-  }
-  #sign_charlooks, #edit_charlooks{
-    width: 40%;
-    background: rgba(61, 29, 87, 0.9);
-    border-radius: 10px;
-    padding: 15px;
-  }
-  #signup_form label, #login_form label, #edit_profile_form label, #sign_charlooks span, #sign_charlooks label, #edit_charlooks span, #edit_charlooks label{
-    align-self: flex-start;
-    font-size: 0.8rem;
-  }
-  #sign_charlooks span, #edit_charlooks span{
-    font-size: 1rem;
-  }
-  #sign_profile .gender_bar, #edit_profile .gender_bar{
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    align-items: center;
-  }
-  #sign_profile .gender_bar label,#edit_profile .gender_bar label{
-    align-self: center;
-  }
-  .btn_close{
+  .top_buttons {
+    padding: 0.3rem 1rem;
+    font-size: 1.2rem;
+    border-radius: 2rem;
+    background-color: rgba(52, 7, 104, 0.7);
+    height: fit-content;
     cursor: pointer;
   }
-  .pwd_type{
-    margin:0 10px;
+
+  #logindiv {
+    width: 95vw;
+    padding: 0.3rem;
   }
-  .form_hint{
-    font-size: 10px;
-    font-weight: 600;
-    font-style: italic;
-    color: #c7660b;
+
+  .overlay {
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
   }
-  .overlay input, .overlay select{
-    border-style: solid;
-    border-width: 2px;
-    border-color: rgb(25, 3, 52);
-    border-bottom-color: rgb(87, 36, 164);
-    border-right-color: rgb(67, 20, 137);
-    border-radius: 15px;
-    padding: 5px;
-    background: rgba(255, 255, 255, 0.9);
-    font-weight: 600;
-    font-size: 1rem;
-    color:rgba(52, 7, 104);
-    width: 100%
+
+  #login_form,
+  #signup_form,
+  #edit_profile_form,
+  #create_character_form {
+    width: calc(100vw - 4rem);
   }
-  .overlay select{
-    font-size: 0.8rem;
+
+  #signup_form .info_row,
+  #edit_profile_form .info_row,
+  #create_character_form .info_row {
+    flex-direction: column;
   }
-  .overlay input[type="radio"]{
-    appearance: none;
-    width: 1.3rem;
-    height: 1.3rem;
-    border-radius: 50%;
-    background-color: #eee;
+
+  #sign_profile,
+  #sign_charlooks,
+  #edit_profile,
+  #edit_charlooks,
+  #createchar_profile,
+  #createchar_charlooks {
+    width: 100%;
   }
-  .overlay input[type="radio"]:hover{
-    background-color: #280149;
+}
+
+@media only screen and (min-width: 500px) and (max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
+
+  /* 在这里写入适合iPad Mini 6的样式 */
+  /* 你可能还需要根据横屏或竖屏进一步调整 */
+  body {
+    font-size: 1.1rem;
   }
-  .overlay input[type="radio"]:checked{
-    background-color: #c7660b;
+
+  .headline {
+    padding: 1rem 0px;
+    text-shadow: 0px 0px 5px #000000;
+    font-size: 2.5rem;
+    font-family: 'Philosopher', sans-serif;
   }
-  .overlay .submit_btn{
-    border: none;
-    border-radius: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
-    padding: 0.2rem 1rem;
-    color:#280149;
-    background-color: antiquewhite;
-  }
-  .overlay .submit_btn:hover{
-    border: none;
-    border-radius: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
-    padding: 0.2rem 1rem;
-    color:antiquewhite;
-    background-color: #d86100;
+
+  .top_buttons {
+    padding: 0.3rem 1rem;
+    font-size: 1.2rem;
+    border-radius: 2rem;
+    background-color: rgba(52, 7, 104, 0.7);
+    height: fit-content;
     cursor: pointer;
   }
-  .avatar_preview{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-width: 10rem;
-    min-height: 10rem;
-    border-radius: 1rem;
-    background-color: #c7790b;
-    background-size: 100%;
-    background-position: center center;
-    background-repeat: no-repeat;
-    box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.3);
+
+  #logindiv {
+    width: 95vw;
+    padding: 0.3rem;
   }
 
-  .Main_footer{
+  .overlay {
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  #login_form,
+  #signup_form,
+  #edit_profile_form,
+  #create_character_form {
+    width: calc(100vw - 4rem);
+  }
+
+  #signup_form .info_row,
+  #edit_profile_form .info_row,
+  #create_character_form .info_row {
+    flex-direction: column;
+  }
+
+  #sign_profile,
+  #sign_charlooks,
+  #edit_profile,
+  #edit_charlooks,
+  #createchar_profile,
+  #createchar_charlooks {
     width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: 15px 10px;
-    background-color: rgba(39, 13, 71, 0.401);
-    backdrop-filter: blur(5px);
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    gap:5px;
-    margin-top: auto;
+  }
 }
-  /*Media Query Blocks*/
-  @media only screen and (max-width: 360px){
-    .avatarbk {
-      width:calc(100vw / 2 - 2.5rem);
-      height:calc(100vw / 2 - 2.5rem);
-      display: flex;
-      background-position: center center;
-      background-size: 100%;
-      border-radius: 0.4rem;
-      box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.7);
-      cursor: pointer;
-  }
-  }
-  @media only screen and (max-width: 430px){
-    body {
-      font-size: 1.1rem; 
-    }
-    .headline {
-      padding: 1rem 0px;
-      text-shadow: 0px 0px 5px #000000;
-      font-size: 2.5rem;
-      font-family: 'Philosopher', sans-serif; 
-    }
-    .top_buttons{
-      padding: 0.3rem 1rem;
-      font-size: 1.2rem;
-      border-radius: 2rem;
-      background-color: rgba(52, 7, 104, 0.7);
-      height:fit-content;
-      cursor: pointer;
-    }
-    #logindiv {
-      width: 95vw;
-      padding: 0.3rem;
-    }
-    .overlay {
-      justify-content: flex-start;
-      align-items: center;
-      flex-direction: column;
-      padding-top: 2rem;
-      padding-bottom: 2rem;
-    }
-    #login_form, #signup_form, #edit_profile_form{
-      width: calc(100vw - 4rem);
-    }
-    #signup_form .info_row, #edit_profile_form .info_row{
-      flex-direction: column;
-    }
-    #sign_profile, #sign_charlooks, #edit_profile, #edit_charlooks{
-      width: 100%;
-    }
-  }
-
-  @media only screen and (min-width: 500px) and (max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
-    /* 在这里写入适合iPad Mini 6的样式 */
-    /* 你可能还需要根据横屏或竖屏进一步调整 */
-    body {
-      font-size: 1.1rem; 
-    }
-    .headline {
-      padding: 1rem 0px;
-      text-shadow: 0px 0px 5px #000000;
-      font-size: 2.5rem;
-      font-family: 'Philosopher', sans-serif; 
-    }
-    .top_buttons{
-      padding: 0.3rem 1rem;
-      font-size: 1.2rem;
-      border-radius: 2rem;
-      background-color: rgba(52, 7, 104, 0.7);
-      height:fit-content;
-      cursor: pointer;
-    }
-    #logindiv {
-      width: 95vw;
-      padding: 0.3rem;
-    }
-    .overlay {
-      justify-content: flex-start;
-      align-items: center;
-      flex-direction: column;
-      padding-top: 2rem;
-      padding-bottom: 2rem;
-    }
-    #login_form, #signup_form, #edit_profile_form{
-      width: calc(100vw - 4rem);
-    }
-    #signup_form .info_row, #edit_profile_form .info_row{
-      flex-direction: column;
-    }
-    #sign_profile, #sign_charlooks, #edit_profile, #edit_charlooks{
-      width: 100%;
-    }
-}
-  
