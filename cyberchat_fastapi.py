@@ -557,7 +557,7 @@ async def createchar_wizard(client_info, client_id):
 
     def chapters():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["chapters"]
-        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created titles for 3 chapters will be: "
+        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output(without double quotes) will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def firstwords():
@@ -572,12 +572,12 @@ async def createchar_wizard(client_info, client_id):
     
     def user_persona():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["user_persona"]
-        userinstruct = f"The given basic information of character are: \n{wizardstr}\n\nThe final output of created user persona will be: "
+        userinstruct = f"The given information are: \n{wizardstr}\n\nThe final output of created {{{{user}}}}'s persona will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
     
     def chat_bg():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["chat_bg"]
-        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created text2img prompt for chat background will be: "
+        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created text2img prompt for background settings(without characters or behaviors, just enviroment elements) will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def default_task():
@@ -603,13 +603,15 @@ async def createchar_wizard(client_info, client_id):
             r"<|system_prompt|>", result["sysinstruct"]
         ).replace(r"<|user_prompt|>", result["userinstruct"])
         # logging.info(wizard_prompt)
+        temperature = 0.9 if task == "prologue" else 0.7
+        smoothing_factor = 0.33 if task == "prologue" else 0
         completions_data.update(
             {
                 "stream": False,
                 "stop": ["###"],
                 "max_tokens": 250,
                 "token_healing": True,
-                "temperature": 0.7,
+                "temperature": temperature,
                 "temperature_last": True,
                 "top_k": 50,
                 "top_p": 0.8,
@@ -627,7 +629,7 @@ async def createchar_wizard(client_info, client_id):
                 "add_bos_token": True,
                 "ban_eos_token": False,
                 "repetition_range": -1,
-                "smoothing_factor": 0,
+                "smoothing_factor": smoothing_factor,
                 "prompt": wizard_prompt,
             }
         )

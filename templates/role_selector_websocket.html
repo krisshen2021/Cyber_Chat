@@ -154,11 +154,11 @@
             $(this).val("");
           }
         });
-        editprofile_inputs.each(function () {
-          if ($(this).attr("type") != "radio") {
-            $(this).val("");
-          }
-        });
+        // editprofile_inputs.each(function () {
+        //   if ($(this).attr("type") != "radio") {
+        //     $(this).val("");
+        //   }
+        // });
         createchar_inputs.each(function () {
           if ($(this).attr("type") != "radio") {
             $(this).val("");
@@ -438,8 +438,26 @@
     }
 
     //wizard function
+    function user_looks_prompt(userlooks) {
+      let user_looks_str = `One ${userlooks["gender"]},  ${userlooks["race"]}, ${userlooks["age"]}, ${userlooks["hair_color"]} ${userlooks["hair_style"]}, ${userlooks["eye_color"]} eyes.`;
+      if (userlooks["beard"] != "") {
+        user_looks_str += ` ${userlooks["beard"]} beard.`;
+      }
+      return user_looks_str;
+    }
     function createchar_wizard(task) {
       let wizardstr;
+      let user_looks = {
+        gender: $("input[name='edit_gender']:checked").val(),
+        race: $("#edit_char_race").val(),
+        age: $("#edit_char_age").val(),
+        hair_color: $("#edit_char_hair_color").val(),
+        hair_style: $("#edit_char_hair_style").val(),
+        eye_color: $("#edit_char_eye_color").val(),
+        beard: $("#edit_char_beard").val(),
+      };
+      let user_appearance = user_looks_prompt(user_looks);
+      console.log(user_appearance);
       switch (task) {
         case "char_persona":
           wizardstr = $("#char_persona").val();
@@ -448,13 +466,13 @@
           wizardstr = $("#char_persona").val();
           break;
         case "char_outfit":
-          wizardstr= "{% raw %}{{char}}'s persona:\n{% endraw %}"+$("#char_persona").val();+"\n\n{% raw %}{{char}}'s looks:\n{% endraw %}"+$("#char_looks").val();
+          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val(); +"\n\n{% raw %}{{char}}'s looks:\n{% endraw %}" + $("#char_looks").val();
           break;
         case "user_persona":
-          wizardstr = $("#user_persona").val();
+          wizardstr = "{% raw %}{{user}}'s appearance:{% endraw %}" + user_appearance + "\nbasic infomation of {% raw %}{{user}}'s persona:{% endraw %}:\n" + $("#user_persona").val();
           break;
         case "prologue":
-          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}" + $("#user_persona").val();
+          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}\nAppearance: " + user_appearance + "\n" + $("#user_persona").val();
           break;
         case "chapters":
           wizardstr = $("#story_prologue").val();
@@ -517,6 +535,15 @@
           break;
         case "firstwords":
           $("#story_firstwords").val(wizardstr);
+          break;
+        case "char_outfit":
+          $("#char_outfit").val(wizardstr);
+          break;
+        case "user_persona":
+          $("#user_persona").val(wizardstr);
+          break;
+        case "chat_bg":
+          $("#chat_bg").val(wizardstr);
           break;
       }
       toggleInputs(true);
@@ -1302,10 +1329,10 @@ Job Position:</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_chapters_wizard">
                 Chapter wizard
               </button>
-              <label for="default_bg">Chat Enviornment<span class="form_hint"></span></label>
+              <label for="chat_bg">Chat Enviornment<span class="form_hint"></span></label>
               <span class="textarea_hint">Chat Background Enviornment prompt, can use wizard once prologue set,
                 example:</span>
-              <textarea name="bg_default" id="default_bg"
+              <textarea name="bg_default" id="chat_bg"
                 rows="2">futuristic, Space station, control room, spacecraft cabin, Mars outside the window</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_chat_bg_wizard">
                 Chat Enviornment wizard
