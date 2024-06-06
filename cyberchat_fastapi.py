@@ -138,7 +138,7 @@ async def client_login(client_info, client_id):
                 "msg": {"status": "Fail", "data": data_op_result},
             }
         else:
-            data_op_result.pop("unique_id", None)
+            # data_op_result.pop("unique_id", None)
             data_op_result.pop("password", None)
             data_op_result["facelooks"] = json.loads(data_op_result["facelooks"])
             send_data = {
@@ -189,7 +189,7 @@ async def client_signup(client_info, client_id):
             }
         else:
             userdata = database.get_user(username, password)
-            userdata.pop("unique_id", None)
+            # userdata.pop("unique_id", None)
             userdata.pop("password", None)
             userdata["facelooks"] = json.loads(userdata["facelooks"])
             send_data = {
@@ -526,12 +526,42 @@ async def preview_avatar(client_info, client_id):
     sd_payload["height"] = 512
     # logging.info(sd_payload)
     avatar_data = await tabby_fastapi.SD_image(payload=sd_payload)
-    avatar_data_url = "data:image/png;base64," + avatar_data
-    data_to_send = {"avatar_img": avatar_data_url, "avatar_for": avatar_for}
     if avatar_data:
+        avatar_data_url = "data:image/png;base64," + avatar_data
+        data_to_send = {"avatar_img": avatar_data_url, "avatar_for": avatar_for}
         await send_datapackage("preview_avatar_result", data_to_send, client_id)
     else:
         logging.info("Failed to get avatar image")
+
+
+# preview createchar
+async def preview_createchar(client_info, client_id):
+    charprompt = client_info["data"]["prompt"]
+    task = client_info["data"]["task"]
+    prompt_str = (
+        prompt_params["prmopt_fixed_prefix"]
+        + ", (body portrait:1.12), "
+        + charprompt
+        + ", "
+        + prompt_params["prmopt_fixed_suffix"]
+    )
+    logging.info(prompt_str)
+    sd_payload["negative_prompt"] = prompt_params["nagetive_prompt"]
+    sd_payload["hr_negative_prompt"] = prompt_params["nagetive_prompt"]
+    sd_payload["hr_prompt"] = prompt_str
+    sd_payload["prompt"] = prompt_str
+    sd_payload["enable_hr"] = True
+    sd_payload["hr_scale"] = 1.25
+    sd_payload["steps"] = 20
+    sd_payload["width"] = 768
+    sd_payload["height"] = 768
+    picture_data = await tabby_fastapi.SD_image(payload=sd_payload)
+    if picture_data:
+        picture_data_url = "data:image/png;base64," + picture_data
+        data_to_send = {"result": picture_data_url, "task": task}
+        await send_datapackage("preview_char_result", data_to_send, client_id)
+    else:
+        logging.info("Failed to get char preview image")
 
 
 # create chars wizard
@@ -552,7 +582,7 @@ async def createchar_wizard(client_info, client_id):
 
     def prologue():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["prologue"]
-        userinstruct = f"The given characters' persona are: \n{wizardstr}\n\nThe final output of created prologue will be: "
+        userinstruct = f"The given characters' persona are: \n{wizardstr}\n\nThe final output will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def chapters():
@@ -562,22 +592,24 @@ async def createchar_wizard(client_info, client_id):
 
     def firstwords():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["firstwords"]
-        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created first words that speaking by {{{{char}}}} will be: "
+        userinstruct = (
+            f"The given plot of story and the information of {{{{char}}}}'s speaking tone are: \n{wizardstr}\n\nThe final output(speaking without double quotes)will be: "
+        )
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
-    
+
     def char_outfit():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["char_outfit"]
         userinstruct = f"The given character persona and looks are: \n{wizardstr}\n\nThe final output of created JSON formated strings for character outfit will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
-    
+
     def user_persona():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["user_persona"]
         userinstruct = f"The given information are: \n{wizardstr}\n\nThe final output of created {{{{user}}}}'s persona will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
-    
+
     def chat_bg():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["chat_bg"]
-        userinstruct = f"The given prologue of story is: \n{wizardstr}\n\nThe final output of created text2img prompt for background settings(without characters or behaviors, just enviroment elements) will be: "
+        userinstruct = f"The given plot of story and the guide for generating prompt are: \n{wizardstr}\n\nThe final output of text2img prompt for enviornment background will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def default_task():
@@ -591,7 +623,7 @@ async def createchar_wizard(client_info, client_id):
         "firstwords": firstwords,
         "char_outfit": char_outfit,
         "user_persona": user_persona,
-        "chat_bg": chat_bg
+        "chat_bg": chat_bg,
     }
 
     def switchfunc(task):
@@ -603,13 +635,15 @@ async def createchar_wizard(client_info, client_id):
             r"<|system_prompt|>", result["sysinstruct"]
         ).replace(r"<|user_prompt|>", result["userinstruct"])
         # logging.info(wizard_prompt)
-        temperature = 0.9 if task == "prologue" else 0.7
-        smoothing_factor = 0.33 if task == "prologue" else 0
+        temperature = 0.7 if task == "prologue" else 0.55
+        smoothing_factor = 0.22 if task == "prologue" else 0
+        max_tokens = 350 if task == "prologue" or task == "char_persona" else 150
+        presen_penalty = 1.15 if task == "prologue" else 1.05
         completions_data.update(
             {
                 "stream": False,
                 "stop": ["###"],
-                "max_tokens": 250,
+                "max_tokens": max_tokens,
                 "token_healing": True,
                 "temperature": temperature,
                 "temperature_last": True,
@@ -620,7 +654,7 @@ async def createchar_wizard(client_info, client_id):
                 "min_p": 0.01,
                 "tfs": 0.95,
                 "frequency_penalty": 0,
-                "presence_penalty": 1.15,
+                "presence_penalty": presen_penalty,
                 "repetition_penalty": 1.05,
                 "repetition_decay": 0,
                 "mirostat_mode": 0,
@@ -640,7 +674,12 @@ async def createchar_wizard(client_info, client_id):
     else:
         logging.info("Invalid task")
 
+# save created character
+async def client_save_character(client_info, client_id):
+    pass
 
+
+#ws event handler
 ws_events_dict = {
     "connect to server": client_connect,
     "client_login": client_login,
@@ -659,6 +698,8 @@ ws_events_dict = {
     "xtts_audio_gen": xtts_audio_generate,
     "preview_avatar": preview_avatar,
     "createchar_wizard": createchar_wizard,
+    "preview_createchar": preview_createchar,
+    "client_save_character" : client_save_character,
 }
 
 

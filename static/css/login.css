@@ -278,6 +278,7 @@ body {
   margin-top: 3rem;
   margin-bottom: 3rem;
 }
+
 #login_form {
   width: 300px;
 }
@@ -385,16 +386,23 @@ body {
 
 #sign_profile .gender_bar,
 #edit_profile .gender_bar,
-#createchar_profile .full_bar {
+#createchar_profile .full_bar,
+#createchar_charlooks .full_bar {
   display: flex;
   flex-direction: row;
   width: 100%;
   align-items: center;
 }
 
+#createchar_charlooks .full_bar {
+  justify-content: center;
+  gap: 5px;
+}
+
 #sign_profile .gender_bar label,
 #edit_profile .gender_bar label,
-#createchar_profile .full_bar label {
+#createchar_profile .full_bar label,
+#createchar_charlooks .full_bar label {
   align-self: center;
 }
 
@@ -404,28 +412,34 @@ body {
   padding: 0.5rem;
   font-size: 0.8rem;
   line-height: 1.2rem;
-  resize: vertical;
   background-color: #1e0d2d;
   color: #f9f4d4;
   border: 0px;
 }
+
+textarea {
+  overflow: hidden;
+  resize: none;
+}
+
 textarea::-webkit-scrollbar {
   width: 0.5rem;
 }
 
 textarea::-webkit-scrollbar-track {
-  background:#1e0d2d;
+  background: #1e0d2d;
 }
 
 textarea::-webkit-scrollbar-thumb {
-  background:#d2b2fc;
+  background: #d2b2fc;
 }
 
 textarea::-webkit-scrollbar-thumb:hover {
-  background:#c7790b;
+  background: #c7790b;
 }
+
 textarea::-webkit-resizer {
-  background:#1e0d2d; 
+  background: #1e0d2d;
 }
 
 #createchar_profile .wizard_btn {
@@ -433,11 +447,13 @@ textarea::-webkit-resizer {
   font-size: 0.7rem;
   background-color: #d2b2fc;
 }
-#createchar_charlooks .preview_btn{
+
+#createchar_charlooks .preview_btn {
   align-self: center;
   font-size: 0.7rem;
   background-color: #d2b2fc;
 }
+
 .btn_close {
   cursor: pointer;
 }
@@ -454,7 +470,8 @@ textarea::-webkit-resizer {
   align-self: flex-start;
 }
 
-#createchar_profile .textarea_hint,  #createchar_charlooks .textarea_hint {
+#createchar_profile .textarea_hint,
+#createchar_charlooks .textarea_hint {
   font-size: 10px;
   font-weight: 600;
   font-style: italic;
@@ -518,13 +535,16 @@ textarea::-webkit-resizer {
   background-color: #d86100;
   cursor: pointer;
 }
-#createchar_profile .submit_btn:hover, #createchar_charlooks .submit_btn:hover {
+
+#createchar_profile .submit_btn:hover,
+#createchar_charlooks .submit_btn:hover {
   color: antiquewhite;
   background-color: #c7790b;
   cursor: pointer;
 }
 
-.avatar_preview, .createchar_preview {
+.avatar_preview,
+.createchar_preview {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -537,7 +557,8 @@ textarea::-webkit-resizer {
   background-repeat: no-repeat;
   box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.3);
 }
-.createchar_preview{
+
+.createchar_preview {
   min-width: 512px;
   min-height: 512px;
 }

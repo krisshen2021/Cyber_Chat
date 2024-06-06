@@ -62,6 +62,23 @@
       document.cookie =
         name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
     }
+    function isValidJSONObject(str) {
+      try {
+        const jsonObj = JSON.parse(str);
+        // 检查解析后的结果是否是非空对象或非空数组
+        if (
+          (typeof jsonObj === 'object' && jsonObj !== null) &&
+          (Object.keys(jsonObj).length > 0 || Array.isArray(jsonObj)) &&
+          (!Array.isArray(jsonObj) || jsonObj.length > 0)
+        ) {
+          return true;
+        }
+        return false;
+      } catch (e) {
+        return false;
+      }
+    }
+
     function form_validation(form_id) {
       let inputs = $("#" + form_id).find("input");
       let allinputFilled = true;
@@ -132,6 +149,12 @@
             scale: 0.5,
             ease: "elastic",
           });
+          let textareas = $("#create_character_form").find("textarea");
+          textareas.each(function () {
+            // $(this).css({ height: "auto" });
+            // $(this).height(this.scrollHeight);
+            autoExpand(this);
+          });
         }
       } else {
         let all_hints = $(".form_hint");
@@ -177,9 +200,7 @@
         let querydata = {
           username: $("#login_username").val(),
           password: $("#login_password").val(),
-          // socket_id: socket.id,
         };
-        // socket.emit("client_login", { data: querydata });
         ws.send(wsData("client_login", querydata));
       }
     }
@@ -206,9 +227,7 @@
             password: $("#sign_password").val(),
             gender: $("input[name='sign_gender']:checked").val(),
             facelooks: user_looks,
-            // socket_id: socket.id,
           };
-          // socket.emit("client_signup", { data: querydata });
           ws.send(wsData("client_signup", querydata));
         } else {
           $("label[for='sign_repassword']")
@@ -241,6 +260,59 @@
         console.log(querydata);
         ws.send(wsData("client_edit_profile", querydata));
         toggleInputs(false);
+      }
+    }
+    function character_submit() {
+      if (form_validation("create_character_form")) {
+        let textareas = $("#create_character_form textarea");
+        textareas.each(function () {
+          if ($(this).val() == "") {
+            alert("Please fill all the fields");
+            return false;
+          }
+        });
+        if (!isValidJSONObject($("#char_outfit").val()) || !isValidJSONObject($("#story_chapters").val()) || !isValidJSONObject($("#completions_data").val())) {
+          alert("check JSON format!");
+          return false;
+        }
+        //start to gather the data of character
+        let decision = confirm("Save character now?");
+        if (decision) {
+          console.log("User clicked OK.");
+        } else {
+          console.log("User clicked Cancel.");
+          return false;
+        }
+        let createchar_data = {
+          "Name": $("#char_unique_id").val(),
+          "Ai_name": $("#char_ai_name").val(),
+          "Ai_speaker": $("#ai_speaker_cn").val(),
+          "Ai_speaker_en": $("#ai_speaker_en").val(),
+          "is_Uncensored": ($("input[name='uncensored_switch']:checked").val() == "yes"),
+          "Prologue": $("#story_prologue").val(),
+          "Char_Persona": $("#char_persona").val(),
+          "User_Persona": $("#user_persona").val(),
+          "json_Chapters": JSON.parse($("#story_chapters").val()),
+          "Char_looks": $("#char_looks").val(),
+          "json_Char_outfit": JSON.parse($("#char_outfit").val()),
+          "Char_avatar": `${$("#char_avatarprefix").val()}, ${$("#char_looks").val()}, ${JSON.parse($("#char_outfit").val())["normal"]}`,
+          "Default_bg": $("#chat_bg").val(),
+          "Firstwords": $("#story_firstwords").val(),
+          "is_Gen_DynaPic": ($("input[name='GDP_switch']:checked").val() == "yes"),
+          "Prompt_to_load": $("#prompt_to_load").val(),
+          "Match_words_cata": $("input[name='NSFW_switch']:checked").val(),
+          "json_Completions_data": JSON.parse($("#completions_data").val()),
+          "Creator_ID": userdata["unique_id"],
+        }
+        console.log(createchar_data);
+        let querydata = {
+          "createchar_data": createchar_data
+        }
+        ws.send(wsData("client_save_character", querydata));
+        // toggleInputs(false);
+      }else{
+        alert("Please fill the fields marked with '*'");
+        return false;
       }
     }
 
@@ -436,7 +508,28 @@
       toggleInputs(false);
 
     }
-
+    //createchar preview function
+    function preview_createchar() {
+      let char_looks = $("#char_looks").val();
+      let char_outfit = $("#char_outfit").val();
+      let chat_bg = $("#chat_bg").val();
+      let selectedoutfit = $('input[name="outfit_preview"]:checked').val();
+      let looking_from = $("#looking_from").val();
+      if (char_looks == "" || char_outfit == "" || chat_bg == "") {
+        alert("Please fill all the fields [char_looks,char_outfit,char_bg]");
+        return;
+      } else {
+        let preview_prompt = `${char_looks}, ${JSON.parse(char_outfit)[selectedoutfit]}, ${looking_from}, ${chat_bg}`;
+        console.log(preview_prompt);
+        let querydata = {
+          prompt: preview_prompt,
+          task: "preview_createchar",
+        };
+        ws.send(wsData("preview_createchar", querydata));
+        $("#createchar_charlooks").find(".createchar_preview").html("Generating...");
+        toggleInputs(false);
+      }
+    }
     //wizard function
     function user_looks_prompt(userlooks) {
       let user_looks_str = `One ${userlooks["gender"]},  ${userlooks["race"]}, ${userlooks["age"]}, ${userlooks["hair_color"]} ${userlooks["hair_style"]}, ${userlooks["eye_color"]} eyes.`;
@@ -447,6 +540,7 @@
     }
     function createchar_wizard(task) {
       let wizardstr;
+      let speaking_tone = 'normal';
       let user_looks = {
         gender: $("input[name='edit_gender']:checked").val(),
         race: $("#edit_char_race").val(),
@@ -458,6 +552,14 @@
       };
       let user_appearance = user_looks_prompt(user_looks);
       console.log(user_appearance);
+      let match_speaking_tone = $("#char_persona").val().match(/Speaking Tone:\s*([^\n]*)/);
+      if (match_speaking_tone) {
+        speaking_tone = match_speaking_tone[1].trim();
+        console.log(speaking_tone);
+      } else {
+        console.log("No speaking tone found.");
+      }
+
       switch (task) {
         case "char_persona":
           wizardstr = $("#char_persona").val();
@@ -472,16 +574,16 @@
           wizardstr = "{% raw %}{{user}}'s appearance:{% endraw %}" + user_appearance + "\nbasic infomation of {% raw %}{{user}}'s persona:{% endraw %}:\n" + $("#user_persona").val();
           break;
         case "prologue":
-          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}\nAppearance: " + user_appearance + "\n" + $("#user_persona").val();
+          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}Appearance: " + user_appearance + "\n" + $("#user_persona").val() + "\n" + $("#story_guideline").val();
           break;
         case "chapters":
           wizardstr = $("#story_prologue").val();
           break;
         case "chat_bg":
-          wizardstr = $("#story_prologue").val();
+          wizardstr = $("#story_prologue").val() + "\n the guide for generating prompt: " +$("#chat_bg_guidewords").val();
           break;
         case "firstwords":
-          wizardstr = $("#story_prologue").val();
+          wizardstr = $("#story_prologue").val() + "\n{% raw %}{{char}}'s speaking tone:\n{% endraw %}" + speaking_tone;
           break;
       }
       if (wizardstr.length > 0) {
@@ -520,33 +622,40 @@
     function createcharWizardUpdate(serverData) {
       let wizardstr = serverData.data["result"];
       let task = serverData.data["task"];
+      toggleInputs(true);
       switch (task) {
         case "char_persona":
-          $("#char_persona").val(wizardstr);
+          $("#char_persona").val(wizardstr).trigger('input');
           break;
         case "char_looks":
-          $("#char_looks").val(wizardstr);
+          $("#char_looks").val(wizardstr).trigger('input');
           break;
         case "prologue":
-          $("#story_prologue").val(wizardstr);
+          $("#story_prologue").val(wizardstr).trigger('input');
           break;
         case "chapters":
-          $("#story_chapters").val(wizardstr);
+          $("#story_chapters").val(wizardstr).trigger('input');
           break;
         case "firstwords":
-          $("#story_firstwords").val(wizardstr);
+          $("#story_firstwords").val(wizardstr).trigger('input');
           break;
         case "char_outfit":
-          $("#char_outfit").val(wizardstr);
+          $("#char_outfit").val(wizardstr).trigger('input');
           break;
         case "user_persona":
-          $("#user_persona").val(wizardstr);
+          $("#user_persona").val(wizardstr).trigger('input');
           break;
         case "chat_bg":
-          $("#chat_bg").val(wizardstr);
+          $("#chat_bg").val(wizardstr).trigger('input');
+          break;
+        case "preview_createchar":
+          //update char preview image
+          $("#createchar_charlooks").find(".createchar_preview").html("");
+          $("#createchar_charlooks").find(".createchar_preview").css({ "background-image": "url(" + wizardstr + ")" });
+          gsap.from($("#createchar_charlooks").find(".createchar_preview"), { duration: 0.3, backgroundSize: "140%", });
           break;
       }
-      toggleInputs(true);
+
     }
 
     function start_chat() {
@@ -582,10 +691,39 @@
         toggle_forms("login");
       }
     }
-
+    //Textarea auto height functions
+    function autoExpand(textarea) {
+      textarea.style.height = 'auto'; // Reset the height
+      textarea.style.height = textarea.scrollHeight + 'px'; // Set the height to the scroll height
+    }
     //DOM loaded
     $(document).ready(function () {
       /** Event binding Section **/
+      $("textarea").each(function () {
+        $(this).on('input', function () {
+          autoExpand(this); // Adjust height on input
+        });
+      });
+      //Textarea auto indent functions
+      $('textarea').on('keydown', function (event) {
+        if (event.key === 'Enter') {
+          const textarea = this;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const value = textarea.value;
+
+          const currentLine = value.substring(0, start).split('\n').pop();
+          const indent = currentLine.match(/^\s*/)[0];
+
+          const newValue = value.substring(0, start) + '\n' + indent + value.substring(end);
+          textarea.value = newValue;
+
+          textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
+          autoExpand(textarea);
+          event.preventDefault();
+        }
+      });
+
       //edit menu
       $(".profile_submenu").on("click", (e) => {
         let target = $(e.target).data("endpoint");
@@ -664,26 +802,6 @@
         stagger: 0.2,
       });
 
-      //Textarea auto indent functions
-      $('textarea').on('keydown', function (event) {
-        if (event.key === 'Enter') {
-          const textarea = this;
-          const start = textarea.selectionStart;
-          const end = textarea.selectionEnd;
-          const value = textarea.value;
-
-          const currentLine = value.substring(0, start).split('\n').pop();
-          const indent = currentLine.match(/^\s*/)[0];
-
-          const newValue = value.substring(0, start) + '\n' + indent + value.substring(end);
-          textarea.value = newValue;
-
-          textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
-
-          event.preventDefault();
-        }
-      });
-
 
       //button event functions
 
@@ -729,17 +847,22 @@
       let btn_chapters_wizard = $("#btn_chapters_wizard");
       let btn_chat_bg_wizard = $("#btn_chat_bg_wizard");
       let btn_firstwords_wizard = $("#btn_firstwords_wizard");
+      let btn_createchar_preview = $("#btn_createchar_preview");
+      let btn_character_submit = $("#btn_character_submit");
       btn_signup_submit.on("click", sign_up);
       btn_login_submit.on("click", login);
       btn_start_chat.on("click", start_chat);
       btn_edit_profile_submit.on('click', profile_submit);
+      btn_character_submit.on('click', character_submit);
       btn_avatar_preview_signup.on('click', function () {
         preview_avatar("signup");
       });
       btn_avatar_preview_edit.on('click', function () {
         preview_avatar("edit");
       });
-
+      btn_createchar_preview.on('click', function () {
+        preview_createchar();
+      });
       //wizard buttons
       btn_char_persona_wizard.on('click', function () {
         createchar_wizard("char_persona");
@@ -893,6 +1016,9 @@
               changePreviewAvatar(serverData);
               break;
             case "createchar_wizard_result":
+              createcharWizardUpdate(serverData);
+              break;
+            case "preview_char_result":
               createcharWizardUpdate(serverData);
               break;
           }
@@ -1086,7 +1212,7 @@
               </select>
               <label for="sign_char_beard">Beard</label>
               <select id="sign_char_beard">
-                <option value="">None</option>
+                <option value>None</option>
                 <option value="Big beard">Big beard</option>
                 <option value="Sideburns">Sideburns</option>
                 <option value="Goatee">Goatee</option>
@@ -1156,7 +1282,8 @@
                 Authorization feedback
               </div>
               <label id="label_edit_username">Username:
-                <span style="font-weight: 500; font-size: 1rem">your name</span></label>
+                <span style="font-weight: 500; font-size: 1rem">your
+                  name</span></label>
               <input type="hidden" name="username" id="edit_username" />
               <label for="edit_nickname">Nickname<span class="form_hint"></span></label>
               <input name="nickname" id="edit_nickname" data-optional="true" />
@@ -1218,7 +1345,7 @@
               </select>
               <label for="edit_char_beard">Beard</label>
               <select id="edit_char_beard">
-                <option value="">None</option>
+                <option value>None</option>
                 <option value="Big beard">Big beard</option>
                 <option value="Sideburns">Sideburns</option>
                 <option value="Goatee">Goatee</option>
@@ -1246,50 +1373,38 @@
         </div>
         <div class="main_body">
           <div class="info_row">
+            <!-- Character Profile HTML -->
             <div id="createchar_profile">
               <div id="createchar_author" class="form_hint">
                 Authorization feedback
               </div>
-              <label for="char_unique_id">Character unique id<span class="form_hint"></span></label>
+              <label for="char_unique_id">Character unique id *<span class="form_hint"></span></label>
               <input name="unique_name" id="char_unique_id" />
-              <label for="char_ai_name">Character name<span class="form_hint"></span></label>
+              <label for="char_ai_name">Character name *<span class="form_hint"></span></label>
               <input name="ai_name" id="char_ai_name" />
               <label for="char_persona">Character persona<span class="form_hint"></span></label>
-              <span class="textarea_hint">character persona descriptive prompt, fill at least 4 fields to use
-                wizard:</span>
-              <textarea name="persona_ai" id="char_persona" rows="8">
-Place of birth:
-Age:
-Gender:
-Ancestry:
-Hair:
-Eyes:
-Height:
-Weight:
-Hobbies:
-Personality:
-Likes:
-Dislikes:
-Fears:
-Speaking Tone:
-Mantra:
-Affiliation:
-Job Position:</textarea>
+              <span class="textarea_hint">write a shot description of the
+                character's persona, then use wizard to
+                generate more details</span>
+              <textarea name="persona_ai"
+                id="char_persona">a girl from england, outgoing and passionate, her figure is sexy, she works as software developr for Mistral</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_char_persona_wizard">
                 Character persona wizard
               </button>
               <label for="char_looks">Character looks<span class="form_hint"></span></label>
-              <span class="textarea_hint">character looks descriptive prompt, can use wizard once complete character
+              <span class="textarea_hint">character looks descriptive prompt,
+                can use wizard once complete character
                 persona, for example:</span>
-              <textarea name="looks_ai" id="char_looks"
-                rows="2">a girl, 30yo, (long red hair:1.13), (green eye:1.10), saggy breasts, (slim waist:1.17)</textarea>
+              <textarea name="looks_ai"
+                id="char_looks">a girl, 30yo, (long red hair:1.13), (green eye:1.10), saggy breasts, (slim waist:1.17)</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_char_looks_wizard">
                 Character looks wizard
               </button>
               <label for="char_outfit">Character outfit<span class="form_hint"></span></label>
-              <span class="textarea_hint">character outfit json data, can use wizard once character persona and looks
+              <span class="textarea_hint">character outfit json data, can use
+                wizard once character persona and looks
                 set, do not change the format:</span>
-              <textarea name="outfit_ai" id="char_outfit" rows="6">
+              <textarea name="outfit_ai" id="char_outfit">
 {
     "normal": "",
     "underwear": "",
@@ -1300,48 +1415,58 @@ Job Position:</textarea>
                 Character outfit wizard
               </button>
               <label for="user_persona">User persona<span class="form_hint"></span></label>
-              <span class="textarea_hint">user persona descriptive prompt, fill some fields to use wizard:</span>
-              <textarea name="persona_user" id="user_persona" rows="8">
-Place of birth:
-Hobbies:
-Personality:
-Likes:
-Dislikes:
-Skills:
-Affiliation:
-Job Position:</textarea>
+              <span class="textarea_hint">write a shot description of the
+                character's persona, then use wizard to
+                generate more details</span>
+              <textarea name="persona_user"
+                id="user_persona">a great cooking master, a bit shy but brave, always learning new things</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_user_persona_wizard">
                 User persona wizard
               </button>
               <label for="story_prologue">Story prologue<span class="form_hint"></span></label>
-              <span class="textarea_hint">story prologue descriptive prompt, can use wizard once character persona and
-                user persona are complete, for example:</span>
-              <textarea name="prologue_story" id="story_prologue"
-                rows="8">{% raw %}{{char}} and {{user}} have been cooperating tacitly for 2 years since landing on the 'Eros' Mars space station{% endraw %}</textarea>
+              <span class="textarea_hint">Plot guideline, to set the concept
+                or type of the plot</span>
+              <textarea name="guideline_story"
+                id="story_guideline">{% raw %}It's a concise but realistic criminal plot developing between {{char}} and {{user}}, less than 100 words!{% endraw %}</textarea>
+              <span class="textarea_hint">Plot context, can use wizard to get
+                best result once character persona and
+                user persona are complete</span>
+              <textarea name="prologue_story"
+                id="story_prologue">Write story plot here, or use wizard to generate...</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_prologue_wizard">
                 Prologue wizard
               </button>
               <label for="story_chapters">Story Chapters<span class="form_hint"></span></label>
-              <span class="textarea_hint">story chapters descriptive prompt, use ',' to separate multiple chapters, can
-                use wizard once story prologue is complete, for example:</span>
-              <textarea name="chapters_story" id="story_chapters"
-                rows="2">chapter 1 title, chapter 2 title, chapter 3 title</textarea>
+              <span class="textarea_hint">story chapters JSON list, can use
+                wizard once story prologue is complete, for
+                example:</span>
+              <textarea name="chapters_story" id="story_chapters">
+[
+  {"name":"Chapter 1"},
+  {"name":"Chapter 2"},
+  {"name":"Chapter 3"}
+]</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_chapters_wizard">
                 Chapter wizard
               </button>
               <label for="chat_bg">Chat Enviornment<span class="form_hint"></span></label>
-              <span class="textarea_hint">Chat Background Enviornment prompt, can use wizard once prologue set,
+              <span class="textarea_hint">guide words for chat enivornment, define interior or exterior, elements etc., for example:</span>
+              <textarea name="bg_guidewords_ai"
+                id="chat_bg_guidewords">focus solely on interior environment elements only, moody lighting description is welcomed, no exterior environment needed</textarea>
+              <span class="textarea_hint">Chat Background Enviornment prompt,
+                can use wizard once prologue set, for
                 example:</span>
-              <textarea name="bg_default" id="chat_bg"
-                rows="2">futuristic, Space station, control room, spacecraft cabin, Mars outside the window</textarea>
+              <textarea name="bg_default"
+                id="chat_bg">(bustling streets of London), (nighttime ambiance), (street lights illuminating the path)</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_chat_bg_wizard">
                 Chat Enviornment wizard
               </button>
               <label for="story_firstwords">First line spokens<span class="form_hint"></span></label>
-              <span class="textarea_hint">The first line spoken by the character at the beginning, can use wizard once
+              <span class="textarea_hint">The first line spoken by the
+                character at the beginning, can use wizard once
                 story prologue is complete, for example:</span>
-              <textarea name="firstwords_story" id="story_firstwords"
-                rows="4">{% raw %}*I'm on my way to Luna Ltd., i find {{user}} is in front of me* Hi!~ {{user}}, how's doing? go to company or somewhere else? would you like to grab some coffee together? *{{char}} smile~*{% endraw %}</textarea>
+              <textarea name="firstwords_story"
+                id="story_firstwords">{% raw %}*I couldn't help but be drawn to the quiet intensity of {{user}}, my eyes locked onto them as we navigated the crowded speakeasy* What brings you here, I wonder?{% endraw %}</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_firstwords_wizard">
                 First line spokens wizard
               </button>
@@ -1387,11 +1512,15 @@ Job Position:</textarea>
                 <label for="GDP_no">No</label>
               </div>
               <label for="char_avatarprefix">Character avatar prefix<span class="form_hint"></span></label>
-              <textarea name="avatarprefix_ai" id="char_avatarprefix"
-                rows="2">Perfect face portrait, (close-up:1.12), (&lt;|emotion|&gt; expression),</textarea>
+              <span class="textarea_hint">default is fine, don't change the
+                emotion template mark, it will be replaced
+                by the actual emotion</span>
+              <textarea name="avatarprefix_ai"
+                id="char_avatarprefix">Perfect face portrait, (close-up:1.12), (&lt;|emotion|&gt; expression)</textarea>
               <label for="completions_data">Completions parameters<span class="form_hint"></span></label>
-              <span class="textarea_hint">The json parameters used to infer the model, Do not change the format:</span>
-              <textarea name="data_completions" id="completions_data" rows="15">
+              <span class="textarea_hint">The json parameters used to infer
+                the model, Do not change the format:</span>
+              <textarea name="data_completions" id="completions_data">
 {
   "max_tokens": 160,
   "top_k": 50,
@@ -1410,12 +1539,32 @@ Job Position:</textarea>
             </div>
             <div id="createchar_charlooks">
               <span class="looks_title">Preview character Looks</span>
-              <span class="textarea_hint">can use to preview character looks once character looks fields are
+              <span class="textarea_hint">can use to preview character looks
+                once character looks fields are
                 filled</span>
               <div class="createchar_preview">preview</div>
+              <div class="full_bar">
+                <label for="looking_from">Looking from</label>
+                <select id="looking_from" style="width: fit-content;">
+                  <option value="(looking from front)" selected>front</option>
+                  <option value="(Looking from below)">below</option>
+                  <option value="(looking from above)">above</option>
+                  <option value="(looking from side)">side</option>
+                  <option value="(looking from behind)">behind</option>
+                </select>
+                <input type="radio" id="outfit_normal" name="outfit_preview" value="normal" checked />
+                <label for="outfit_normal">Normal</label>
+                <input type="radio" id="outfit_underwear" name="outfit_preview" value="underwear" />
+                <label for="outfit_underwear">underwear</label>
+                <input type="radio" id="outfit_bdsm" name="outfit_preview" value="bdsm" />
+                <label for="outfit_bdsm">bdsm</label>
+                <input type="radio" id="outfit_naked" name="outfit_preview" value="naked" />
+                <label for="outfit_naked">naked</label>
+              </div>
               <button type="button" class="submit_btn preview_btn" id="btn_createchar_preview">
                 Preview Character
               </button>
+
             </div>
           </div>
           <button type="button" class="submit_btn" id="btn_character_submit">
