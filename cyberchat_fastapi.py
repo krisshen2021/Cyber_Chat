@@ -21,6 +21,7 @@ from modules.PydanticModels import EnterRoom, as_form
 from fastapimode.room_uncensor_websocket import chatRoom_unsensor
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 from modules.payload_state import sd_payload, completions_data
+from modules.AiRoleOperator import AiRoleOperator as ARO
 
 sd_payload = sd_payload.copy()
 config_data = config_data.copy()
@@ -568,7 +569,7 @@ async def preview_createchar(client_info, client_id):
 async def createchar_wizard(client_info, client_id):
     task = client_info["data"]["task"]
     wizardstr = client_info["data"]["wizardstr"]
-    wizard_prompt_template = prompt_templates["Alpaca_Rephrase"]
+    wizard_prompt_template = prompt_templates["Cohere_Rephrase"]
 
     def char_persona():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["char_persona"]
@@ -676,7 +677,23 @@ async def createchar_wizard(client_info, client_id):
 
 # save created character
 async def client_save_character(client_info, client_id):
-    pass
+    createchar_data = client_info['data']['createchar_data']
+    logging.info(createchar_data)
+    createchar_data["User_Persona"] = f"Appearance: <|User_Looks|>\n{createchar_data['User_Persona']}"
+    
+    createchar_data["json_Chapters"] = json.dumps(createchar_data["json_Chapters"],indent=4)
+    createchar_data["json_Char_outfit"] = json.dumps(createchar_data["json_Char_outfit"],indent=4)
+    createchar_data["json_Completions_data"] = json.dumps(createchar_data["json_Completions_data"],indent=4)
+    result = await ARO.create_role(createchar_data)
+    if result[0]:
+        msg_to_send = "success"
+        logging.info("save character successfuly")
+    else:
+        msg_to_send = result[1]
+    data_to_send = {"result":msg_to_send, "task":"after_char_saved"}
+    await send_datapackage("save_character_result", data_to_send, client_id)
+    
+    
 
 
 #ws event handler

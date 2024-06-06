@@ -12,6 +12,7 @@ from modules.global_sets_async import (
     config_data,
     prompt_templates,
     prompt_params,
+    logging
 )
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 from modules.payload_state import completions_data, sd_payload
@@ -54,7 +55,9 @@ class AiRoleOperator:
             bg_img, avatar_img = await AiRoleOperator.buildup_images(
                 airole_dict=airole_dict
             )
-        return (result, bg_img, avatar_img)
+            return (result, bg_img, avatar_img)
+        else:
+            return (False, result)
 
     @staticmethod
     async def modify_role(airole_dict: dict):
@@ -63,7 +66,9 @@ class AiRoleOperator:
             bg_img, avatar_img = await AiRoleOperator.buildup_images(
                 airole_dict=airole_dict
             )
-        return (result, bg_img, avatar_img)
+            return (result, bg_img, avatar_img)
+        else:
+            return (False, result)
 
     @staticmethod
     async def fetch_airole(ai_Name: str):
@@ -153,18 +158,19 @@ class AiRoleOperator:
         )
         if not os.path.exists(role_img_path):
             os.makedirs(role_img_path)
-        image_payload = sd_payload
+        image_payload = sd_payload.copy()
         image_bg_prompt = (
             prompt_params["prmopt_fixed_prefix"]
             + ", "
             + airole_dict["Char_looks"]
             + ", "
-            + airole_dict["json_Char_outfit"]["normal"]
+            + json.loads(airole_dict["json_Char_outfit"])["normal"]
             + ", "
             + airole_dict["Default_bg"]
             + ", "
             + prompt_params["prmopt_fixed_suffix"]
         )
+        logging.info(image_bg_prompt)
         image_avatar_prompt = (
             prompt_params["prmopt_fixed_prefix"]
             + ", "
@@ -188,9 +194,11 @@ class AiRoleOperator:
         }
         image_payload.update(bg_payload)
         bg_img = await tabby_fastapi.SD_image(payload=image_payload)
+        logging.info(bg_img)
         bg_img_path = os.path.join(role_img_path, "background.png")
-        image_save = Image.open(io.BytesIO(base64.b64decode(bg_img)))
-        image_save.save(bg_img_path)
+        logging.info(bg_img_path)
+        image_save_bg = Image.open(io.BytesIO(base64.b64decode(bg_img)))
+        image_save_bg.save(bg_img_path)
 
         avatar_payload = {
             "hr_scale": 1.25,
@@ -206,9 +214,11 @@ class AiRoleOperator:
         }
         image_payload.update(avatar_payload)
         avatar_img = await tabby_fastapi.SD_image(payload=image_payload)
+        logging.info(avatar_img)
         avatar_img_path = os.path.join(role_img_path, "none.png")
-        image_save = Image.open(io.BytesIO(base64.b64decode(avatar_img)))
-        image_save.save(avatar_img_path)
+        logging.info(avatar_img_path)
+        image_save_avatar = Image.open(io.BytesIO(base64.b64decode(avatar_img)))
+        image_save_avatar.save(avatar_img_path)
 
         return (bg_img, avatar_img)
 

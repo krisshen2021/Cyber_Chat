@@ -295,7 +295,7 @@
           "json_Chapters": JSON.parse($("#story_chapters").val()),
           "Char_looks": $("#char_looks").val(),
           "json_Char_outfit": JSON.parse($("#char_outfit").val()),
-          "Char_avatar": `${$("#char_avatarprefix").val()}, ${$("#char_looks").val()}, ${JSON.parse($("#char_outfit").val())["normal"]}`,
+          "Char_avatar": `${$("#char_avatarprefix").val()}, ${$("#char_looks").val()}`,
           "Default_bg": $("#chat_bg").val(),
           "Firstwords": $("#story_firstwords").val(),
           "is_Gen_DynaPic": ($("input[name='GDP_switch']:checked").val() == "yes"),
@@ -309,7 +309,7 @@
           "createchar_data": createchar_data
         }
         ws.send(wsData("client_save_character", querydata));
-        // toggleInputs(false);
+        toggleInputs(false);
       }else{
         alert("Please fill the fields marked with '*'");
         return false;
@@ -653,6 +653,16 @@
           $("#createchar_charlooks").find(".createchar_preview").html("");
           $("#createchar_charlooks").find(".createchar_preview").css({ "background-image": "url(" + wizardstr + ")" });
           gsap.from($("#createchar_charlooks").find(".createchar_preview"), { duration: 0.3, backgroundSize: "140%", });
+          break;
+        case "after_char_saved":
+          if (wizardstr == "success"){
+            alert("Character saved successfully");
+            toggleInputs(true);
+            location.reload();
+          }else{
+            alert(`Operation failed, feedback:\n${wizardstr}`);
+            toggleInputs(true);
+          }
           break;
       }
 
@@ -1019,6 +1029,9 @@
               createcharWizardUpdate(serverData);
               break;
             case "preview_char_result":
+              createcharWizardUpdate(serverData);
+              break;
+            case "save_character_result":
               createcharWizardUpdate(serverData);
               break;
           }

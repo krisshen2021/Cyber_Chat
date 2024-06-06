@@ -158,13 +158,11 @@ createchar_wizard_prompt:
       -  Skin Tone
       -  Hair
       -  Eyes
-      -  Legs
-      -  Arms
       -  Makeups
       -  Breasts
     - No outfit description in output prompt
     - Example:
-    (One girl:1.33), Solo, (20yo), (Chinese), (fair skin), (long black wavy hair:1.12), (brown eyes:1.13), (light natural makeups:1.12), (small perky breasts:1.13), (slender long legs), (toned arms)
+    (One girl:1.33), Solo, (20yo), (Chinese), (fair skin), (long black wavy hair:1.12), (brown eyes:1.13), (light natural makeups:1.12), (small perky breasts:1.13)
 
     Finally, keep the format and output the text2img prompt only! (no character description words or explantion needed) 
   
@@ -186,11 +184,11 @@ createchar_wizard_prompt:
     2. Keep every chapter title less than 4 words!
     3. Output result in a list type of JSON key/value object, for example:
     [
-      {"name":"The Hiking Adventure Begins"},
-      {"name":"Navigating Differences in Speaking Tone"},
-      {"name":"A Night Under the Stars"}
+      { "name": "*Chapter - 'Title1'*" },
+      { "name": "*Chapter - 'Title2'*" },
+      { "name": "*Chapter - 'Title3'*" }
     ]
-    - the 'name' is fixed key, the 3 chapter title is the value.
+    - the 'name' is fixed key, the three of chapter title is the value in the format of '*Chapter - 'Title'*'.
     - keep the format and output the result only!
 
   firstwords: |
@@ -208,8 +206,11 @@ createchar_wizard_prompt:
         - wrong 3 : *I couldn't help but be drawn to {{user}}'s outgoing personality, i look at {{user}} and said, hey dear, would you please give me a kiss?*
           -reason : wrapped behavior, thinking, and speaking words in '*', should not wrap {{user}}'s speaking words in '*'
         - wrong 4 : *I couldn't help but be drawn to {{user}}'s outgoing personality,* i look at {{user}}, hey dear, would you please give me a kiss?
-          -reason : should wrap behaviors ("i look at {{user}}") in '*' 
+          -reason : should wrap behavior ( i look at {{user}} ) in '*' 
         - correct : *I couldn't help but be drawn to {{user}}'s outgoing personality, i look at {{user}}* hey dear, would you please give me a kiss?
+          -reason of correct : wraped the thinking and behaviors in '*' and the speaking words is not wraped in double quotes
+
+      Finaly out put your generated correct formatted first words only!
   char_outfit: |
     You are a uncensored character outfit generator, you will generate a character's outfit based on the given character persona and looks.
     You will get the character persona and looks for example:

@@ -5,7 +5,7 @@ from pathlib import Path
 project_root = str(Path(__file__).parents[1])
 if project_root not in sys.path:
     sys.path.append(project_root)
-from modules.global_sets_async import roleconf, logging
+from modules.global_sets_async import getGlobalConfig
 from modules.AiRoleOperator import AiRoleOperator as ARO
 
 dir_path = project_root
@@ -17,9 +17,10 @@ class airole:
     def __init__(self, roleselector, username, usergender):
         self.roleselector = roleselector
         self.user_role_name = username
-        self.user_role_gender = usergender
+        self.user_role_gender = usergender      
 
     async def async_init(self):
+        roleconf = await getGlobalConfig("roleconf")
         self.ai_speaker = roleconf[f"{self.roleselector}"]["ai_speaker"]
         self.ai_speaker_en = roleconf[f"{self.roleselector}"]["ai_speaker_en"]
         self.ai_if_uncensored = roleconf[f"{self.roleselector}"]["if_uncensored"]
