@@ -5,4 +5,4 @@
 /modules/__pycache__/
 /fastapimode/__pycache__/
 /Testing/
-/modules/azure_translator.py
+modules/azure_translator.py

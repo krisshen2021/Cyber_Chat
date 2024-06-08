@@ -1,5 +1,4 @@
 import requests, uuid
-
 key = 'd7f0555229ed46c2b3d7024c1edba578'
 endpoint = "https://api.cognitive.microsofttranslator.com"
 location = "eastasia"
