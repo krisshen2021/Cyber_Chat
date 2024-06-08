@@ -513,7 +513,8 @@
       let char_looks = $("#char_looks").val();
       let char_outfit = $("#char_outfit").val();
       let chat_bg = $("#chat_bg").val();
-      let selectedoutfit = $('input[name="outfit_preview"]:checked').val();
+      // let selectedoutfit = $('input[name="outfit_preview"]:checked').val();
+      let selectedoutfit = $('#looking_outfit').val();
       let looking_from = $("#looking_from").val();
       if (char_looks == "" || char_outfit == "" || chat_bg == "") {
         alert("Please fill all the fields [char_looks,char_outfit,char_bg]");
@@ -526,7 +527,7 @@
           task: "preview_createchar",
         };
         ws.send(wsData("preview_createchar", querydata));
-        $("#createchar_charlooks").find(".createchar_preview").html("Generating...");
+        $("#createchar_charlooks").find(".createchar_preview .content").html("Generating...");
         toggleInputs(false);
       }
     }
@@ -562,7 +563,7 @@
 
       switch (task) {
         case "char_persona":
-          wizardstr = $("#char_persona").val();
+          wizardstr = $("#char_persona_guideline").val();
           break;
         case "char_looks":
           wizardstr = $("#char_persona").val();
@@ -571,7 +572,7 @@
           wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val(); +"\n\n{% raw %}{{char}}'s looks:\n{% endraw %}" + $("#char_looks").val();
           break;
         case "user_persona":
-          wizardstr = "{% raw %}{{user}}'s appearance:{% endraw %}" + user_appearance + "\nbasic infomation of {% raw %}{{user}}'s persona:{% endraw %}\n" + $("#user_persona").val();
+          wizardstr = "{% raw %}{{user}}'s appearance:{% endraw %}" + user_appearance + "\nbasic infomation of {% raw %}{{user}}'s persona:{% endraw %}\n" + $("#user_persona_guideline").val();
           break;
         case "prologue":
           wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}Appearance: " + user_appearance + "\n" + $("#user_persona").val() + "\n" + $("#story_guideline").val();
@@ -677,7 +678,7 @@
           break;
         case "preview_createchar":
           //update char preview image
-          $("#createchar_charlooks").find(".createchar_preview").html("");
+          $("#createchar_charlooks").find(".createchar_preview .content").html("");
           $("#createchar_charlooks").find(".createchar_preview").css({ "background-image": "url(" + wizardstr_rawdata + ")" });
           gsap.from($("#createchar_charlooks").find(".createchar_preview"), { duration: 0.3, backgroundSize: "140%", });
           break;
@@ -1424,11 +1425,10 @@
               <label for="char_ai_name">Character name *<span class="form_hint"></span></label>
               <input name="ai_name" id="char_ai_name" />
               <label for="char_persona">Character persona<span class="form_hint"></span></label>
-              <span class="textarea_hint">write a shot description of the
-                character's persona, then use wizard to
-                generate more details</span>
-              <textarea name="persona_ai"
-                id="char_persona">a girl from england, outgoing and passionate, her figure is sexy, she works as software developr for Mistral</textarea>
+              <span class="textarea_hint">write a shot description of the character's persona, then use wizard to generate more details</span>
+              <textarea name="persona_char_guideline" id="char_persona_guideline">a girl from england, outgoing and passionate, her figure is sexy, she works as software developr for Mistral</textarea>
+              <span class="textarea_hint">Preview and edit generated persona</span>
+              <textarea name="persona_ai" id="char_persona"> {% raw %}{{char}}'s persona has not been set {% endraw %}</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_char_persona_wizard">
                 Character persona wizard
               </button>
@@ -1456,11 +1456,10 @@
                 Character outfit wizard
               </button>
               <label for="user_persona">User persona<span class="form_hint"></span></label>
-              <span class="textarea_hint">write a shot description of the
-                character's persona, then use wizard to
-                generate more details</span>
-              <textarea name="persona_user"
-                id="user_persona">a great cooking master, a bit shy but brave, always learning new things</textarea>
+              <span class="textarea_hint">write a shot description of the character's persona, then use wizard to generate more details</span>
+              <textarea name="persona_user_guideline" id="user_persona_guideline">a great cooking master, a bit shy but brave, always learning new things</textarea>
+              <span class="textarea_hint">Preview and edit generated persona</span>
+              <textarea name="persona_user" id="user_persona">{% raw %}{{user}}'s persona has not been set {% endraw %}</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_user_persona_wizard">
                 User persona wizard
               </button>
@@ -1469,11 +1468,9 @@
                 or type of the plot</span>
               <textarea name="guideline_story"
                 id="story_guideline">{% raw %}It's a concise but realistic criminal plot developing between {{char}} and {{user}}, less than 100 words!{% endraw %}</textarea>
-              <span class="textarea_hint">Plot context, can use wizard to get
-                best result once character persona and
-                user persona are complete</span>
+              <span class="textarea_hint">Plot context, can use wizard to get best result once character persona and user persona are complete</span>
               <textarea name="prologue_story"
-                id="story_prologue">Write story plot here, or use wizard to generate...</textarea>
+                id="story_prologue">story plot has not been set</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_prologue_wizard">
                 Prologue wizard
               </button>
@@ -1584,9 +1581,18 @@
               <span class="textarea_hint">can use to preview character looks
                 once character looks fields are
                 filled</span>
-              <div class="createchar_preview">preview</div>
+              <div class="createchar_preview">
+                <div class="content">Preview Character Image</div>
+              </div>
               <div class="full_bar">
-                <label for="looking_from">Looking from</label>
+                <label for="looking_outfit">Looking</label>
+                <select id="looking_outfit" style="width: fit-content;">
+                  <option value="normal" selected>normal</option>
+                  <option value="underwear">underwear</option>
+                  <option value="bdsm">bdsm</option>
+                  <option value="naked">naked</option>
+                </select>
+                <label for="looking_from">from</label>
                 <select id="looking_from" style="width: fit-content;">
                   <option value="(looking from front)" selected>front</option>
                   <option value="(Looking from below)">below</option>
@@ -1594,14 +1600,6 @@
                   <option value="(looking from side)">side</option>
                   <option value="(looking from behind)">behind</option>
                 </select>
-                <input type="radio" id="outfit_normal" name="outfit_preview" value="normal" checked />
-                <label for="outfit_normal">Normal</label>
-                <input type="radio" id="outfit_underwear" name="outfit_preview" value="underwear" />
-                <label for="outfit_underwear">underwear</label>
-                <input type="radio" id="outfit_bdsm" name="outfit_preview" value="bdsm" />
-                <label for="outfit_bdsm">bdsm</label>
-                <input type="radio" id="outfit_naked" name="outfit_preview" value="naked" />
-                <label for="outfit_naked">naked</label>
               </div>
               <button type="button" class="submit_btn preview_btn" id="btn_createchar_preview">
                 Preview Character

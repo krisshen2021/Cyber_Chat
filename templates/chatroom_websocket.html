@@ -140,15 +140,17 @@
 
     function toggleInputs(input_switcher) {
       if (input_switcher == true) {
-        $("button, input, select").each(function () {
+        $("button, input, select, textarea").each(function () {
           $(this).prop("disabled", false).css("opacity", 1);
           if ($(this).is("button")) {
             $(this).css("pointer-events", "auto");
           }
         });
         $("#messageToSend").focus();
+        $("#submit").on("click", sendmsgtoserver);
       } else {
-        $("button, input, select").each(function () {
+        $("#submit").off("click", sendmsgtoserver);
+        $("button, input, select, textarea").each(function () {
           $(this).prop("disabled", true).css("opacity", 0.5);
           if ($(this).is("button")) {
             $(this).css("pointer-events", "none");
@@ -1030,14 +1032,17 @@
     }
 
     function sendmsgtoserver() {
-      var textbox = document.getElementById("messageToSend");
-      let statechk = checkSendState();
-      var usermsg = textbox.value;
-      let windowSize = getWindowSize();
-      if (usermsg != "") {
+        let textbox = $("#messageToSend");
+        if (textbox.val().trim() == "") {
+          $("#messageToSend").focus();
+          return false;
+        }
         toggleInputs(false);
+        let statechk = checkSendState();
+        let usermsg = textbox.val();
+        let windowSize = getWindowSize();
         userLastMsg = usermsg;
-        var user_inputmsg = marked.parse(usermsg);
+        let user_inputmsg = marked.parse(usermsg);
         add_msg({
           message_input: user_inputmsg,
           avatar_url: user_looks,
@@ -1050,33 +1055,35 @@
           istranslated: statechk.transswitcher,
           windowRatio: windowSize.ratio,
           iscreatedynimage: statechk.imageswitcher,
-          // socket_id: socket.id,
         };
-
-        // socket.emit("send_user_msg", { data: querydata });
         ws.send(wsData("send_user_msg", querydata));
-        textbox.value = "";
-        gsap.to($("#messageToSend"), {
-          duration: 0.7,
-          scale: 1,
-          ease: "elastic",
-        });
-      } else {
-        gsap.to($("#messageToSend"), {
-          duration: 0.7,
-          scale: 1.1,
-          ease: "elastic",
-        });
+        textbox.val("");
+        autoExpand(textbox[0]);
       }
+    function autoExpand(textarea) {
+      setTimeout(function() {
+      textarea.style.height = 'auto'; 
+      textarea.style.height = textarea.scrollHeight + 'px'; 
+      },0);
     }
-
-    function onKeyUp(event) {
-      if (event.keyCode === 13) {
-        event.preventDefault();
-        console.log("keyup event triggered");
-        sendmsgtoserver();
+    function onInputMsgSend(event) {
+        if (event.key === "Enter") {
+          if (event.shiftKey) {
+            autoExpand(event.target);
+            return;
+          } else {
+            event.preventDefault();
+            if (event.target.value.trim() !== "") {
+              sendmsgtoserver();
+            } else {
+              event.target.value = "";
+              return;
+            }
+          }
+        } else {
+          autoExpand(event.target);
+        }
       }
-    }
     //Server Connected
     function Server_Connected() {
       if (initialstate) {
@@ -1146,7 +1153,10 @@
       $("#regenerate").click(regenReply);
       $("#exitchat").click(exitChat);
       $("#comicMode").change(dispModeSwitch);
-      $("#messageToSend").off("keyup").on("keyup", onKeyUp);
+      $("#messageToSend").keydown(onInputMsgSend);
+      $("#messageToSend").on('paste', function(){
+        autoExpand(this)
+      });
       $("#voiceswitcher").change(switchVoiceController);
       toggleInputs(false);
       // Auto resize comic layout
@@ -1506,11 +1516,11 @@
           <button id="save-chat-history">Save chat history</button>
         </div>
         <div class="messageInputBox">
-          <input type="text" id="messageToSend" />
+          <textarea type="text" id="messageToSend" rows="1"></textarea><span id="submit" class="msgInput">Send</span>
         </div>
         <div class="messageOptions">
           <div class="subButtonsGroup">
-            <button id="submit">Submit</button>
+            
             <button id="regenerate">Regen</button>
             <button id="restart">Restart</button>
             <button id="exitchat">Exit</button>

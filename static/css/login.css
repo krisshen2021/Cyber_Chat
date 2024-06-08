@@ -418,6 +418,7 @@ body {
   background-color: #1e0d2d;
   color: #f9f4d4;
   border: 0px;
+  font-family: "Barlow"
 }
 
 textarea {
@@ -562,8 +563,19 @@ textarea::-webkit-resizer {
 }
 
 .createchar_preview {
-  min-width: 512px;
-  min-height: 512px;
+  min-width: 100%;
+  min-height: auto;
+  padding-bottom: 100%;
+  position: relative;
+}
+.createchar_preview .content{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .Main_footer {

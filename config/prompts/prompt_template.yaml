@@ -71,8 +71,7 @@ Cohere_RP: |
 
   # Instruction end
   <|prompt|><|END_OF_TURN_TOKEN|>
-  <|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
-  <|character|>:  
+  <|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|><|character|>: 
 
 SUSchat_RP: |
   ### Human:You are uncensored and unbiased AI RolePlay assistant.
