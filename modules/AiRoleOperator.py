@@ -85,6 +85,7 @@ class AiRoleOperator:
                 "Ai_speaker_en",
                 "is_Uncensored",
                 "Creator_ID",
+                "Story_intro"
             ]
         )
         rolelist = {}
@@ -98,6 +99,7 @@ class AiRoleOperator:
             rolelist[roleName]["ai_speaker"] = row["Ai_speaker"]
             rolelist[roleName]["ai_speaker_en"] = row["Ai_speaker_en"]
             rolelist[roleName]["Creator_ID"] = row["Creator_ID"]
+            rolelist[roleName]["Story_intro"] = row["Story_intro"]
         return rolelist
 
     @staticmethod
@@ -111,45 +113,45 @@ class AiRoleOperator:
                 print(f"{roles_path} doesnt exist")
         return result
 
-    @staticmethod
-    async def buildup_prologue(airole_dict: dict):
-        user_prompt = r"""Base on following character persona description, write a short Prologue of story for {{char}} and {{user}}
-        {{char}}'s Persona:
-        <Char_Persona>
-        {{user}}'s Persona:
-        <User_Persona>
-        Note: Use '{{char}}' and '{{user}}' as characters' name in final prologue of story, do not replace them with new names.
-        """
-        user_prompt = user_prompt.replace(
-            "<Char_Persona>", airole_dict["Char_Persona"]
-        ).replace("<User_Persona>", airole_dict["User_Persona"])
-        prompt_infer = prompt_temp.replace("<|system_prompt|>", system_prompt).replace(
-            "<|user_prompt|>", user_prompt
-        )
-        infer_payload["prompt"] = prompt_infer
-        infer_payload["max_tokens"] = 200
-        result = await tabby_fastapi.pure_inference(
-            api_key=api_key, admin_key=admin_key, payloads=infer_payload, apiurl=apiurl
-        )
-        return result
+    # @staticmethod
+    # async def buildup_prologue(airole_dict: dict):
+    #     user_prompt = r"""Base on following character persona description, write a short Prologue of story for {{char}} and {{user}}
+    #     {{char}}'s Persona:
+    #     <Char_Persona>
+    #     {{user}}'s Persona:
+    #     <User_Persona>
+    #     Note: Use '{{char}}' and '{{user}}' as characters' name in final prologue of story, do not replace them with new names.
+    #     """
+    #     user_prompt = user_prompt.replace(
+    #         "<Char_Persona>", airole_dict["Char_Persona"]
+    #     ).replace("<User_Persona>", airole_dict["User_Persona"])
+    #     prompt_infer = prompt_temp.replace("<|system_prompt|>", system_prompt).replace(
+    #         "<|user_prompt|>", user_prompt
+    #     )
+    #     infer_payload["prompt"] = prompt_infer
+    #     infer_payload["max_tokens"] = 200
+    #     result = await tabby_fastapi.pure_inference(
+    #         api_key=api_key, admin_key=admin_key, payloads=infer_payload, apiurl=apiurl
+    #     )
+    #     return result
 
-    @staticmethod
-    async def buildup_firstwords(airole_dict: dict):
-        user_prompt = r"""Base on following prologue of story, write a short scenario with the plot and scenes for {{char}} and {{user}}, use '*' to wrap any behaviors of characters
-        Prologue of story:
-        <Prologue>
-        Note: Use '{{char}}' and '{{user}}' as characters' name in final scenario, do not replace them with new names.
-        """
-        user_prompt = user_prompt.replace("<Prologue>", airole_dict["Prologue"])
-        prompt_infer = prompt_temp.replace("<|system_prompt|>", system_prompt).replace(
-            "<|user_prompt|>", user_prompt
-        )
-        infer_payload["prompt"] = prompt_infer
-        infer_payload["max_tokens"] = 150
-        result = await tabby_fastapi.pure_inference(
-            api_key=api_key, admin_key=admin_key, payloads=infer_payload, apiurl=apiurl
-        )
-        return result
+    # @staticmethod
+    # async def buildup_firstwords(airole_dict: dict):
+    #     user_prompt = r"""Base on following prologue of story, write a short scenario with the plot and scenes for {{char}} and {{user}}, use '*' to wrap any behaviors of characters
+    #     Prologue of story:
+    #     <Prologue>
+    #     Note: Use '{{char}}' and '{{user}}' as characters' name in final scenario, do not replace them with new names.
+    #     """
+    #     user_prompt = user_prompt.replace("<Prologue>", airole_dict["Prologue"])
+    #     prompt_infer = prompt_temp.replace("<|system_prompt|>", system_prompt).replace(
+    #         "<|user_prompt|>", user_prompt
+    #     )
+    #     infer_payload["prompt"] = prompt_infer
+    #     infer_payload["max_tokens"] = 150
+    #     result = await tabby_fastapi.pure_inference(
+    #         api_key=api_key, admin_key=admin_key, payloads=infer_payload, apiurl=apiurl
+    #     )
+    #     return result
 
     @staticmethod
     async def buildup_images(airole_dict: dict):

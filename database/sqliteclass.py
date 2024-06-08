@@ -66,6 +66,7 @@ class SQLiteDB:
                 Match_words_cata TEXT,
                 json_Completions_data TEXT,
                 Creator_ID INTEGER,
+                Story_intro TEXT DEFAULT 'A fiction RolePlay unlease wild imagination',
                 FOREIGN KEY (Creator_ID) REFERENCES users (UNIQUE_ID)
             )
         """
@@ -94,8 +95,8 @@ class SQLiteDB:
         self.cursor = self.conn.cursor()
         try:
             user_query = """
-            INSERT INTO airoles (Name, Ai_name, Ai_speaker, Ai_speaker_en, is_Uncensored, Prologue, Char_Persona, User_Persona, json_Chapters, Char_looks, json_Char_outfit, Char_avatar, Default_bg, Firstwords, is_Gen_DynaPic, Prompt_to_load, Match_words_cata, json_Completions_data, Creator_ID)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO airoles (Name, Ai_name, Ai_speaker, Ai_speaker_en, is_Uncensored, Prologue, Char_Persona, User_Persona, json_Chapters, Char_looks, json_Char_outfit, Char_avatar, Default_bg, Firstwords, is_Gen_DynaPic, Prompt_to_load, Match_words_cata, json_Completions_data, Creator_ID, Story_intro)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             # self.cursor.execute(
             #     user_query,
@@ -119,6 +120,7 @@ class SQLiteDB:
             #         airole["Match_words_cata"],
             #         airole["json_Completions_data"],
             #         airole["Creator_ID"],
+            #         airole["Story_intro"],
             #     ),
             # )
             values = tuple(airole.values())
@@ -140,7 +142,7 @@ class SQLiteDB:
         self.cursor = self.conn.cursor()
         try:
             user_query = """
-            UPDATE airoles SET Ai_name = ?, Ai_speaker = ?, Ai_speaker_en = ?, is_Uncensored = ?, Prologue = ?, Char_Persona = ?, User_Persona = ?, json_Chapters = ?, Char_looks = ?, json_Char_outfit = ?, Char_avatar = ?, Default_bg = ?, Firstwords = ?, is_Gen_DynaPic = ?, Prompt_to_load = ?, Match_words_cata = ?, json_Completions_data = ?, Creator_ID = ? WHERE Name = ?
+            UPDATE airoles SET Ai_name = ?, Ai_speaker = ?, Ai_speaker_en = ?, is_Uncensored = ?, Prologue = ?, Char_Persona = ?, User_Persona = ?, json_Chapters = ?, Char_looks = ?, json_Char_outfit = ?, Char_avatar = ?, Default_bg = ?, Firstwords = ?, is_Gen_DynaPic = ?, Prompt_to_load = ?, Match_words_cata = ?, json_Completions_data = ?, Creator_ID = ?, Story_intro = ? WHERE Name = ?
             """
             self.cursor.execute(
                 user_query,
@@ -163,6 +165,7 @@ class SQLiteDB:
                     airole["Match_words_cata"],
                     airole["json_Completions_data"],
                     airole["Creator_ID"],
+                    airole["Story_intro"],
                     airole["Name"],
                 ),
             )
@@ -205,6 +208,7 @@ class SQLiteDB:
                 "Match_words_cata",
                 "json_Completions_data",
                 "Creator_ID",
+                "Story_intro",
             ]
             airole_data = SQLiteDB.convert_to_pyType(dict(zip(keys, result)))
             self.conn.close()
