@@ -28,7 +28,7 @@ class airole:
         role_result = await ARO.fetch_airole(ai_Name=self.roleselector)
         # logging.info(role_result)
         role_desc = f"""
-# Prologue
+# Plot of the RolePlay
         
 {role_result['Prologue']}
         
@@ -39,9 +39,12 @@ class airole:
 
 {{{{user}}}}'s Persona:       
 {role_result['User_Persona']}
-        
-# Story
+
+# Role play start:
+
 <|Current Chapter|>
+
+
 """
         self.ai_system_role = role_desc
         self.welcome_text_dec = role_result["Firstwords"]

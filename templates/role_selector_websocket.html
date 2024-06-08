@@ -310,7 +310,7 @@
         }
         ws.send(wsData("client_save_character", querydata));
         toggleInputs(false);
-      }else{
+      } else {
         alert("Please fill the fields marked with '*'");
         return false;
       }
@@ -571,7 +571,7 @@
           wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val(); +"\n\n{% raw %}{{char}}'s looks:\n{% endraw %}" + $("#char_looks").val();
           break;
         case "user_persona":
-          wizardstr = "{% raw %}{{user}}'s appearance:{% endraw %}" + user_appearance + "\nbasic infomation of {% raw %}{{user}}'s persona:{% endraw %}:\n" + $("#user_persona").val();
+          wizardstr = "{% raw %}{{user}}'s appearance:{% endraw %}" + user_appearance + "\nbasic infomation of {% raw %}{{user}}'s persona:{% endraw %}\n" + $("#user_persona").val();
           break;
         case "prologue":
           wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}Appearance: " + user_appearance + "\n" + $("#user_persona").val() + "\n" + $("#story_guideline").val();
@@ -580,7 +580,7 @@
           wizardstr = $("#story_prologue").val();
           break;
         case "chat_bg":
-          wizardstr = $("#story_prologue").val() + "\n the guide for generating prompt: " +$("#chat_bg_guidewords").val();
+          wizardstr = $("#story_prologue").val() + "\n the guide for generating prompt: " + $("#chat_bg_guidewords").val();
           break;
         case "firstwords":
           wizardstr = $("#story_prologue").val() + "\n{% raw %}{{char}}'s speaking tone:\n{% endraw %}" + speaking_tone;
@@ -619,8 +619,35 @@
       }
     }
     //wizard update function
+      // - process llm output text, format it well
+    function process_wizard_result(text) {
+      var lines = text.split('\n');
+      var processedLines = lines.map(function (line) {
+        return $.trim(line);
+      }).filter(function (line) {
+        return line.length > 0;
+      });
+
+      var processedText = processedLines.join('\n');
+
+      if (processedText.startsWith('{') && processedText.endsWith('}')) {
+        var jsonLines = processedText.split('\n');
+        var formattedJsonLines = jsonLines.map(function (line, index) {
+          if (index !== 0 && index !== jsonLines.length - 1) {
+            return '  ' + line;
+          }
+          return line;
+        });
+
+        processedText = formattedJsonLines.join('\n');
+      }
+
+      return processedText;
+    }
+      // - fill the procesed text to the textarea
     function createcharWizardUpdate(serverData) {
-      let wizardstr = serverData.data["result"];
+      let wizardstr_rawdata = serverData.data["result"];
+      let wizardstr = process_wizard_result(wizardstr_rawdata);
       let task = serverData.data["task"];
       toggleInputs(true);
       switch (task) {
@@ -651,16 +678,17 @@
         case "preview_createchar":
           //update char preview image
           $("#createchar_charlooks").find(".createchar_preview").html("");
-          $("#createchar_charlooks").find(".createchar_preview").css({ "background-image": "url(" + wizardstr + ")" });
+          $("#createchar_charlooks").find(".createchar_preview").css({ "background-image": "url(" + wizardstr_rawdata + ")" });
           gsap.from($("#createchar_charlooks").find(".createchar_preview"), { duration: 0.3, backgroundSize: "140%", });
           break;
         case "after_char_saved":
-          if (wizardstr == "success"){
+          //update char preview image and refresh page
+          if (wizardstr_rawdata == "success") {
             alert("Character saved successfully");
             toggleInputs(true);
             location.reload();
-          }else{
-            alert(`Operation failed, feedback:\n${wizardstr}`);
+          } else {
+            alert(`Operation failed, feedback:\n${wizardstr_rawdata}`);
             toggleInputs(true);
           }
           break;
@@ -1463,7 +1491,8 @@
                 Chapter wizard
               </button>
               <label for="chat_bg">Chat Enviornment<span class="form_hint"></span></label>
-              <span class="textarea_hint">guide words for chat enivornment, define interior or exterior, elements etc., for example:</span>
+              <span class="textarea_hint">guide words for chat enivornment, define interior or exterior, elements etc.,
+                for example:</span>
               <textarea name="bg_guidewords_ai"
                 id="chat_bg_guidewords">focus solely on interior environment elements only, moody lighting description is welcomed, no exterior environment needed</textarea>
               <span class="textarea_hint">Chat Background Enviornment prompt,

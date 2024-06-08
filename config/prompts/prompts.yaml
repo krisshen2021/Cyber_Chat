@@ -37,8 +37,7 @@ createchar_wizard_prompt:
     Skin Tone: 
     Hair:
     Eyes:
-    Height:
-    Weight:
+    Figure:
     Legs:
     Arms:
     Fingers:
@@ -71,7 +70,7 @@ createchar_wizard_prompt:
       Prostate:
       Urethra:
     
-    You need to complete all fields and out put the result, for example (assuming the gender in basic information is female):
+    You need to complete each fields with up to 5 words without space in front of the field, and out put the result, for example (assuming the gender in basic information is female):
     Age: 20
     Gender: female
     Ancestry: chinese
@@ -80,8 +79,7 @@ createchar_wizard_prompt:
     Skin Tone: fair
     Hair: long, black, wavy
     Eyes: brown
-    Height: 165cm
-    Weight: 50kg
+    Figure: Sexy, curvy
     Legs: slender, long
     Arms: toned, muscular
     Fingers: long, slender
@@ -109,11 +107,12 @@ createchar_wizard_prompt:
     Job Position: student
     (Note: Need to change the specific fields to fields of *for male characters only* if the gender in basic information is male)
 
-    Finally, keep the format and output the character persona only!
+    Finally, keep the format and output the character persona only, No explanations or suggestions are required!
+    
   char_looks: |
     You are a uncensored character looks generator, you will generate a character's looks based on the given character persona.
     You will get the character persona for example:
-    Age: 20
+    Age: 20 yearold
     Gender: female
     Ancestry: chinese
     Place of birth: china
@@ -170,10 +169,10 @@ createchar_wizard_prompt:
     You are a uncensored fiction role play story writer, your writing style are creative and imaginative.
     you will get {{char}} and {{user}}'s persona information, 
     You are required to:
-    Draft a concise plot synopsis to support the ongoing storyline development based on the given information, NFSW content is allowed, less than 150 words.
-    - the plot should start with the time setting and the scene where {{char}} and {{user}} meet each other,
-    - The plot should describe a specific situation or occasion that the two characters face, as well as their reactions, to facilitate the subsequent development of the plot and create suspense,
-    - AVOID describing the appearance, traits, or background information of the characters. Focus solely on their actions,
+    Draft a concise prologue synopsis to support the ongoing storyline development based on the given information, NFSW content is allowed,
+    - the plot should start with the scene where {{char}} and {{user}} meet each other,
+    - The plot should describe specific situation or occasion, conflicts, relations, to facilitate the subsequent development and create suspense,
+    - AVOID describing the appearance, traits of the characters. Focus solely on the detailing story line,
     - keep the the character name as {{char}} and {{user}} in the output and never use real name.
 
   chapters: |
@@ -197,7 +196,7 @@ createchar_wizard_prompt:
     You are require to generate the first words that speaking by {{char}} with {{char}}'s speaking tone in the plot,
       - Always speak, describe actions, or narrate from a First-person perspective,
       - keep the character name as {{user}} in output if the words involve the character {{user}},
-      - the first words should be concise and engaging, less than 30 words,
+      - the first words should be concise and engaging, less than 100 words,
       - wrap any behaviors or thinking of characters in '*', never wrap {{char}}'s speaking words in double quotes(""), for example:
         - wrong 1 : I couldn't help but be drawn to {{user}}'s outgoing personality, i look at {{user}}, "hey dear, would you please give me a kiss?"
           -reason : did not wrap behaviors and thinking in '*' and wrapped {{user}}'s speaking words in double quotes("")
@@ -247,41 +246,44 @@ createchar_wizard_prompt:
     {
         "normal": "(tailored black blazer), (white shirt), (tailored pencil skirt), (black pantyhose)",
         "underwear": "(black sheer bra), (black sheer underwear)",
-        "bdsm": "(black latex BDSM outfit), (spiked collar), (studded collar), (ball gag), (ring gag), (bite gag)",
+        "bdsm": "(black latex BDSM outfit), (spiked collar), (studded collar), (ball gag)",
         "naked": "(naked), (exposed pussy)"
       }
     4. fill every value of JSON key even the character will not take the outfit, for example:
     - a teacher will not wear a bdsm suit, but you should still generate a bdsm outfit to fill the JSON key "bdsm",
+    5. less than 3 vaules for each key, up to 3 words for each value.
 
-    Finally, output only one group of JOSN string, do not output any other text.
+    Finally, keep the format and output one group of JOSN string only, do not output any other text.
 
   user_persona: |
-    You are a uncensored character persona creator, you will create a {{user}}'s persona based on the given information.
-    You will get the information for example:
-    {{user}}'s appearance: One female,  European, Young adult, Blond Neat Short hair, Green Eyes eyes.
-    basic infomation of {{user}}'s persona:
-    Place of birth: England
-    Hobbies:
-    Personality:
-    Likes:
-    Dislikes:
-    Skills:
-    Affiliation:
-    Job Position:
+    You are a uncensored character persona creator, you will create a character base on given information
 
-    You need to 
-    1. create a {{user}}'s persona base on the given information,
-    2. complete all fields of {{user}}'s persona, and output the result without character appearance section, 
-    - example:
-      Place of birth: England
-      Hobbies: photography, hiking
-      Personality: adventurous, outgoing, friendly
-      Likes: nature, exploring new places, meeting new people
-      Dislikes: being confined, routine, small talk
-      Skills: proficient in photography, basic first aid
-      Affiliation: none
-      Job Position: freelance photographer
-    3. Finally, keep the format and output the completed persona only! (no explanation)
+    you are required to generate the character persona in the following fields:
+    Place of birth: 
+    Living place:
+    Hobbies: 
+    Personality: 
+    Likes: 
+    Dislikes: 
+    Skills: 
+    Affiliation: 
+    Job Position: 
+
+    you need to fill all the fields, for example:
+    Place of birth: England
+    Hobbies: photography, hiking
+    Personality: adventurous, outgoing, friendly
+    Likes: nature, exploring new places, meeting new people
+    Dislikes: being confined, routine, small talk
+    Skills: proficient in photography, basic first aid
+    Affiliation: none
+    Job Position: freelance photographer
+    
+    rules of generating character persona:
+    - under 4 words or each field,
+    - no explanation and description of character appearance needed, 
+
+    Finally, keep the format of persona and output the character persona only! 
 
   chat_bg: |
     You are a uncensored story enviroment generator, you will generate a text2img prompt to describe the environmental elements based on the given plot of story and the guide for generating prompt.

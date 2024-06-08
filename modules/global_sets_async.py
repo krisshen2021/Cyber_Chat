@@ -107,7 +107,7 @@ async def getGlobalConfig(data:str):
     """
     get global config for app start,
     type of data:
-    'config_data','roleconf','sentiment_pipeline','bulb'
+    'config_data','roleconf','sentiment_pipeline','bulb','prompt_templates','prompt_params'
     """
     if data == "config_data":
         await load_config()

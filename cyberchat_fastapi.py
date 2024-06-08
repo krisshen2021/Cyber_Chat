@@ -7,8 +7,7 @@ from modules.global_sets_async import (
     conn_ws_mgr,
     logging,
     config_data,
-    prompt_params,
-    prompt_templates,
+    prompt_params
 )
 import uvicorn, uuid, json, markdown, os
 from datetime import datetime
@@ -86,10 +85,11 @@ async def initpage(request: Request):
     ainame = []
     ai_is_uncensored = []
     roleconf = await getGlobalConfig("roleconf")
-    for key, value in roleconf.items():
+    roleconf_reversed = dict(reversed(list(roleconf.items())))
+    for key, value in roleconf_reversed.items():
         ainame.append(value.get("ai_name"))
         ai_is_uncensored.append(value.get("if_uncensored"))
-    roleitems = list(roleconf.keys())
+    roleitems = list(roleconf_reversed.keys())
     timestamp = generate_timestamp()
     context = {
         "request": request,
@@ -569,7 +569,9 @@ async def preview_createchar(client_info, client_id):
 async def createchar_wizard(client_info, client_id):
     task = client_info["data"]["task"]
     wizardstr = client_info["data"]["wizardstr"]
-    wizard_prompt_template = prompt_templates["Cohere_Rephrase"]
+    result = await getGlobalConfig("prompt_templates")
+    wizard_prompt_template = result["Cohere_Rephrase"]
+    prompt_params = await getGlobalConfig("prompt_params")
 
     def char_persona():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["char_persona"]
@@ -605,7 +607,7 @@ async def createchar_wizard(client_info, client_id):
 
     def user_persona():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["user_persona"]
-        userinstruct = f"The given information are: \n{wizardstr}\n\nThe final output of created {{{{user}}}}'s persona will be: "
+        userinstruct = f"The given {{{{char}}}}'s information are: \n{wizardstr}\n\nThe final output will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def chat_bg():
@@ -636,10 +638,11 @@ async def createchar_wizard(client_info, client_id):
             r"<|system_prompt|>", result["sysinstruct"]
         ).replace(r"<|user_prompt|>", result["userinstruct"])
         # logging.info(wizard_prompt)
-        temperature = 0.7 if task == "prologue" else 0.55
-        smoothing_factor = 0.22 if task == "prologue" else 0
-        max_tokens = 350 if task == "prologue" or task == "char_persona" else 150
-        presen_penalty = 1.15 if task == "prologue" else 1.05
+        temperature = 0.8 if task == "prologue" or task == "firstwords" else 0.5
+        smoothing_factor = 0.55 if task == "prologue" or task == "firstwords" else 0.1
+        max_tokens = 300 if task == "prologue" or task == "char_persona" else 150
+        presence_penalty = 1.25 if task == "prologue" or task == "firstwords" or task == "char_persona" or task == "user_persona" else 1.05
+        repetition_penalty = 1.18 if task == "prologue" or task == "firstwords" or task == "char_persona" or task == "user_persona" else 1.05
         completions_data.update(
             {
                 "stream": False,
@@ -647,7 +650,7 @@ async def createchar_wizard(client_info, client_id):
                 "max_tokens": max_tokens,
                 "token_healing": True,
                 "temperature": temperature,
-                "temperature_last": True,
+                "temperature_last": False,
                 "top_k": 50,
                 "top_p": 0.8,
                 "top_a": 0,
@@ -655,8 +658,8 @@ async def createchar_wizard(client_info, client_id):
                 "min_p": 0.01,
                 "tfs": 0.95,
                 "frequency_penalty": 0,
-                "presence_penalty": presen_penalty,
-                "repetition_penalty": 1.05,
+                "presence_penalty": presence_penalty,
+                "repetition_penalty": repetition_penalty,
                 "repetition_decay": 0,
                 "mirostat_mode": 0,
                 "mirostat_tau": 1.5,
@@ -669,6 +672,7 @@ async def createchar_wizard(client_info, client_id):
             }
         )
         wizard_result = await tabby_fastapi.pure_inference(payloads=completions_data)
+        wizard_result = wizard_result.strip()
         # logging.info(wizard_result)
         data_to_send = {"result": wizard_result, "task": task}
         await send_datapackage("createchar_wizard_result", data_to_send, client_id)

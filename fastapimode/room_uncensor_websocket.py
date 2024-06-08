@@ -3,7 +3,8 @@ from modules.global_sets_async import (
     sentiment_pipeline,
     bulb,
     logging,
-    prompt_templates,
+    getGlobalConfig
+    
 )
 import os, random, re, io, base64, yaml, copy, markdown, asyncio, aiofiles
 from fastapimode.airole_creator_uncensor_websocket import airole
@@ -21,7 +22,8 @@ state = room_state
 # Read prompt template
 async def get_instr_temp_list():
     instr_temp_list = []
-    for templates in prompt_templates.keys():
+    prompt_keys_list = await getGlobalConfig("prompt_templates")
+    for templates in prompt_keys_list.keys():
         instr_temp_list.append(templates)
     return instr_temp_list
 
@@ -115,7 +117,7 @@ class chatRoom_unsensor:
         await self.create_envart()
 
     async def preparation(self):
-        self.prompts_templates = prompt_templates
+        self.prompts_templates = await getGlobalConfig("prompt_templates")
         self.instr_temp_list = await get_instr_temp_list()
         self.iscreatedynimage = self.ai_role.generate_dynamic_picture
         self.state["prompts_templates"] = self.prompts_templates
