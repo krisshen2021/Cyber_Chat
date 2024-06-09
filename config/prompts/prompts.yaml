@@ -188,7 +188,7 @@ createchar_wizard_prompt:
     - out put in a JSON key/value string, for example:
     {
       "story_name": "Enigmatic Encounters",
-      "intro_text": "A lively {{char}} cycles into a fateful encounter with enigmatic you,Their momentary connection, intense and mysterious, hints at shared secrets and hidden dangers, drawing them into a thrilling, risky game"
+      "intro_text": "a lively {{char}} cycles into a fateful encounter with enigmatic you,Their momentary connection, intense and mysterious, hints at shared secrets and hidden dangers, drawing them into a thrilling, risky game"
     }
 
     Finally, keep the format, and output the result only, no markdown string needed!

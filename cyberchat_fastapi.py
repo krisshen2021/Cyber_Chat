@@ -84,9 +84,11 @@ async def initpage(request: Request):
     cookid_server = uuid.uuid1()
     ainame = []
     ai_is_uncensored = []
+    ai_role_list = []
     roleconf = await getGlobalConfig("roleconf")
     roleconf_reversed = dict(reversed(list(roleconf.items())))
     for key, value in roleconf_reversed.items():
+        ai_role_list.append({"aiRoleId":key,"Data":value})
         ainame.append(value.get("ai_name"))
         ai_is_uncensored.append(value.get("if_uncensored"))
     roleitems = list(roleconf_reversed.keys())
@@ -97,6 +99,7 @@ async def initpage(request: Request):
         "roleslist": roleitems,
         "ainamelist": ainame,
         "censoredlist": ai_is_uncensored,
+        "ai_role_list": ai_role_list,
         "cookid_server": cookid_server,
     }
     return non_cache_response("role_selector_websocket.html", context)

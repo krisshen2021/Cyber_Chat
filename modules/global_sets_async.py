@@ -46,12 +46,8 @@ async def load_prompts_params():
     prompt_params = yaml.safe_load(contents)
     
 async def load_roles():
-    # async with aiofiles.open(roles_path, mode="r", encoding="utf-8") as f:
-    #     contents = await f.read()
-    # global roleconf
-    # roleconf = json.loads(contents)
     result = database.list_data_airole(
-        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored", "Creator_ID"]
+        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored", "Creator_ID", "json_Story_intro"]
     )
     rolelist = {}
     for row in result:
@@ -62,6 +58,7 @@ async def load_roles():
         rolelist[roleName]['ai_speaker'] = row['Ai_speaker']
         rolelist[roleName]['ai_speaker_en'] = row['Ai_speaker_en']
         rolelist[roleName]['Creator_ID'] = row['Creator_ID']
+        rolelist[roleName]['json_Story_intro'] = row['json_Story_intro']
     global roleconf
     roleconf = rolelist.copy()
 

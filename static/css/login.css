@@ -14,7 +14,10 @@ body {
   font-weight: 400;
   font-style: normal;
   color: antiquewhite;
+}
 
+body::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -242,6 +245,37 @@ body {
 
 }
 
+.role_info_bar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.info_button {
+  margin-left: auto;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-self: center;
+}
+
+.svg_info {
+  fill: #5a337a;
+  transition: fill 0.3 ease;
+}
+
+.ainame_span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-left: 35px;
+  flex-grow: 1;
+}
+
 .roleRadios {
   display: none
 }
@@ -253,10 +287,10 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.5);
   display: none;
   opacity: 100;
-  justify-content: flex-start;
+  justify-content: space-evenly;
   align-items: center;
   flex-direction: column;
   backdrop-filter: blur(5px);
@@ -264,12 +298,15 @@ body {
   overflow-y: auto;
   scrollbar-width: none;
 }
+
 .overlay::-webkit-scrollbar {
   display: none;
 }
+
 #signup_form,
 #login_form,
 #edit_profile_form,
+#role_intro_form,
 #create_character_form {
   display: none;
   flex-direction: column;
@@ -301,6 +338,30 @@ body {
 
 }
 
+#role_intro_form .top_bar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-between;
+  padding-top: 10px;
+  padding-right: 10px;
+  padding-left: 10px;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  background-color: rgba(52, 7, 104, 0.7);
+}
+
+#role_intro_form .ainame_in_introtext {
+  color: #ff8000;
+  font-weight: 600;
+}
+
+#role_intro_form .storyname_in_introblock {
+  color: #aa77e5;
+  font-style: italic;
+  font-weight: 600;
+}
+
 #signup_form .top_bar .title,
 #login_form .top_bar .title,
 #edit_profile_form .title,
@@ -320,6 +381,7 @@ body {
 #signup_form .main_body,
 #login_form .main_body,
 #edit_profile_form .main_body,
+#role_intro_form .main_body,
 #create_character_form .main_body {
   display: flex;
   flex-direction: column;
@@ -331,6 +393,42 @@ body {
   border-bottom-left-radius: 15px;
   border-bottom-right-radius: 15px;
   padding: 10px;
+
+}
+
+#role_intro_form .main_body {
+  padding-top: 5px;
+  padding-left: 15px;
+  padding-bottom: 15px;
+  padding-right: 15px;
+  align-items: flex-start;
+}
+
+#role_intro_form .role_intro_content {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+#role_intro_form .role_intro_img {
+  width: 150px;
+  height: 150px;
+  min-width: 150px;
+  min-height: 150px;
+  border: 1px solid #411f50;
+  border-radius: 10px;
+  box-shadow: 0px 0px 3px 2px rgba(41, 1, 64, 0.8);
+  background-color: #aa77e5;
+  background-size: cover;
+}
+
+#role_intro_form .role_intro_intro_text {
+  width: auto;
+  font-size: 1rem;
+  line-height: 1.2rem;
+  word-break:normal;
+  margin-right: 15px;
 
 }
 
@@ -568,7 +666,8 @@ textarea::-webkit-resizer {
   padding-bottom: 100%;
   position: relative;
 }
-.createchar_preview .content{
+
+.createchar_preview .content {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -633,7 +732,7 @@ textarea::-webkit-resizer {
   }
 
   .overlay {
-    justify-content: flex-start;
+    justify-content: space-evenly;
     align-items: center;
     flex-direction: column;
     padding-top: 2rem;
@@ -693,7 +792,7 @@ textarea::-webkit-resizer {
   }
 
   .overlay {
-    justify-content: flex-start;
+    justify-content: space-evenly;
     align-items: center;
     flex-direction: column;
     padding-top: 2rem;

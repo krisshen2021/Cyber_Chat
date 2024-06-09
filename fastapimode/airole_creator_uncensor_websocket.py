@@ -25,6 +25,7 @@ class airole:
         self.ai_speaker_en = roleconf[f"{self.roleselector}"]["ai_speaker_en"]
         self.ai_if_uncensored = roleconf[f"{self.roleselector}"]["if_uncensored"]
         self.ai_role_name = roleconf[f"{self.roleselector}"]["ai_name"]
+        self.story_intro = roleconf[f"{self.roleselector}"]["json_Story_intro"]
         role_result = await ARO.fetch_airole(ai_Name=self.roleselector)
         # logging.info(role_result)
         role_desc = f"""

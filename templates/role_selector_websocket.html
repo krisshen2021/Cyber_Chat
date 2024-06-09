@@ -16,15 +16,21 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script type="text/javascript" charset="utf-8">
+    //load roles
+    var aiRoleList = JSON.parse('{{ ai_role_list | tojson | safe }}');
+    console.log(aiRoleList);
+
     var roleslist_items = JSON.parse('{{ roleslist | tojson | safe }}');
     var ainamelist_items = JSON.parse('{{ ainamelist | tojson | safe }}');
     var censoredlist_items = JSON.parse('{{ censoredlist | tojson |safe }}');
     var ainame;
+    var ai_role_name;
     var is_uncensored;
+    var story_name;
+    var intro_text;
     var conid;
     var userdata;
     var login_status = false;
-    // var socket = Object;
     var ws = Object;
     const clientID = "{{ cookid_server }}";
     const timestamp = "{{ timestamp }}";
@@ -151,9 +157,15 @@
           });
           let textareas = $("#create_character_form").find("textarea");
           textareas.each(function () {
-            // $(this).css({ height: "auto" });
-            // $(this).height(this.scrollHeight);
             autoExpand(this);
+          });
+        } else if (form_id == "role_intro_form") {
+          $("#role_intro_form").css("display", "flex");
+          gsap.from("#role_intro_form", {
+            duration: 1,
+            opacity: 0,
+            scale: 0.5,
+            ease: "elastic",
           });
         }
       } else {
@@ -165,6 +177,7 @@
         $("#login_form").hide();
         $("#edit_profile_form").hide();
         $("#create_character_form").hide();
+        $("#role_intro_form").hide();
         $("#sign_author").hide().html("");
         $("#login_author").hide().html("");
         $("#createchar_author").hide().html("");
@@ -720,6 +733,8 @@
           credits: userdata["credits"],
           ai_role_name: ai_role_name,
           ainame: ainame,
+          story_name: story_name,
+          intro_text: intro_text,
           is_uncensored: is_uncensored,
           clientID: clientID,
         };
@@ -799,9 +814,9 @@
       });
 
       //role list constructor
-      $.each(roleslist_items, function (index, item) {
+      $.each(aiRoleList, function (index, item) {
         let roleContent = $("#roleholder_template").find(".roleholder").clone(true);
-        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item + '/none.png?nocache=' + timestamp + ')')
+        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.png?nocache=' + timestamp + ')')
           .on('mouseover', function () {
             gsap.to($(this), { duration: 0.3, backgroundSize: "130%", ease: "back", });
           })
@@ -816,16 +831,27 @@
             $(this).closest(".roleholder").addClass("roleholder_selected");
           });
         roleContent.find(".roleRadios")
-          .attr('id', ainamelist_items[index])
-          .data("uncensored", censoredlist_items[index])
-          .val(item)
+          .attr('id', item.Data.ai_name)
+          .data("uncensored", item.Data.if_uncensored)
+          .data("story_name", item.Data.json_Story_intro.story_name)
+          .data("intro_text", item.Data.json_Story_intro.intro_text)
+          .val(item.aiRoleId)
           .on('change', function () {
             ai_role_name = $(this).val();
             ainame = $(this).attr("id");
             is_uncensored = $(this).data("uncensored");
-            console.log(ai_role_name + "/" + ainame + "/" + is_uncensored);
+            story_name = $(this).data("story_name");
+            intro_text = $(this).data("intro_text");
+            let roleinf = JSON.stringify({ai_role_name,ainame,is_uncensored,story_name,intro_text});
+            console.log("current role selected: "+roleinf);
           });
-        roleContent.find(".ainame_span").html(ainamelist_items[index]);
+        roleContent.find(".info_button").on('click', function () {
+          $("#role_intro_form").find('.role_intro_story_name').html(`<span class="storyname_in_introblock">" ${item.Data.json_Story_intro.story_name} "</span>`);
+          $("#role_intro_form").find('.role_intro_intro_text').html((item.Data.json_Story_intro.intro_text).replace('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${item.Data.ai_name}</span>`));
+          $("#role_intro_form").find('.role_intro_img').css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.png?nocache=' + timestamp + ')');
+          toggle_forms("role_intro_form");
+        });
+        roleContent.find(".ainame_span").html(item.Data.ai_name);
         $("#logindiv").find(".rolelist").append(roleContent);
       });
       $(".avatarbk").eq(0).trigger('click');
@@ -849,7 +875,6 @@
         stagger: 0.2,
       });
 
-
       //button event functions
 
       let btn_logout = $("#btn_logout");
@@ -867,6 +892,7 @@
       let btn_login_form_close = $("#btn_login_form_close");
       let btn_edit_form_close = $("#btn_profile_form_close");
       let btn_character_form_close = $("#btn_character_form_close");
+      let btn_role_intro_form_close = $("#btn_role_intro_form_close");
       btn_signup_form_close.on("click", function () {
         toggle_forms("close");
       });
@@ -877,6 +903,9 @@
         toggle_forms("close");
       });
       btn_character_form_close.on("click", function () {
+        toggle_forms("close");
+      });
+      btn_role_intro_form_close.on("click", function () {
         toggle_forms("close");
       });
 
@@ -1483,7 +1512,7 @@
               <button type="button" class="submit_btn wizard_btn" id="btn_prologue_wizard">
                 Prologue wizard
               </button>
-              <label for="story_concise_intro">Concise intro of story<span class="form_hint"></span></label>
+              <label for="story_intro">Concise intro of story<span class="form_hint"></span></label>
               <span class="textarea_hint">guideline for create a concise intro for your story</span>
               <textarea name="guideline_intro_story" id="story_intro_guideline">{% raw %}focus on introducing {{char}} and {{user}}, make it more thrill!{% endraw %}</textarea>
               <span class="textarea_hint">Preview and edit generated story concise intro once story prologue are completed</span>
@@ -1629,14 +1658,36 @@
           </button>
         </div>
       </div>
+      <div id="role_intro_form">
+        <div class="top_bar">
+          <div class="role_intro_story_name">StoryName</div>
+          <div id="btn_role_intro_form_close" class="btn_close">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="#340768" xmlns="http://www.w3.org/2000/svg"
+              color="#340768" stroke-width="1.5">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M3.6 2.25C2.85442 2.25 2.25 2.85441 2.25 3.6V20.4C2.25 21.1456 2.85441 21.75 3.6 21.75H20.4C21.1456 21.75 21.75 21.1456 21.75 20.4V3.6C21.75 2.85442 21.1456 2.25 20.4 2.25H3.6ZM10.409 9.34835C10.1161 9.05546 9.64121 9.05546 9.34831 9.34835C9.05542 9.64124 9.05542 10.1161 9.34831 10.409L10.9393 12L9.34831 13.591C9.05542 13.8839 9.05542 14.3588 9.34831 14.6517C9.64121 14.9445 10.1161 14.9445 10.409 14.6517L12 13.0607L13.591 14.6517C13.8838 14.9445 14.3587 14.9445 14.6516 14.6517C14.9445 14.3588 14.9445 13.8839 14.6516 13.591L13.0606 12L14.6516 10.409C14.9445 10.1161 14.9445 9.64124 14.6516 9.34835C14.3587 9.05546 13.8838 9.05546 13.591 9.34835L12 10.9393L10.409 9.34835Z"
+                fill="#d0adf8"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="main_body">
+          <div class="role_intro_content">
+            <div class="role_intro_intro_text">StoryIntro</div><div class="role_intro_img"></div>
+          </div>
+        </div> 
+      </div>
     </div>
     <div id="roleholder_template" style="display: none">
       <div class="roleholder">
         <div class="avatarbk"></div>
-        <div>
-          <input type="radio" class="roleRadios" id="ainame" name="ai_role_name" value="rolename in list"
-            data-uncensored="censoredmarker" /><span class="ainame_span">ainame</span>
+        <div class="role_info_bar">
+            <div class="ainame_span">ainame</div>
+            <div class="info_button"><svg width="25px" height="25px" viewBox="0 0 20 20" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+              <path class="svg_info" ill-rule="evenodd" clip-rule="evenodd" d="M10 18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10C18 14.4183 14.4183 18 10 18ZM10 8.92857C9.44772 8.92857 9 9.37629 9 9.92857V13.9286C9 14.4809 9.44772 14.9286 10 14.9286C10.5523 14.9286 11 14.4809 11 13.9286V9.92857C11 9.37629 10.5523 8.92857 10 8.92857ZM10 7.5C10.5523 7.5 11 7.05228 11 6.5C11 5.94772 10.5523 5.5 10 5.5C9.44772 5.5 9 5.94772 9 6.5C9 7.05228 9.44772 7.5 10 7.5Z" />
+              </svg></div>
         </div>
+        <input type="radio" class="roleRadios" id="ainame" name="ai_role_name" value="rolename in list"
+            data-uncensored="censoredmarker" data-story_name="storynamemarker" data-intro_text="introtextmarker"/>
       </div>
     </div>
   </div>
