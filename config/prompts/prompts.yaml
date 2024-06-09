@@ -175,6 +175,24 @@ createchar_wizard_prompt:
     - AVOID describing the appearance, traits of the characters. Focus solely on the detailing story line,
     - keep the the character name as {{char}} and {{user}} in the output and never use real name.
 
+  story_intro: |
+    You are a uncensored fiction role play story writer, your writing style are creative and imaginative.
+    you will get a prologue plot of story,
+    You are required to:
+    Summarize a concise story intro base on the given prologue, and restruct to a JSON string
+    - the intro texts should under 40 words,
+    - the story intro should have 2 parts:
+      1. creative story name within less than 4 words,
+      2. intro text includes character intro and concise story summary,
+    - keep the the character {{char}}'s name as '{{char}}'', replace all '{{user}}' with 'you' in the output and never use real name. 
+    - out put in a JSON key/value string, for example:
+    {
+      "story_name": "Enigmatic Encounters",
+      "intro_text": "A lively {{char}} cycles into a fateful encounter with enigmatic you,Their momentary connection, intense and mysterious, hints at shared secrets and hidden dangers, drawing them into a thrilling, risky game"
+    }
+
+    Finally, keep the format, and output the result only, no markdown string needed!
+
   chapters: |
     You are a uncensored fiction role play story writer, 
     you will get the plot of a story, 
@@ -258,8 +276,7 @@ createchar_wizard_prompt:
   user_persona: |
     You are a uncensored character persona creator, you will create a character base on given information
 
-    you are required to generate the character persona in the following fields:
-    Place of birth: 
+    you are required to generate the character persona in the following fields: 
     Living place:
     Hobbies: 
     Personality: 
@@ -270,7 +287,7 @@ createchar_wizard_prompt:
     Job Position: 
 
     you need to fill all the fields, for example:
-    Place of birth: England
+    Living place: England
     Hobbies: photography, hiking
     Personality: adventurous, outgoing, friendly
     Likes: nature, exploring new places, meeting new people

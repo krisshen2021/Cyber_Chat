@@ -607,12 +607,17 @@ async def createchar_wizard(client_info, client_id):
 
     def user_persona():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["user_persona"]
-        userinstruct = f"The given {{{{char}}}}'s information are: \n{wizardstr}\n\nThe final output will be: "
+        userinstruct = f"The given {{{{char}}}}'s information is: \n{wizardstr}\n\nThe final output will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def chat_bg():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["chat_bg"]
         userinstruct = f"The given plot of story and the guide for generating prompt are: \n{wizardstr}\n\nThe final output of text2img prompt for enviornment background will be: "
+        return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
+    
+    def story_intro():
+        sysinstruct = prompt_params["createchar_wizard_prompt"]["story_intro"]
+        userinstruct = f"The given plot of story and the guideline for generate story intro are: \n{wizardstr}\n\nThe final output will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def default_task():
@@ -627,6 +632,7 @@ async def createchar_wizard(client_info, client_id):
         "char_outfit": char_outfit,
         "user_persona": user_persona,
         "chat_bg": chat_bg,
+        "story_intro": story_intro
     }
 
     def switchfunc(task):
@@ -688,6 +694,7 @@ async def client_save_character(client_info, client_id):
     createchar_data["json_Chapters"] = json.dumps(createchar_data["json_Chapters"],indent=4)
     createchar_data["json_Char_outfit"] = json.dumps(createchar_data["json_Char_outfit"],indent=4)
     createchar_data["json_Completions_data"] = json.dumps(createchar_data["json_Completions_data"],indent=4)
+    createchar_data["json_Story_intro"] = json.dumps(createchar_data["json_Story_intro"],indent=4)
     result = await ARO.create_role(createchar_data)
     if result[0]:
         msg_to_send = "success"

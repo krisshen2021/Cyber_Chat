@@ -271,7 +271,7 @@
             return false;
           }
         });
-        if (!isValidJSONObject($("#char_outfit").val()) || !isValidJSONObject($("#story_chapters").val()) || !isValidJSONObject($("#completions_data").val())) {
+        if (!isValidJSONObject($("#char_outfit").val()) || !isValidJSONObject($("#story_chapters").val()) || !isValidJSONObject($("#completions_data").val()) || isValidJSONObject($("#Story_intro"))) {
           alert("check JSON format!");
           return false;
         }
@@ -303,6 +303,7 @@
           "Match_words_cata": $("input[name='NSFW_switch']:checked").val(),
           "json_Completions_data": JSON.parse($("#completions_data").val()),
           "Creator_ID": userdata["unique_id"],
+          "json_Story_intro": JSON.parse($("#story_intro").val()),
         }
         console.log(createchar_data);
         let querydata = {
@@ -558,6 +559,7 @@
         speaking_tone = match_speaking_tone[1].trim();
         console.log(speaking_tone);
       } else {
+        speaking_tone = "normal";
         console.log("No speaking tone found.");
       }
 
@@ -572,10 +574,13 @@
           wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val(); +"\n\n{% raw %}{{char}}'s looks:\n{% endraw %}" + $("#char_looks").val();
           break;
         case "user_persona":
-          wizardstr = "{% raw %}{{user}}'s appearance:{% endraw %}" + user_appearance + "\nbasic infomation of {% raw %}{{user}}'s persona:{% endraw %}\n" + $("#user_persona_guideline").val();
+          wizardstr = "basic infomation of {% raw %}{{user}}'s persona:{% endraw %}\n" + $("#user_persona_guideline").val();
           break;
         case "prologue":
-          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}Appearance: " + user_appearance + "\n" + $("#user_persona").val() + "\n" + $("#story_guideline").val();
+          wizardstr = "{% raw %}{{char}}'s persona:\n{% endraw %}" + $("#char_persona").val() + "{% raw %}\n\n{{user}}'s persona:\n{% endraw %}"+ $("#user_persona").val() + "\n" + $("#story_guideline").val();
+          break;
+        case "story_intro":
+          wizardstr = $("#story_prologue").val() + "\n the guideline for generating story intro: " + $("#story_intro_guideline").val();
           break;
         case "chapters":
           wizardstr = $("#story_prologue").val();
@@ -661,6 +666,9 @@
         case "prologue":
           $("#story_prologue").val(wizardstr).trigger('input');
           break;
+        case "story_intro":
+          $("#story_intro").val(wizardstr).trigger('input');
+          break; 
         case "chapters":
           $("#story_chapters").val(wizardstr).trigger('input');
           break;
@@ -883,6 +891,7 @@
       let btn_char_outfit_wizard = $("#btn_char_outfit_wizard");
       let btn_user_persona_wizard = $("#btn_user_persona_wizard");
       let btn_prologue_wizard = $("#btn_prologue_wizard");
+      let btn_story_intro_wizard = $("#btn_story_intro_wizard");
       let btn_chapters_wizard = $("#btn_chapters_wizard");
       let btn_chat_bg_wizard = $("#btn_chat_bg_wizard");
       let btn_firstwords_wizard = $("#btn_firstwords_wizard");
@@ -920,6 +929,9 @@
       });
       btn_prologue_wizard.on('click', function () {
         createchar_wizard("prologue");
+      });
+      btn_story_intro_wizard.on('click', function () {
+        createchar_wizard("story_intro");
       });
       btn_chapters_wizard.on('click', function () {
         createchar_wizard("chapters");
@@ -1464,15 +1476,20 @@
                 User persona wizard
               </button>
               <label for="story_prologue">Story prologue<span class="form_hint"></span></label>
-              <span class="textarea_hint">Plot guideline, to set the concept
-                or type of the plot</span>
-              <textarea name="guideline_story"
-                id="story_guideline">{% raw %}It's a concise but realistic criminal plot developing between {{char}} and {{user}}, less than 100 words!{% endraw %}</textarea>
-              <span class="textarea_hint">Plot context, can use wizard to get best result once character persona and user persona are complete</span>
-              <textarea name="prologue_story"
-                id="story_prologue">story plot has not been set</textarea>
+              <span class="textarea_hint">Plot guideline, to set the concept or type of the plot</span>
+              <textarea name="guideline_story" id="story_guideline">{% raw %}It's a concise but realistic criminal plot developing between {{char}} and {{user}}, less than 100 words!{% endraw %}</textarea>
+              <span class="textarea_hint">Plot context, can use wizard to get best result once character persona and user persona are completed</span>
+              <textarea name="prologue_story" id="story_prologue">story plot has not been set</textarea>
               <button type="button" class="submit_btn wizard_btn" id="btn_prologue_wizard">
                 Prologue wizard
+              </button>
+              <label for="story_concise_intro">Concise intro of story<span class="form_hint"></span></label>
+              <span class="textarea_hint">guideline for create a concise intro for your story</span>
+              <textarea name="guideline_intro_story" id="story_intro_guideline">{% raw %}focus on introducing {{char}} and {{user}}, make it more thrill!{% endraw %}</textarea>
+              <span class="textarea_hint">Preview and edit generated story concise intro once story prologue are completed</span>
+              <textarea name="intro_story" id="story_intro">concise intro of story has not been set</textarea>
+              <button type="button" class="submit_btn wizard_btn" id="btn_story_intro_wizard">
+                Intro wizard
               </button>
               <label for="story_chapters">Story Chapters<span class="form_hint"></span></label>
               <span class="textarea_hint">story chapters JSON list, can use
