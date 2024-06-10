@@ -242,9 +242,27 @@ body {
   border-radius: 0.4rem;
   box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.7);
   cursor: pointer;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
 
 }
-
+.info_NSFW{
+  width: 25px;
+  height: 25px;
+  border-radius: 3px;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(5, 5, 5, 0.5);
+  backdrop-filter: blur(2px);
+  margin-bottom: 2px;
+  margin-right: 2px;
+}
+.NSFW_icon{
+  fill:#fcefe0
+}
 .role_info_bar {
   display: flex;
   flex-direction: row;
@@ -318,7 +336,9 @@ body {
   margin-top: 3rem;
   margin-bottom: 3rem;
 }
-
+#role_intro_form{
+  width:490px;
+}
 #login_form {
   width: 300px;
 }
@@ -412,6 +432,10 @@ body {
 }
 
 #role_intro_form .role_intro_img {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
   width: 150px;
   height: 150px;
   min-width: 150px;
@@ -427,9 +451,30 @@ body {
   width: auto;
   font-size: 1rem;
   line-height: 1.2rem;
-  word-break:normal;
+  word-break: normal;
   margin-right: 15px;
-
+}
+#role_intro_form .role_intro_textwrapper{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 100%;
+  gap:10px;
+}
+#role_intro_form .role_intro_button{
+  border:none;
+  border-radius: 20px;
+  padding: 5px 10px;
+  background-color: #e5c2ed;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color:#280149;
+  cursor: pointer;
+}
+#role_intro_form .role_intro_button:hover{
+  background-color: #ff8000;
+  color: #280149;
 }
 
 #signup_form .info_row,

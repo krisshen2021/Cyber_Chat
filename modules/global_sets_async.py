@@ -47,7 +47,7 @@ async def load_prompts_params():
     
 async def load_roles():
     result = database.list_data_airole(
-        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored", "Creator_ID", "json_Story_intro"]
+        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored", "Creator_ID", "json_Story_intro", "Match_words_cata"]
     )
     rolelist = {}
     for row in result:
@@ -59,6 +59,7 @@ async def load_roles():
         rolelist[roleName]['ai_speaker_en'] = row['Ai_speaker_en']
         rolelist[roleName]['Creator_ID'] = row['Creator_ID']
         rolelist[roleName]['json_Story_intro'] = row['json_Story_intro']
+        rolelist[roleName]['Match_words_cata'] = row['Match_words_cata']
     global roleconf
     roleconf = rolelist.copy()
 

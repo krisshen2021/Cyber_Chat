@@ -85,7 +85,8 @@ class AiRoleOperator:
                 "Ai_speaker_en",
                 "is_Uncensored",
                 "Creator_ID",
-                "json_Story_intro"
+                "json_Story_intro",
+                "Match_words_cata"
             ]
         )
         rolelist = {}
@@ -100,6 +101,7 @@ class AiRoleOperator:
             rolelist[roleName]["ai_speaker_en"] = row["Ai_speaker_en"]
             rolelist[roleName]["Creator_ID"] = row["Creator_ID"]
             rolelist[roleName]["json_Story_intro"] = row["json_Story_intro"]
+            rolelist[roleName]["Match_words_cata"] = row["Match_words_cata"]
         return rolelist
 
     @staticmethod
