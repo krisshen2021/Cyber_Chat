@@ -3,30 +3,24 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="/static/favicon.ico" />
+  <link rel="icon" href="/static/images/favicon.ico" />
   <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
   <link rel="stylesheet" type="text/css" href="/static/css/chat.css" />
+  <link rel="stylesheet" type="text/css" href="/static/css/jquery-ui.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css?family=Philosopher&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css" />
-  <title>{{ainame}}</title>
 
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" crossorigin="anonymous"></script> -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <title>{{ainame}}</title>
+  <script src="/static/js/gsap.min.js"></script>
   <script src="/static/js/marked.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="/static/js/jquery-3.6.0.min.js"></script>
+  <script src="/static/js/jquery-ui.js"></script>
 
   <script type="text/javascript">
-    // window.addEventListener("beforeunload", function (e) {
-    //   socket.disconnect();
-    // });
-
     function copyCode(clickedDiv) {
       let $clickdiv = $(clickedDiv);
       let tempHtml = $clickdiv.parent().next().get(0);
@@ -85,7 +79,7 @@
   <script type="module" charset="utf-8">
     import { msTTS } from "/static/js/tts.js";
     const msttser = new msTTS();
-
+    import CommandInputHandler from "/static/js/input_control.js"
     marked.use({
       mangle: false,
       headerIds: false,
@@ -102,6 +96,8 @@
     var usergender = "{{gender}}";
     var credits = "{{credits}}";
     var ai_role_name = "{{ai_role_name}}";
+    var ainame = "{{ainame}}";
+    var Prologue = `{{Prologue | safe}}`;
     var ai_is_uncensored = "{{is_uncensored}}";
     var conid = "{{clientID}}";
     var bkimg_path =
@@ -113,7 +109,10 @@
     var initialstate = true;
     var holdbox_origin_height;
     var streamingBuffer = [];
-
+    var prompt_variable_str;
+    // var command_flag = "cmd_normal";
+    // var prompt_flag = null;
+    // var msg_to_send = "";
     function wsData(wsevent, querydata) {
       let messagebody = {
         wsevent_client: wsevent,
@@ -147,9 +146,9 @@
           }
         });
         $("#messageToSend").focus();
-        $("#submit").on("click", sendmsgtoserver);
+        // $("#submit").on("click", sendmsgtoserver);
       } else {
-        $("#submit").off("click", sendmsgtoserver);
+        // $("#submit").off("click", sendmsgtoserver);
         $("button, input, select, textarea").each(function () {
           $(this).prop("disabled", true).css("opacity", 0.5);
           if ($(this).is("button")) {
@@ -457,7 +456,7 @@
         initialstate = false;
       } else {
         //update normal mode contents
-        let $lastMsg = $("#message_box").find(".msg-container-clone").last(); 
+        let $lastMsg = $("#message_box").find(".msg-container-clone").last();
         $lastMsg
           .find(".avatar")
           .css("backgroundImage", "url('" + avatar_url_new + "')");
@@ -939,9 +938,9 @@
           if (msgText != "[DONE]") {
             streamingBuffer.push(msgText);
             let streamText = streamingBuffer.join('');
-            $lastmsg.html("<p class='stream_text'>"+streamText+"</p>");
+            $lastmsg.html("<p class='stream_text'>" + streamText + "</p>");
             $lastmsg.find("p").append("<span class='stream_hint'></span>");
-            $lastmsg_comic.html("<p class='stream_text'>"+streamText+"</p>");
+            $lastmsg_comic.html("<p class='stream_text'>" + streamText + "</p>");
             $lastmsg_comic.find("p").append("<span class='stream_hint'></span>");
           } else {
             $lastmsg.find("p").find(".stream_hint").fadeOut(1500);
@@ -1030,60 +1029,68 @@
         from: "server",
       });
     }
-
-    function sendmsgtoserver() {
-        let textbox = $("#messageToSend");
-        if (textbox.val().trim() == "") {
-          $("#messageToSend").focus();
-          return false;
-        }
-        toggleInputs(false);
-        let statechk = checkSendState();
-        let usermsg = textbox.val();
-        let windowSize = getWindowSize();
-        userLastMsg = usermsg;
-        let user_inputmsg = marked.parse(usermsg);
-        add_msg({
-          message_input: user_inputmsg,
-          avatar_url: user_looks,
-          from: "client",
-        });
-        let querydata = {
-          message: usermsg,
-          conid: conid,
-          isembbed: statechk.embswitcher,
-          istranslated: statechk.transswitcher,
-          windowRatio: windowSize.ratio,
-          iscreatedynimage: statechk.imageswitcher,
-        };
-        ws.send(wsData("send_user_msg", querydata));
-        textbox.val("");
-        autoExpand(textbox[0]);
+    //send msg to server
+    function sendmsgtoserver(msg_to_send, command_flag, prompt_flag) {
+      // let textbox = $("#messageToSend");
+      // console.log(`message:${textbox.val()}\ncommand:${command_flag}`);
+      // if (textbox.val().trim() == "") {
+      //   $("#messageToSend").focus();
+      //   return false;
+      // }
+      toggleInputs(false);
+      let statechk = checkSendState();
+      let windowSize = getWindowSize();
+      let usermsg;
+      if (command_flag !== "cmd_normal") {
+        usermsg = prompt_flag.replace(prompt_variable_str, msg_to_send);
+      }else{
+        usermsg = msg_to_send;
       }
-    function autoExpand(textarea) {
-      setTimeout(function() {
-      textarea.style.height = 'auto'; 
-      textarea.style.height = textarea.scrollHeight + 'px'; 
-      },0);
+      userLastMsg = usermsg;
+      let user_inputmsg = marked.parse(usermsg);
+      add_msg({
+        message_input: user_inputmsg,
+        avatar_url: user_looks,
+        from: "client",
+      });
+      let querydata = {
+        message: usermsg,
+        command_flag: command_flag,
+        conid: conid,
+        isembbed: statechk.embswitcher,
+        istranslated: statechk.transswitcher,
+        windowRatio: windowSize.ratio,
+        iscreatedynimage: statechk.imageswitcher,
+      };
+      ws.send(wsData("send_user_msg", querydata));
+      $("#messageToSend").val("");
+      autoExpand($("#messageToSend")[0]);
     }
-    function onInputMsgSend(event) {
-        if (event.key === "Enter") {
-          if (event.shiftKey) {
-            autoExpand(event.target);
-            return;
-          } else {
-            event.preventDefault();
-            if (event.target.value.trim() !== "") {
-              sendmsgtoserver();
-            } else {
-              event.target.value = "";
-              return;
-            }
-          }
-        } else {
-          autoExpand(event.target);
-        }
-      }
+
+    function autoExpand(textarea) {
+      setTimeout(function () {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }, 0);
+    }
+    // function onInputMsgSend(event) {
+    //   if (event.key === "Enter") {
+    //     if (event.shiftKey) {
+    //       autoExpand(event.target);
+    //       return;
+    //     } else {
+    //       event.preventDefault();
+    //       if (event.target.value.trim() !== "") {
+    //         sendmsgtoserver();
+    //       } else {
+    //         event.target.value = "";
+    //         return;
+    //       }
+    //     }
+    //   } else {
+    //     autoExpand(event.target);
+    //   }
+    // }
     //Server Connected
     function Server_Connected() {
       if (initialstate) {
@@ -1146,17 +1153,108 @@
 
     /*Document Ready Actions*/
     $(document).ready(function () {
+      //new command function
+      const icons = {
+        "default": `<svg width="30px" height="30px" viewBox="0 0 24 24" data-name="025_SCIENCE"
+                id="_025_SCIENCE" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <style>
+                        .cls-1 {
+                            fill: #ffffff;
+                        }
+                    </style>
+                </defs>
+                <path class="cls-1"
+                    d="M16,13H8a3,3,0,0,1-3-3V6A3,3,0,0,1,8,3h8a3,3,0,0,1,3,3v4A3,3,0,0,1,16,13ZM8,5A1,1,0,0,0,7,6v4a1,1,0,0,0,1,1h8a1,1,0,0,0,1-1V6a1,1,0,0,0-1-1Z" />
+                <path class="cls-1"
+                    d="M10,9a1.05,1.05,0,0,1-.71-.29A1,1,0,0,1,10.19,7a.6.6,0,0,1,.19.06.56.56,0,0,1,.17.09l.16.12A1,1,0,0,1,10,9Z" />
+                <path class="cls-1"
+                    d="M14,9a1,1,0,0,1-.71-1.71,1,1,0,0,1,1.42,1.42,1,1,0,0,1-.16.12.56.56,0,0,1-.17.09.6.6,0,0,1-.19.06Z" />
+                <path class="cls-1" d="M12,4a1,1,0,0,1-1-1V2a1,1,0,0,1,2,0V3A1,1,0,0,1,12,4Z" />
+                <path class="cls-1" d="M9,22a1,1,0,0,1-1-1V18a1,1,0,0,1,2,0v3A1,1,0,0,1,9,22Z" />
+                <path class="cls-1" d="M15,22a1,1,0,0,1-1-1V18a1,1,0,0,1,2,0v3A1,1,0,0,1,15,22Z" />
+                <path class="cls-1"
+                    d="M15,19H9a1,1,0,0,1-1-1V12a1,1,0,0,1,1-1h6a1,1,0,0,1,1,1v6A1,1,0,0,1,15,19Zm-5-2h4V13H10Z" />
+                <path class="cls-1"
+                    d="M5,17a1,1,0,0,1-.89-.55,1,1,0,0,1,.44-1.34l4-2a1,1,0,1,1,.9,1.78l-4,2A.93.93,0,0,1,5,17Z" />
+                <path class="cls-1"
+                    d="M19,17a.93.93,0,0,1-.45-.11l-4-2a1,1,0,1,1,.9-1.78l4,2a1,1,0,0,1,.44,1.34A1,1,0,0,1,19,17Z" />
+            </svg>`,
+        "request": `<svg fill="#ffffff" width="30px" height="30px" viewBox="0 0 16 16" id="request-16px" xmlns="http://www.w3.org/2000/svg">
+          <path id="Path_49" data-name="Path 49" d="M30.5,16a.489.489,0,0,1-.191-.038A.5.5,0,0,1,30,15.5V13h-.5A2.5,2.5,0,0,1,27,10.5v-8A2.5,2.5,0,0,1,29.5,0h11A2.5,2.5,0,0,1,43,2.5v8A2.5,2.5,0,0,1,40.5,13H33.707l-2.853,2.854A.5.5,0,0,1,30.5,16Zm-1-15A1.5,1.5,0,0,0,28,2.5v8A1.5,1.5,0,0,0,29.5,12h1a.5.5,0,0,1,.5.5v1.793l2.146-2.147A.5.5,0,0,1,33.5,12h7A1.5,1.5,0,0,0,42,10.5v-8A1.5,1.5,0,0,0,40.5,1ZM36,9a1,1,0,1,0-1,1A1,1,0,0,0,36,9Zm1-4a2,2,0,0,0-4,0,.5.5,0,0,0,1,0,1,1,0,1,1,1,1,.5.5,0,0,0,0,1A2,2,0,0,0,37,5Z" transform="translate(-27)"/>
+            </svg>`,
+        "pushplot": `<svg fill="#ffffff" width="30px" height="30px" viewBox="0 0 16 16" id="request-sent-16px" xmlns="http://www.w3.org/2000/svg">
+          <path id="Path_50" data-name="Path 50" d="M-11.5,0h-11A2.5,2.5,0,0,0-25,2.5v8A2.5,2.5,0,0,0-22.5,13h.5v2.5a.5.5,0,0,0,.309.462A.489.489,0,0,0-21.5,16a.5.5,0,0,0,.354-.146L-18.293,13H-11.5A2.5,2.5,0,0,0-9,10.5v-8A2.5,2.5,0,0,0-11.5,0ZM-10,10.5A1.5,1.5,0,0,1-11.5,12h-7a.5.5,0,0,0-.354.146L-21,14.293V12.5a.5.5,0,0,0-.5-.5h-1A1.5,1.5,0,0,1-24,10.5v-8A1.5,1.5,0,0,1-22.5,1h11A1.5,1.5,0,0,1-10,2.5Zm-2.038-3.809a.518.518,0,0,1-.109.163l-2,2A.5.5,0,0,1-14.5,9a.5.5,0,0,1-.354-.146.5.5,0,0,1,0-.708L-13.707,7H-18.5A1.5,1.5,0,0,0-20,8.5a.5.5,0,0,1-.5.5.5.5,0,0,1-.5-.5A2.5,2.5,0,0,1-18.5,6h4.793l-1.147-1.146a.5.5,0,0,1,0-.708.5.5,0,0,1,.708,0l2,2a.518.518,0,0,1,.109.163A.505.505,0,0,1-12.038,6.691Z" transform="translate(25)"/>
+            </svg>`,
+        "occasion": `<svg fill="#ffffff" width="30px" height="30px" viewBox="0 0 16 16" id="request-added-16px" xmlns="http://www.w3.org/2000/svg">
+          <path id="Path_48" data-name="Path 48" d="M-6.5,0h-11A2.5,2.5,0,0,0-20,2.5v8A2.5,2.5,0,0,0-17.5,13h.5v2.5a.5.5,0,0,0,.309.462A.489.489,0,0,0-16.5,16a.5.5,0,0,0,.354-.146L-13.293,13H-6.5A2.5,2.5,0,0,0-4,10.5v-8A2.5,2.5,0,0,0-6.5,0ZM-5,10.5A1.5,1.5,0,0,1-6.5,12h-7a.5.5,0,0,0-.354.146L-16,14.293V12.5a.5.5,0,0,0-.5-.5h-1A1.5,1.5,0,0,1-19,10.5v-8A1.5,1.5,0,0,1-17.5,1h11A1.5,1.5,0,0,1-5,2.5Zm-3.5-4A.5.5,0,0,1-9,7h-2.5V9.5a.5.5,0,0,1-.5.5.5.5,0,0,1-.5-.5V7H-15a.5.5,0,0,1-.5-.5A.5.5,0,0,1-15,6h2.5V3.5A.5.5,0,0,1-12,3a.5.5,0,0,1,.5.5V6H-9A.5.5,0,0,1-8.5,6.5Z" transform="translate(20)"/>
+            </svg>`
+      }
+      const suggestions = [{
+        "name": "Request to A.I",
+        "descript": "Make a request to A.I assistant:[contents]",
+        "cmd": "cmd_request",
+        "prompt": "*Command to A.I assistant: [contents], exectue the command immedately*",
+        "svg": icons.request
+      },
+      {
+        "name": "Push the plot forward",
+        "descript": "Push the plot forward to create a new chapter - [contents]",
+        "cmd": "cmd_plotforward",
+        "prompt": "*Command to A.I assistant: Push the plot forward to create a new chapter: [contents], exectue the command immedately*",
+        "svg": icons.pushplot
+      },
+      {
+        "name": "Create a special occasion",
+        "descript": "Push the plot forward to create a special occasion of [contents]",
+        "cmd": "cmd_occasion",
+        "prompt": "*Command to A.I assistant: Push the plot forward and create a special occasion, the description of the occasion is: [contents], exectue the command immedately*",
+        "svg": icons.occasion
+      }
+      ];
+      const defaultText = "Enter your words, or use '/' to give special command";
+      const $msg_inputer = $("#messageToSend");
+      const $cmd_dropdownMenu = $("#cmd_dropdownMenu");
+      const $ai_icon = $(".ai_icon");
+      prompt_variable_str = '[contents]'
+      const cssClasses = {
+        cmdItems: 'cmd_items',
+        inputText: 'input_text',
+        highlight: 'highlight',
+        itemName: 'item_name',
+        sugDesc: 'sug_desc'
+      };
+
+      const commandInputHandler = new CommandInputHandler(
+        icons, suggestions, defaultText, $msg_inputer, $cmd_dropdownMenu, $ai_icon, prompt_variable_str, cssClasses
+      );
+      $msg_inputer.on('SendMsg', function (event) {
+        console.log(`command type:${event.command_flag}\nthe message is:${event.msg}\nthe prompt is:${event.prompt_flag}`);
+        sendmsgtoserver(event.msg, event.command_flag, event.prompt_flag);
+      });
+      //
+      $("#submit").on("click", function () {
+        commandInputHandler.triggerEnterEvent();
+      });
+
+
       $("#load-chat-history").click(loadChatHistory);
       $("#save-chat-history").click(saveChatHistory);
-      $("#submit").click(sendmsgtoserver);
       $("#restart").click(resetChat);
       $("#regenerate").click(regenReply);
       $("#exitchat").click(exitChat);
       $("#comicMode").change(dispModeSwitch);
-      $("#messageToSend").keydown(onInputMsgSend);
-      $("#messageToSend").on('paste', function(){
-        autoExpand(this)
+      // $("#messageToSend").keydown(onInputMsgSend);
+      // $("#messageToSend").on('paste', function () {
+      //   autoExpand(this)
+      // });
+      $("#ai_intro .prologue_button").on("click", function () {
+        $("#intro_prologue_area .intro_prologue").fadeToggle(500);
       });
+      $("#intro_prologue_area .intro_prologue").on("click", function () {
+        $(this).fadeOut(100);
+      });
+      $("#intro_prologue_area .intro_prologue").html(Prologue);
       $("#voiceswitcher").change(switchVoiceController);
       toggleInputs(false);
       // Auto resize comic layout
@@ -1236,6 +1334,7 @@
           }
         }
       }, 250);
+
       $(window).on("resize", handleResize);
       //
 
@@ -1306,37 +1405,6 @@
 
       let backgroundImage = "url('" + bkimg_path + "')";
       $("#char-bgpic").css("background-image", backgroundImage);
-      /**
-      socket = io.connect("/", {
-        path: "/chat",
-        pingTimeout: 180000,
-        query: {
-          username: username,
-          usergender: usergender,
-          ai_role_name: ai_role_name,
-          conid: conid,
-          ai_is_uncensored: ai_is_uncensored,
-        },
-      });
-      socket.on("connect", Server_Connected);
-      socket.on("disconnect", function (reason) {
-        alert("Server Disconnected [" + reason + "]");
-      });
-      socket.on("room_reconnected", function () {
-        alert("Server Reconnected, You Can Continue To Chat Now");
-      });
-      socket.on("reconnect_and_recreate_room", function () {
-        alert("Room Removed, Needs To Be Initiated");
-        initialstate = true;
-        Server_Connected();
-      });
-      socket.on("status from server", showServerStatus);
-      socket.on("my response", msg_proc);
-      socket.on("model_change_result", model_loaded);
-      socket.on("exit_room_success", exitRoomSuccess);
-      socket.on("instruction_change_result", instruct_changed);
-      socket.on("SD_Model_change_result", SD_model_changed);
-      socket.on("xtts_result", xtts_audio_data);**/
 
       //WebSocket Process
       let websocket;
@@ -1504,7 +1572,17 @@
       </div>
     </div>
     <div id="ai_intro">
-      <div>{{ainame}}</div>
+      <div class="ai_name">{{ainame}}</div>
+      <div class="prologue_button">
+        <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M4 19V6.2C4 5.0799 4 4.51984 4.21799 4.09202C4.40973 3.71569 4.71569 3.40973 5.09202 3.21799C5.51984 3 6.0799 3 7.2 3H16.8C17.9201 3 18.4802 3 18.908 3.21799C19.2843 3.40973 19.5903 3.71569 19.782 4.09202C20 4.51984 20 5.0799 20 6.2V17H6C4.89543 17 4 17.8954 4 19ZM4 19C4 20.1046 4.89543 21 6 21H20M9 7H15M9 11H15M19 17V21"
+            stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
+    <div id="intro_prologue_area">
+      <div class="intro_prologue">Prologue Texts</div>
     </div>
     <div class="free-space"></div>
     <div id="holder_box">
@@ -1515,12 +1593,18 @@
           <button id="load-chat-history">Load chat history</button>
           <button id="save-chat-history">Save chat history</button>
         </div>
+
         <div class="messageInputBox">
-          <textarea type="text" id="messageToSend" rows="1"></textarea><span id="submit" class="msgInput">Send</span>
+          <div class="ai_icon">
+          </div>
+          <div class="input_area">
+            <textarea type="text" id="messageToSend" rows="1"></textarea><span id="submit" class="msgInput">Send</span>
+            <ul id="cmd_dropdownMenu"></ul>
+          </div>
         </div>
         <div class="messageOptions">
           <div class="subButtonsGroup">
-            
+
             <button id="regenerate">Regen</button>
             <button id="restart">Restart</button>
             <button id="exitchat">Exit</button>

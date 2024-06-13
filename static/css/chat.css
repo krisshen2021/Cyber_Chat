@@ -349,6 +349,57 @@ body {
   align-self: flex-start;
   margin-left: 4rem;
   z-index: 10;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+#ai_intro .ainame {
+  width: fit-content;
+  height: fit-content;
+}
+
+#ai_intro .prologue_button {
+  width: 36px;
+  height: 36px;
+  padding: 2px;
+  background: rgb(3, 3, 3, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  cursor: pointer;
+
+}
+
+#intro_prologue_area {
+  position: relative;
+  width: 100%;
+  height: 0px;
+}
+
+#intro_prologue_area .intro_prologue {
+  position: absolute;
+  width: 80%;
+  height: fit-content;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  border-radius: 10px;
+  padding: 10px;
+  overflow: auto;
+  box-shadow: 3px 3px 5px rgba(15, 13, 16, 0.5);
+  transition: height 0.5s ease;
+  left: 50%;
+  transform: translateX(-50%);
+  color: antiquewhite;
+  line-height: 1.5rem;
+  z-index: 5;
+  text-shadow: 1px 1px rgb(0, 0, 0, 0.5);
+  display: none;
+  cursor: pointer;
+
 }
 
 .free-space {
@@ -453,16 +504,108 @@ body {
 
 .messageInputBox {
   width: 100%;
-  border-radius: 3rem;
+  border-radius: 1rem;
   border: 0px;
   background: rgba(2, 2, 2, 0.7);
   backdrop-filter: blur(3px);
-  padding: 10px 20px 10px 20px;
-  max-height: 200px;
-  overflow: hidden;
+  padding: 10px 10px 10px 10px;
   display: flex;
   flex-direction: row;
   align-items: center;
+}
+
+
+.messageInputBox .ai_icon {
+  width: fit-content;
+  height: fit-content;
+  border-radius: 0.5rem;
+  padding: 0 1rem;
+  display: none;
+}
+
+.messageInputBox .input_area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+  position: relative;
+}
+
+#cmd_dropdownMenu {
+  display:none;
+  list-style: none;
+  border: none;
+  margin: 0;
+  padding: 2px;
+  position:absolute;
+  border-radius: 5px;
+  background-color: #34145c;
+  flex-direction: column;
+  width: max-content;
+  box-shadow: 2px 2px 5px rgb(4, 4, 4, 0.7);
+  z-index: 99;
+  font-size: 0.9rem;
+  gap:2px;
+
+}
+
+#cmd_dropdownMenu li {
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 200px;
+  color: #34145c;
+  background-color: #d7b8ff;
+}
+
+#cmd_dropdownMenu li.highlight {
+  background-color: #452573;
+  color: #eeeeee;
+}
+
+#cmd_dropdownMenu li .sug_desc {
+  display: none;
+  font-size: 0.7rem;
+  color: #34145c;
+  background-color: #d7b8ff;
+  border-radius: 2.5px;
+  padding: 0.35rem;
+  width: 100%;
+}
+
+
+
+#messageToSend {
+  width: 100%;
+  height: auto;
+  color: rgb(67, 55, 74);
+  font-size: 0.8rem;
+  border: none;
+  background: transparent;
+  resize: none;
+  overflow: auto;
+  max-height: 200px;
+  font-family: "Barlow";
+  flex-grow: 1;
+  align-self: center;
+}
+
+#messageToSend.input_text {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+#messageToSend:focus {
+  outline: none;
+}
+
+#messageToSend::selection {
+  background-color: orange;
+  color: white;
 }
 
 .messageOptions {
@@ -471,24 +614,6 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   gap: 1rem;
-}
-
-
-
-#messageToSend {
-  width: 100%;
-  height: auto;
-  color: whitesmoke;
-  font-size: 1rem;
-  border:none;
-  background: transparent;
-  resize: none;
-  overflow: auto;
-  max-height: 200px;
-  font-family: "Barlow";
-}
-#messageToSend:focus{
-  outline: none;
 }
 
 #submit,
@@ -503,20 +628,23 @@ body {
   height: 40px;
   font-weight: 500;
 }
- #submit {
-    padding: 0px;
-    min-height: 3rem;
-    min-width: 3rem;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.7rem;
-    background-color: #444444;
-  }
-  #submit .msgInput{
-    align-self: flex-end;
-  }
+
+#submit {
+  padding: 0px;
+  min-height: 3rem;
+  min-width: 3rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.7rem;
+  background-color: #444444;
+}
+
+#submit .msgInput {
+  align-self: flex-end;
+}
+
 #chat-history-buttons {
   align-self: flex-end;
 }
@@ -815,8 +943,9 @@ input[type="checkbox"]:checked::after {
 input[type="checkbox"]:hover {
   cursor: pointer;
 }
-.stream_text{
-  color:rgb(196, 196, 196)
+
+.stream_text {
+  color: rgb(196, 196, 196)
 }
 
 .stream_hint {
@@ -941,7 +1070,8 @@ input[type="checkbox"]:hover {
     height: 1.5rem;
     font-size: 0.8rem;
   }
- #submit {
+
+  #submit {
     padding: 0px;
     min-height: 3rem;
     min-width: 3rem;
@@ -952,6 +1082,7 @@ input[type="checkbox"]:hover {
     font-size: 0.7rem;
     background-color: #444444;
   }
+
   .border-wrapper {
     padding: 5px;
     /* 边框的宽度 */
@@ -1099,7 +1230,8 @@ input[type="checkbox"]:hover {
     height: 1.5rem;
     font-size: 1rem;
   }
- #submit {
+
+  #submit {
     padding: 0px;
     min-height: 3rem;
     min-width: 3rem;

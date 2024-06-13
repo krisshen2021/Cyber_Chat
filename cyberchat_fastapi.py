@@ -104,6 +104,12 @@ async def enter_room(
     form_data: EnterRoom = Depends(as_form(EnterRoom), use_cache=False),
 ):
     context = form_data.dict()
+    ai_role_data = database.get_airole(context["ai_role_name"])
+    prologue = ai_role_data["Prologue"]
+    username = context["username"]
+    ainame = context["ainame"]
+    prologue = prologue.replace('\n','<br>').replace(r"{{user}}", f"<em>{username}</em>").replace(r"{{char}}", f"<em>{ainame}</em>")
+    context["Prologue"] = prologue
     context["request"] = request
     timestamp = generate_timestamp()
     context["timestamp"] = timestamp
