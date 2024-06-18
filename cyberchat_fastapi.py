@@ -104,6 +104,8 @@ async def enter_room(
     form_data: EnterRoom = Depends(as_form(EnterRoom), use_cache=False),
 ):
     context = form_data.dict()
+    suggestions = await getGlobalConfig("suggestions_params")
+    context["suggestions"] = suggestions
     ai_role_data = database.get_airole(context["ai_role_name"])
     prologue = ai_role_data["Prologue"]
     username = context["username"]

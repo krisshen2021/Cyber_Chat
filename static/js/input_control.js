@@ -1,6 +1,29 @@
 class CommandInputHandler {
-    constructor(icons, suggestions, defaultText, $msg_inputer, $cmd_dropdownMenu, $ai_icon, prompt_variable_str, cssClasses) {
-        this.icons = icons;
+    constructor(suggestions, defaultText, $msg_inputer, $cmd_dropdownMenu, $ai_icon, prompt_variable_str, cssClasses) {
+        this.icon_default_svg = `<svg width="30px" height="30px" viewBox="0 0 24 24" data-name="025_SCIENCE" id="_025_SCIENCE" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+        <style>
+                .cls-1 {
+                    fill: #ffffff;
+                }
+            </style>
+        </defs>
+        <path class="cls-1"
+            d="M16,13H8a3,3,0,0,1-3-3V6A3,3,0,0,1,8,3h8a3,3,0,0,1,3,3v4A3,3,0,0,1,16,13ZM8,5A1,1,0,0,0,7,6v4a1,1,0,0,0,1,1h8a1,1,0,0,0,1-1V6a1,1,0,0,0-1-1Z" />
+        <path class="cls-1"
+            d="M10,9a1.05,1.05,0,0,1-.71-.29A1,1,0,0,1,10.19,7a.6.6,0,0,1,.19.06.56.56,0,0,1,.17.09l.16.12A1,1,0,0,1,10,9Z" />
+        <path class="cls-1"
+            d="M14,9a1,1,0,0,1-.71-1.71,1,1,0,0,1,1.42,1.42,1,1,0,0,1-.16.12.56.56,0,0,1-.17.09.6.6,0,0,1-.19.06Z" />
+        <path class="cls-1" d="M12,4a1,1,0,0,1-1-1V2a1,1,0,0,1,2,0V3A1,1,0,0,1,12,4Z" />
+        <path class="cls-1" d="M9,22a1,1,0,0,1-1-1V18a1,1,0,0,1,2,0v3A1,1,0,0,1,9,22Z" />
+        <path class="cls-1" d="M15,22a1,1,0,0,1-1-1V18a1,1,0,0,1,2,0v3A1,1,0,0,1,15,22Z" />
+        <path class="cls-1"
+            d="M15,19H9a1,1,0,0,1-1-1V12a1,1,0,0,1,1-1h6a1,1,0,0,1,1,1v6A1,1,0,0,1,15,19Zm-5-2h4V13H10Z" />
+        <path class="cls-1"
+            d="M5,17a1,1,0,0,1-.89-.55,1,1,0,0,1,.44-1.34l4-2a1,1,0,1,1,.9,1.78l-4,2A.93.93,0,0,1,5,17Z" />
+        <path class="cls-1"
+            d="M19,17a.93.93,0,0,1-.45-.11l-4-2a1,1,0,1,1,.9-1.78l4,2a1,1,0,0,1,.44,1.34A1,1,0,0,1,19,17Z" />
+    </svg>`;
         this.suggestions = suggestions;
         this.defaultText = defaultText;
         this.$msg_inputer = $msg_inputer;
@@ -9,12 +32,24 @@ class CommandInputHandler {
         this.prompt_variable_str = prompt_variable_str;
         this.cssClasses = cssClasses;
 
-        this.filteredSuggestions = this.suggestions.map(suggestion =>
-            `<li class='${this.cssClasses.cmdItems}' data-desc='${suggestion.cmd.replace('[contents]', this.prompt_variable_str)}' data-svg='${suggestion.svg}' data-prompt='${suggestion.prompt.replace('[contents]', this.prompt_variable_str)}'>
-                <span class='${this.cssClasses.itemName}'>${suggestion.name}</span>
-                <span class='${this.cssClasses.sugDesc}'>${suggestion.descript}</span>
-            </li>`
-        ).join('');
+        // this.filteredSuggestions = this.suggestions.map(suggestion =>
+        //     `<li class='${this.cssClasses.cmdItems}' data-desc='${suggestion.cmd.replace('[contents]', this.prompt_variable_str)}' data-svg='${suggestion.svg}' data-prompt='${suggestion.prompt.replace('[contents]', this.prompt_variable_str)}'>
+        //         <span class='${this.cssClasses.itemName}'>${suggestion.name}</span>
+        //         <span class='${this.cssClasses.sugDesc}'>${suggestion.descript}</span>
+        //     </li>`
+        // ).join('');
+        this.filteredSuggestions = [];
+        $.each(this.suggestions, (key,value) => {
+                let prompt = this.suggestions[key].prompt.replace('[contents]', this.prompt_variable_str)
+                let sugDesc = this.suggestions[key].descript.replace('[contents]', this.prompt_variable_str)
+                let li_html = `<li class='${this.cssClasses.cmdItems}' data-desc='${this.suggestions[key].cmd}' data-svg='' data-prompt='${prompt}'>
+                        <span class='${this.cssClasses.itemName}'><div>${this.suggestions[key].svg}</div><div>${this.suggestions[key].name}</div></span>
+                        <span class='${this.cssClasses.sugDesc}'>${sugDesc}</span>
+                    </li>`
+                this.filteredSuggestions.push(li_html);
+        });
+        this.filteredSuggestions.reverse();
+        this.filteredSuggestions = this.filteredSuggestions.join('');
         this.$msg_inputer.val(this.defaultText);
         this.selectedItemIndex = -1;
         this.command_flag = "cmd_normal";
@@ -42,7 +77,7 @@ class CommandInputHandler {
                 this.setItemMenuPos();
                 this.command_flag = "cmd_normal";
                 this.prompt_flag = null;
-                this.$ai_icon.html(this.icons.default);
+                this.$ai_icon.html(this.icon_default_svg);
                 this.$ai_icon.show();
                 this.selectedItemIndex = -1;
             } else {
@@ -118,7 +153,7 @@ class CommandInputHandler {
         this.$msg_inputer.val("");
         this.command_flag = "cmd_normal";
         this.prompt_flag = null;
-        this.$ai_icon.html(this.icons.default).hide();
+        this.$ai_icon.html(this.icon_default_svg).hide();
     }
     autoExpand(textarea) {
         setTimeout(() => {
@@ -142,7 +177,7 @@ class CommandInputHandler {
         let $liItem_select = this.$cmd_dropdownMenu.find(`li.${this.cssClasses.cmdItems}`).eq(index);
         this.command_flag = $liItem_select.data('desc');
         this.prompt_flag = $liItem_select.data('prompt');
-        let svg_icon = $liItem_select.data('svg');
+        let svg_icon = this.suggestions[this.command_flag].svg;
         this.$msg_inputer.val(this.prompt_variable_str);
         let startIndex = 0;
         let endIndex = this.prompt_variable_str.length;
@@ -151,6 +186,7 @@ class CommandInputHandler {
         $liItem_select.siblings().find(`.${this.cssClasses.sugDesc}`).hide();
         this.$cmd_dropdownMenu.hide();
         this.$ai_icon.html(svg_icon);
+        console.log(`current cmd is ${this.command_flag}`);
     }
 
     changeItem(index) {
@@ -159,6 +195,8 @@ class CommandInputHandler {
         $liItem_select.siblings().removeClass(this.cssClasses.highlight);
         $liItem_select.find(`.${this.cssClasses.sugDesc}`).show();
         $liItem_select.siblings().find(`.${this.cssClasses.sugDesc}`).hide();
+        $liItem_select.find('svg').addClass(this.cssClasses.highlight_svg);
+        $liItem_select.siblings().find('svg').removeClass(this.cssClasses.highlight_svg);
         this.selectedItemIndex = $liItem_select.index();
     }
 
