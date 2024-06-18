@@ -10,7 +10,6 @@ from modules.FormatedLogger import logger
 timeout = Timeout(300.0)
 logging = logger
 dir_path = Path(__file__).parents[1]
-senti_path = os.path.join(dir_path, "config", "sentimodel")
 config_path = os.path.join(dir_path, "config", "config.yml")
 database_path = os.path.join(dir_path, "database", "cyberchat.db")
 prompt_temp_path = os.path.join(dir_path, "config","prompts","prompt_template.yaml")
@@ -107,7 +106,7 @@ async def multitask():
     func_prompt_temp = asyncio.create_task(load_prompts_template())
     func_prompt_param = asyncio.create_task(load_prompts_params())
     func_suggestions = asyncio.create_task(load_suggestions())
-    sentiment = asyncio.create_task(gen_sentimodel(os.path.join(senti_path, config_data["sentimodelpath"])))
+    sentiment = asyncio.create_task(gen_sentimodel(config_data["sentimodelpath"]))
     bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
     await asyncio.gather(roles,func_prompt_temp,func_prompt_param, func_suggestions, sentiment, bulbstatus)
     
