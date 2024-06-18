@@ -30,6 +30,7 @@
       headerIds: false,
     });
     var ws = Object;
+    var socket = Object;
     const clientID = '{{clientID}}';
     const timestamp = '{{ timestamp }}';
     console.log('Client ID: ' + clientID);
@@ -57,7 +58,6 @@
     var holdbox_origin_height;
     var streamingBuffer = [];
     var prompt_variable_str;
-
     var suggestions = JSON.parse('{{ suggestions | tojson | safe }}');
     for (var key in suggestions) {
         if (suggestions[key].hasOwnProperty('svg')) {
@@ -316,10 +316,10 @@
           alert("Code copied to clipboard!");
         })
         .catch((err) => {
+          // This can happen if the user denies clipboard permissions:
           console.error('Could not copy text: ', err);
         });
     }
-
     //show off dynamic picture
     function hideDynaPic(dynapicDiv) {
       let $dynapicDiv = $(dynapicDiv);
@@ -336,7 +336,6 @@
         $dynapicDiv.find('svg').replaceWith(svg);
       }
     }
-
     //preview dynamic picture
     function previewPic(backgroundImg) {
       $('#overLayer').css('display', 'flex');
@@ -354,7 +353,6 @@
           $(this).off('click');
         });
     }
-
     function preDynaPic(DynaDiv) {
       let $dynaDiv = $(DynaDiv);
       let $dynaPic = $dynaDiv.find('img');
@@ -542,7 +540,7 @@
           divTimer.TimerTrigger('#char-dynpic-wrapper', 200, 30000);
         }
 
-        //Update voice data for both normal mode and comic mode
+        //update voice data for both nromal mode and comic mode
         let voiceChecked = $('#voiceswitcher').is(':checked');
         if (voiceChecked && voice_text != '') {
           let langcode = extractLanguageCode(speaker);
@@ -1338,9 +1336,7 @@
       }
       let backgroundImage = "url('" + bkimg_path + "')";
       $('#char-bgpic').css('background-image', backgroundImage);
-
-
-      /*WebSocket Process*/
+      //WebSocket Process
       let websocket;
       let retryCount = 0;
       const maxRetryLimit = 10;
@@ -1417,7 +1413,7 @@
 
   </script>
 </head>
-<!--HTML BODY CODE-->
+
 <body>
   <div class="flexPage">
     <div class="comic-area">

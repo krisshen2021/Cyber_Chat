@@ -1213,10 +1213,10 @@ input[type='checkbox']:hover {
 
   .avatar {
     border-radius: 50%;
-    width: 3rem;
-    height: 3rem;
-    min-width: 3rem;
-    min-height: 3rem;
+    width: 4.5rem;
+    height: 4.5rem;
+    min-width: 4.5rem;
+    min-height: 4.5rem;
   }
 
   .messageOptions {
