@@ -2,7 +2,7 @@
 from fastapimode.sys_path import project_root
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 import json, os, tiktoken, yaml, httpx, aiofiles
-from modules.global_sets_async import logging, config_data, timeout, prompt_params
+from modules.global_sets_async import logging, config_data, timeout, prompt_params, getGlobalConfig
 from modules.payload_state import completions_data
 
 dir_path = project_root
@@ -132,7 +132,11 @@ class CoreGenerator:
         temperature=None,
         apiurl: str = None,
         stream: bool = False,
+        using_remoteapi: bool = None,
     ) -> str:
+        if using_remoteapi is None:
+            config_data = await getGlobalConfig('config_data')
+            using_remoteapi = config_data["using_remoteapi"]
         self.completions_data.update(
             {
                 "temperature": (
@@ -157,7 +161,14 @@ class CoreGenerator:
             }
         )
         payloads = self.completions_data
-        response = await self.tabby_server.inference(payloads=payloads, apiurl=apiurl)
+        if using_remoteapi is not True:
+            response = await self.tabby_server.inference(
+                payloads=payloads, apiurl=apiurl
+            )
+        else:
+            response = await self.tabby_server.inference_remoteapi(
+                payloads=payloads, apiurl=apiurl
+            )
         if response is not None:
             response_text = self.tabby_server.remove_extra_punctuation(response)
             if response_text is not None:
@@ -169,10 +180,21 @@ class CoreGenerator:
             return None
 
     # Rephase Function
-    async def get_rephase_response(self, user_msg: str, system_prompt: str) -> str:
-        prompt = self.rephrase_template.replace(
-            r"<|system_prompt|>", system_prompt
-        ).replace(r"<|user_prompt|>", user_msg)
+    async def get_rephase_response(
+        self,
+        user_msg: str,
+        system_prompt: str,
+        using_remoteapi: bool = None,
+    ) -> str:
+        if using_remoteapi is None:
+            config_data = await getGlobalConfig('config_data')
+            using_remoteapi = config_data["using_remoteapi"]
+        if using_remoteapi is not True:
+            prompt = self.rephrase_template.replace(
+                r"<|system_prompt|>", system_prompt
+            ).replace(r"<|user_prompt|>", user_msg)
+        else:
+            prompt = f"{system_prompt}\n{user_msg}"
         response_text = await self.get_chat_response(
             system_prompt=prompt,
             temperature=0.001,

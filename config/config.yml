@@ -9,6 +9,9 @@ admin_key: "f4b1a7dc92c8a576c918844f440ba90a"
 openai_api_chat_base: http://127.0.0.1:5001/v1
 openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional
 openai_api_rephase_base: http://127.0.0.1:5001/v1
+using_remoteapi: True
+#the remote api endpoints: cohere, mistral, deepseek, togetherai, nvidia
+remoteapi_endpoint: cohere
 #xtts api
 xtts_api_base: http://127.0.0.1:8020/tts_to_audio/
 #StableDiffusion Configuration

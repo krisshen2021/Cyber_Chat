@@ -117,6 +117,7 @@ class chatRoom_unsensor:
         await self.create_envart()
 
     async def preparation(self):
+        self.config_data = await getGlobalConfig('config_data')
         self.prompts_templates = await getGlobalConfig("prompt_templates")
         self.instr_temp_list = await get_instr_temp_list()
         self.iscreatedynimage = self.ai_role.generate_dynamic_picture
@@ -510,7 +511,10 @@ class chatRoom_unsensor:
         return clean_text
 
     def create_instruct_template(self, ainame, username):
-        template = self.prompts_templates[self.state["prompt_template"]]
+        if self.config_data["using_remoteapi"] is not True:
+            template = self.prompts_templates[self.state["prompt_template"]]
+        else:
+            template = self.prompts_templates["Remote_RP"]
         pt = template.replace(r"<|character|>", ainame).replace(r"<|user|>", username)
         self.my_generate.get_rephrase_template()
         return pt

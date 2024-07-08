@@ -1,5 +1,5 @@
 import httpx, time, base64, json, asyncio
-from modules.global_sets_async import config_data, timeout, logging
+from modules.global_sets_async import config_data, timeout, logging, getGlobalConfig
 from modules.payload_state import completions_data, model_load_data, sd_payload
 
 
@@ -123,6 +123,62 @@ class tabby_fastapi:
                     return response
             except Exception as e:
                 logging.info("Error on inference: ", e)
+
+    async def inference_remoteapi(self, payloads: dict, apiurl: str = None):
+        """
+        inference from remote api
+        """
+        config_data = await getGlobalConfig('config_data')
+        data = payloads
+        if apiurl is None:
+            apiurl = self.url
+        url = apiurl + "/remoteapi/" + config_data["remoteapi_endpoint"]
+        timeout = httpx.Timeout(10.0, read=20.0)
+        data["messages"] = data.pop("prompt")
+        if data["stream"] is True:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                try:
+                    logging.info(
+                        f"Get streaming response from remoteapi - {config_data['remoteapi_endpoint']}."
+                    )
+                    async with client.stream("POST", url, json=data) as response:
+                        if response.status_code == 200:
+                            async for chunk in response.aiter_text():
+                                json_msg = json.loads(chunk)
+                                if json_msg["event"] == "text-generation":
+                                    msgpack = {
+                                        "event": "streaming",
+                                        "text": json_msg["text"],
+                                    }
+                                    await self.send_msg_websocket(
+                                        {"name": "chatreply", "msg": msgpack},
+                                        self.conversation_id,
+                                    )
+                                else:
+                                    msgpack = {"event": "streaming", "text": "[DONE]"}
+                                    await self.send_msg_websocket(
+                                        {"name": "chatreply", "msg": msgpack},
+                                        self.conversation_id,
+                                    )
+                                    return json_msg["final_text"]
+                        else:
+                            print(
+                                f"Request failed with status code {response.status_code}"
+                            )
+                            print(await response.aread())
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+        else:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                try:
+                    response = await client.post(url, json=data)
+                    if response.status_code == 200:
+                        return response.text
+                    else:
+                        print(f"Request failed with status code {response.status_code}")
+                        print(await response.aread())
+                except Exception as e:
+                    print(f"An error occurred: {e}")
 
     async def get_model(self):
         url = self.url + "/model"

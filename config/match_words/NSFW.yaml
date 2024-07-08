@@ -31,17 +31,17 @@ words:
   - urine
   - pee
 results:
-  - Explicit BDSM
+  - BDSM play
   - gaping anus
   - gaping pussy
-  - extreme bodily harm
+  - Gory body or internal trauma
   - blowjob
   - Finger sex
   - Vagina sex
   - Anal sex
   - Teasing
   - handjob
-  - Foreplay
+  - Reveal the underwear
   - Deep throat
   - Footjob
   - reverse cowgirl
@@ -53,6 +53,7 @@ results:
   - anal prolapse
   - double prolapse
   - piss drinking
+  - Access the new place
 lora:
   blowjob: "NSFW, <lora:PovBlowjob:0.8>, penis, hetero, fellatio, oral, solo focus, pov, naked"
   cowgirl: "NSFW, <lora:PSCowgirl:0.9>, squatting cowgirl position, vaginal, pov, squatting, looking at viewer"
@@ -61,16 +62,18 @@ lora:
   doggy style: "NSFW, <lora:POVDoggy:0.8>, doggy, 1girl, anus, nude, looking back, penis, deep penetration, naked"
   gaping pussy: "NSFW, <lora:LulublairMerge:0.65>, lay down, spread legs wide open and raised, gape pussy, spread pussy, <lora:edgOrgasm_v2:0.52>, close up:1.3"
   gaping anus: "NSFW, buttlift, ass, from behind, grabbing own ass, ass grab, spread ass, standing, <lora:MS_Buttlift_Lite:0.85>, close up:1.3, naked"
-  explicit bdsm: "NSFW, naked:1.3, crying, eyes rolling back, opening mouth, tongue out, nude, pov"
-  teasing: "NSFW, black bra, black underwear, lewd, exposed pussy"
-  foreplay: "NSFW, Naked, Nude, lewd"
+  gory body or internal trauma: "NSFW, naked:1.3, crying, eyes rolling back, opening mouth, tongue out, nude, pov"
+  teasing: normal
+  reveal the underwear: underwear
+  access the new place: normal
+  bdsm play: bdsm
   vagina sex: "NSFW, naked, penetration, pussy gaping, close-up pussy"
   uterine prolapse: "lay down on back, gape pussy, cervix, spread legs wide open and raised, <lora:LulublairMerge:0.4>,<lora:edgOrgasm_v2:0.42>, Close up:1.3, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.95>, (bloody gory cervix:1.13),(bloody gory uterus:1.13),(bloody gory pussy:1.13), (bloody gory vagina:1.13),naked"
   anal prolapse: "<lora:MS_Buttlift_Lite:0.85>, buttlift, ass, spread legs, from behind, grabbing own ass, ass grab, spread ass, ((big anal prolapse)), (cum cover rectum), Close up:1.12, <lora:anal_prolapse:1.1>, naked, NSFW"
   double prolapse: "lay down on back, gape pussy, gape anus, spread legs wide open and raised, <lora:LulublairMerge:0.6>,<lora:edgOrgasm_v2:0.62>, Close up:1.3, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.8>, anal prolapse, <lora:anal_prolapse:0.8>, naked"
   piss drinking: "kneeling, <lora:Pissdrinking_anime:0.85>, piss drinking,(urine cover all body:1.1),pee stream, tongue_out, pissdrinking_anime, drinking_pee, from above, open mouth"
 summary_prompt: |
-  You are a sexual content summarization robot. you will judge which type of sex action it is involved base on provided string, 
+  You are a content summarization robot. you will judge which type of action it is involved base on provided string, 
   Only select one of these options to output : 
-    <Explicit BDSM>, <Extreme bodily harm>, <blowjob>, <gaping pussy>, <gaping anus>, <piss drinking>, <Finger sex>, <Anal sex>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <Teasing>, <handjob sex>, <Foreplay>, <Deep throat>, <Footjob sex>, <cowgirl>, <reverse cowgirl>, <missionary>, <doggy style>, <fold-up position>
+    <BDSM play>, <Gory body or internal trauma>, <blowjob>, <gaping pussy>, <gaping anus>, <piss drinking>, <Finger sex>, <Anal sex>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <Teasing>, <handjob sex>, <Reveal the underwear>, <Deep throat>, <Footjob sex>, <cowgirl>, <reverse cowgirl>, <missionary>, <doggy style>, <fold-up position>, <Access the new place>
   if nothing matched, output <Speech Content> only, Do not output any reasoning process, Do not output any thoughts too.
