@@ -20,7 +20,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         f"You are a professional language translator, Base on the given json list, translate the texts to {target}, "
         + "1. Maintain astriks(*) in the texts, never replace/translate/remove them, \n "
         + "2. Refine each translated text to make it more conversational and natural in the target language,\n"
-        + "3. Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
+        + "3. if the target language is Simplified Chinese, Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
         + 'Finally, return a valid json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], output the josn list only, do not output any other text or json code block marks.'
     )
     user_prompt = f"The given json list is: \n{translater_prompt}\n, the result will be:"
@@ -54,7 +54,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
             def replace_func(match):
                 # logging.info("match found!!!")
                 index, text = match.groups()
-                escaped_text = text.replace('\"', '\\"').replace('\\*','*')
+                escaped_text = text.replace('"', "'").replace('\\*','*')
                 return f'{{"index":{index},"text":"{escaped_text}"}}'
             
             processed_content = re.sub(object_pattern, replace_func, json_content, flags=re.DOTALL)
