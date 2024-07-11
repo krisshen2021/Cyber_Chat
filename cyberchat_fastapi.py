@@ -570,6 +570,7 @@ async def preview_createchar(client_info, client_id):
 
 # create chars wizard
 async def createchar_wizard(client_info, client_id):
+    config_data = await getGlobalConfig("config_data")
     task = client_info["data"]["task"]
     wizardstr = client_info["data"]["wizardstr"]
     result = await getGlobalConfig("prompt_templates")
@@ -643,9 +644,12 @@ async def createchar_wizard(client_info, client_id):
 
     result = switchfunc(task)
     if result != "Invalid task":
-        wizard_prompt = wizard_prompt_template.replace(
-            r"<|system_prompt|>", result["sysinstruct"]
-        ).replace(r"<|user_prompt|>", result["userinstruct"])
+        if config_data["using_remoteapi"] is not True:
+            wizard_prompt = wizard_prompt_template.replace(
+                r"<|system_prompt|>", result["sysinstruct"]
+            ).replace(r"<|user_prompt|>", result["userinstruct"])
+        else:
+            wizard_prompt = result["sysinstruct"] + "\n" + result["userinstruct"]
         # logging.info(wizard_prompt)
         temperature = 0.8 if task == "prologue" or task == "firstwords" else 0.5
         smoothing_factor = 0.55 if task == "prologue" or task == "firstwords" else 0.1

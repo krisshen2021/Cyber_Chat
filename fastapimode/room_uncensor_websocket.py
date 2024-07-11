@@ -3,8 +3,7 @@ from modules.global_sets_async import (
     sentiment_pipeline,
     bulb,
     logging,
-    getGlobalConfig
-    
+    getGlobalConfig,
 )
 import os, random, re, io, base64, yaml, copy, markdown, asyncio, aiofiles
 from fastapimode.airole_creator_uncensor_websocket import airole
@@ -117,7 +116,7 @@ class chatRoom_unsensor:
         await self.create_envart()
 
     async def preparation(self):
-        self.config_data = await getGlobalConfig('config_data')
+        self.config_data = await getGlobalConfig("config_data")
         self.prompts_templates = await getGlobalConfig("prompt_templates")
         self.instr_temp_list = await get_instr_temp_list()
         self.iscreatedynimage = self.ai_role.generate_dynamic_picture
@@ -189,9 +188,10 @@ class chatRoom_unsensor:
                 name=self.ai_role.model_to_load
             )
         if self.ai_role.prompt_to_load is not False:
-            self.state["prompt_template"] = self.ai_role.prompt_to_load
             self.my_generate.state["prompt_template"] = self.ai_role.prompt_to_load
             self.my_generate.get_rephrase_template()
+            
+        
 
     async def create_envart(self):
         await self.send_msg_websocket(
@@ -211,7 +211,7 @@ class chatRoom_unsensor:
         )
         bgimg_base64 = await self.gen_bgImg(
             self.my_generate,
-            self.user_facelooks['prompt'],
+            self.user_facelooks["prompt"],
             self.state["env_setting"],
             False,
             True,
@@ -232,18 +232,25 @@ class chatRoom_unsensor:
         )
         userlooksprefix = ", Perfect face portrait, (close-up:0.8)"
         avatarimg_base64 = await self.gen_avatar(
-            self.my_generate, self.user_facelooks['prompt'] + userlooksprefix, "smile", False
+            self.my_generate,
+            self.user_facelooks["prompt"] + userlooksprefix,
+            "smile",
+            False,
         )
         self.G_userlooks_url = "data:image/png;base64," + avatarimg_base64
         return True
 
     # assistant functions
     async def create_role_desc_msg(self, istranslated: bool = True):
+        self.state["prompt_template"] = self.ai_role.prompt_to_load
+        chat_template_name = self.state["prompt_template"].split("_")
+        rephrase_template_name = chat_template_name[0] + "_Rephrase"
+        self.rephrase_template = self.state["prompts_templates"][rephrase_template_name]
         self.char_desc_system = (
             self.ai_role.ai_system_role.replace(
                 r"<|Current Chapter|>", self.ai_role.chapters[0]["name"]
             )
-            .replace(r"<|User_Looks|>", self.user_facelooks['desc'])
+            .replace(r"<|User_Looks|>", self.user_facelooks["desc"])
             .replace(r"{{char}}", self.ainame)
             .replace(r"{{user}}", self.username)
         )
@@ -252,7 +259,7 @@ class chatRoom_unsensor:
             r"{{user}}", self.username
         ).replace(r"{{char}}", self.ainame)
         self.welcome_text = (
-            await myTrans.translate_text("zh", self.first_message)
+            await myTrans.translate_text("Simplified Chinese", self.first_message, self.rephrase_template)
             if istranslated
             else self.first_message
         )
@@ -299,9 +306,7 @@ class chatRoom_unsensor:
                 tabbyGen.image_payload["width"] / self.windowRatio
             )
             tabbyGen.image_payload["steps"] = 20
-            portraitprefix = (
-                ", body portrait, looking directly at the camera, front view"
-            )
+            portraitprefix = "Upper body portrait, looking at the viewer"
             logging.info(
                 f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             )
@@ -315,15 +320,15 @@ class chatRoom_unsensor:
                 else int((tabbyGen.image_payload["width"] / self.windowRatio) * 0.5)
             )
             tabbyGen.image_payload["steps"] = 20
-            portraitprefix = ", Upper body portrait, front view"
+            portraitprefix = "Upper body portrait, looking at the viewer"
             logging.info(
                 f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             )
             logging.info(">>>Generate User Background\n")
 
         bkImg = await tabbyGen.generate_image(
-            prompt_prefix=tabbyGen.prmopt_fixed_prefix + ", solo:1.25",
-            char_looks=f"({char_looks})" + portraitprefix,
+            prompt_prefix=tabbyGen.prmopt_fixed_prefix,
+            char_looks=f"{char_looks}" + ", " + portraitprefix,
             env_setting=bgImgstr,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
         )
@@ -341,6 +346,11 @@ class chatRoom_unsensor:
         return bkImg
 
     async def gen_avatar(self, tabbyGen, char_avatar, emotion, is_save=True):
+        env_setting = ",".join(
+            (self.state.get("env_setting", "").split(",") + ["", ""])[:2]
+        )
+        if not env_setting.strip(","):
+            env_setting = "plain background"
         tabbyGen.image_payload["enable_hr"] = True
         tabbyGen.image_payload["hr_scale"] = 1.25
         tabbyGen.image_payload["width"] = 256
@@ -351,7 +361,7 @@ class chatRoom_unsensor:
         avatarImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
             char_looks=char_avatar,
-            env_setting=self.state["env_setting"],
+            env_setting=env_setting,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
         )
 
@@ -371,7 +381,7 @@ class chatRoom_unsensor:
     # Main Server Reply Blocks
     async def server_reply(self, usermsg):
         input_text = (
-            await myTrans.translate_text("en", usermsg)
+            await myTrans.translate_text("English", usermsg, self.rephrase_template)
             if self.state["translate"] is True
             else usermsg
         )
@@ -409,26 +419,29 @@ class chatRoom_unsensor:
         )
         if result_text is None:
             result_text = "*Silent*"
+
         logging.info(f">>> The Response:\n {result_text}")
+
         if picture:
             self.dynamic_picture = "data:image/png;base64," + picture
         elif not picture:
             self.dynamic_picture = False
+
         result_text_cn = (
-            await myTrans.translate_text("zh", result_text)
+            await myTrans.translate_text("Simplified Chinese", result_text, self.rephrase_template)
             if self.state["translate"] is True
             else result_text
         )
 
         tts_text_extracted = self.extract_text(result_text_cn)
-
+        logging.info(f">>> The TTS Text:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:
             if tts_text_extracted != "":
                 sentiment_text = (
                     tts_text_extracted
                     if self.state["translate"] is True
-                    else await myTrans.translate_text("zh", tts_text_extracted)
+                    else await myTrans.translate_text("Simplified Chinese", tts_text_extracted, self.rephrase_template)
                 )
                 emotion = await self.async_sentiment_analysis(sentiment_text)
                 emotion_des = emotion[0]["label"]
@@ -508,7 +521,7 @@ class chatRoom_unsensor:
     def extract_text(text):
         clean_text = re.sub(r"\*[^*]*\*", "", text)
         clean_text = re.sub(r"```(.*?)```", "", clean_text, flags=re.DOTALL)
-        return clean_text
+        return clean_text.strip()
 
     def create_instruct_template(self, ainame, username):
         if self.config_data["using_remoteapi"] is not True:

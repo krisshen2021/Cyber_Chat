@@ -7,7 +7,7 @@ from modules.ConnectionManager import ConnectionManager
 from httpx import Timeout
 from modules.FormatedLogger import logger
 
-timeout = Timeout(300.0)
+timeout = Timeout(60.0)
 logging = logger
 dir_path = Path(__file__).parents[1]
 config_path = os.path.join(dir_path, "config", "config.yml")
@@ -90,7 +90,7 @@ async def conn_bulb(yeelight_url):
         bulb.toggle()
         logging.info(f"Bulb Power: {bulb.get_properties()['power']}") 
     except Exception as e:
-        logging.info(f"Error during turn on Bulb: {e}")
+        # logging.info(f"Error during turn on Bulb: {e}")
 
         class bulb_null:
             def __init__(self) -> None:

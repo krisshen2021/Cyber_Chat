@@ -128,12 +128,11 @@ class tabby_fastapi:
         """
         inference from remote api
         """
-        config_data = await getGlobalConfig('config_data')
+        config_data = await getGlobalConfig("config_data")
         data = payloads
         if apiurl is None:
             apiurl = self.url
         url = apiurl + "/remoteapi/" + config_data["remoteapi_endpoint"]
-        timeout = httpx.Timeout(10.0, read=20.0)
         data["messages"] = data.pop("prompt")
         if data["stream"] is True:
             async with httpx.AsyncClient(timeout=timeout) as client:
@@ -186,9 +185,12 @@ class tabby_fastapi:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url=url, headers=headers, timeout=timeout)
-                response = response.json()
-                logging.info(f"Current model: {response['id']}")
-                return response["id"]
+                if response.status_code == 200:
+                    response = response.json()
+                    logging.info(f"Current model: {response['id']}")
+                    return response["id"]
+                else:
+                    return "None"
         except Exception as e:
             logging.info("Error on get current model: ", e)
             return "None"
@@ -199,9 +201,12 @@ class tabby_fastapi:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url=url, headers=headers, timeout=timeout)
-                response = response.json()
-                models = [model["id"] for model in response["data"]]
-                return models
+                if response.status_code == 200:
+                    response = response.json()
+                    models = [model["id"] for model in response["data"]]
+                    return models
+                else:
+                    return []
         except Exception as e:
             logging.info("Error on get current model-list: ", e)
             return []
@@ -382,21 +387,44 @@ class tabby_fastapi:
         api_key: str = config_data["api_key"],
         admin_key: str = config_data["admin_key"],
         payloads: dict = completions_data,
-        apiurl: str = config_data["openai_api_chat_base"] + "/completions",
+        apiurl: str = None,
     ):
-        headers = {
-            "accept": "application/json",
-            "x-api-key": api_key,
-            "x-admin-key": admin_key,
-            "Content-Type": "application/json",
-        }
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    url=apiurl, headers=headers, json=payloads, timeout=timeout
-                )
-                response = response.json()
-                response = response["choices"][0]["text"]
-                return response
-        except Exception as e:
-            logging.info("Error on inference: ", e)
+        data = payloads
+        config_data = await getGlobalConfig("config_data")
+        if config_data["using_remoteapi"] is True:
+            apiurl = (
+                config_data["openai_api_chat_base"]
+                + "/remoteapi/"
+                + config_data["remoteapi_endpoint"]
+            )
+            data["messages"] = data.pop("prompt")
+            try:
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    response = await client.post(url=apiurl, json=data)
+                    if response.status_code == 200:
+                        return response.text
+                    else:
+                        print(f"Request failed with status code {response.status_code}")
+                        print(await response.aread())
+            except Exception as e:
+                logging.info("Error on inference from remote: ", e)
+
+        else:
+            apiurl = config_data["openai_api_chat_base"] + "/completions"
+            headers = {
+                "accept": "application/json",
+                "x-api-key": api_key,
+                "x-admin-key": admin_key,
+                "Content-Type": "application/json",
+            }
+            try:
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    response = await client.post(url=apiurl, headers=headers, json=data)
+                    if response.status_code == 200:
+                        response = response.json()
+                        return response["choices"][0]["text"]
+                    else:
+                        print(f"Request failed with status code {response.status_code}")
+                        print(await response.aread())
+            except Exception as e:
+                logging.info("Error on inference: ", e)
