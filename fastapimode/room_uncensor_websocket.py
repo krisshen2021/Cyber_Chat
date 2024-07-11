@@ -437,11 +437,11 @@ class chatRoom_unsensor:
         logging.info(f">>> The TTS Text:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:
-            if tts_text_extracted != "":
+            if result_text_cn != "":
                 sentiment_text = (
-                    tts_text_extracted
+                    result_text_cn
                     if self.state["translate"] is True
-                    else await myTrans.translate_text("Simplified Chinese", tts_text_extracted, self.rephrase_template)
+                    else await myTrans.translate_text("Simplified Chinese", result_text_cn, self.rephrase_template)
                 )
                 emotion = await self.async_sentiment_analysis(sentiment_text)
                 emotion_des = emotion[0]["label"]
