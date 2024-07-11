@@ -14,3 +14,4 @@ package-lock.json
 .eslintrc
 eslint.config.mjs
 /config/sentimodel/
+/static/images/avatar/**/
