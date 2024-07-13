@@ -1,8 +1,4 @@
 chromadb==0.3.29
-deep_translator==1.11.4
-deepl==1.16.1
-Flask==2.3.2
-Flask_SocketIO==5.3.4
 gevent==22.10.2
 Markdown
 openai==1.9.0
@@ -22,3 +18,7 @@ multipart
 aiofiles
 fastapi
 colorlog
+pynvml
+uvicorn
+cohere
+boto3

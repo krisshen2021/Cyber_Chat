@@ -1,17 +1,21 @@
 from typing import Optional
 import re
-from pydantic import BaseModel, EmailStr, ValidationError, validator
+from pydantic import BaseModel, EmailStr, field_validator, ValidationError, ConfigDict
 
 class DataValidation(BaseModel):
-    username: Optional[str]
-    nickname: Optional[str]
-    password: Optional[str]
-    gender: Optional[str]
-    email: Optional[EmailStr]
+    model_config = ConfigDict(validate_assignment=True)
+
+    username: Optional[str] = None
+    nickname: Optional[str] = None
+    password: Optional[str] = None
+    gender: Optional[str] = None
+    email: Optional[EmailStr] = None
     
-    @validator('username', 'nickname', pre=True)
-    def validate_names(cls, v):
-        if v is None: return v  # 如果字段是可选的且未提供，直接返回
+    @field_validator('username', 'nickname')
+    @classmethod
+    def validate_names(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
         if len(v) < 3:
             raise ValueError('Minimum 3 characters required')
         if len(v) > 20:
@@ -20,9 +24,11 @@ class DataValidation(BaseModel):
             raise ValueError('Can only consist of alphanumeric characters and underscores')
         return v
     
-    @validator('password', pre=True)
-    def validate_password(cls, v):
-        if v is None: return v  # 同上
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
         if len(v) < 3:
             raise ValueError('Minimum 3 characters required')
         if len(v) > 20:
@@ -31,20 +37,19 @@ class DataValidation(BaseModel):
             raise ValueError('Password must include an uppercase letter, lowercase letter, number, and special symbol')
         return v
 
-
 class Validation:
     @staticmethod
     def vali_data(data):
         try:
             result = DataValidation(**data)
-            return {"validated":True,"data":result.dict(exclude_none=True)}
+            return {"validated": True, "data": result.model_dump(exclude_none=True)}
         except ValidationError as e:
             errors = e.errors()
             error_details = []
             for error in errors:
                 field = "->".join(str(part) for part in error['loc']) 
                 message = error['msg']
-                error_details.append({"field":field,"error":message}) 
+                error_details.append({"field": field, "error": message}) 
             return {"validated": False, "data": error_details}
 
 #Using Examples : 

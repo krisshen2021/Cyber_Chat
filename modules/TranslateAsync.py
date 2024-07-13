@@ -15,7 +15,9 @@ import re, logging, json
 from modules.global_sets_async import getGlobalConfig
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi as tabby
 
-config_data:dict
+config_data: dict
+
+
 def convert_punctuation(match):
     punctuation_map = {
         "，": ",",
@@ -50,12 +52,12 @@ async def convert_text(text):
 
 
 async def translate_ai_driven(translater_prompt, target, prompt_template):
-    config_data = await getGlobalConfig('config_data')
+    config_data = await getGlobalConfig("config_data")
     system_prompt = (
         f"You are a professional language translator, Base on the given json list, translate the texts to {target}, "
         + "1. Maintain astriks(*) in the texts, never replace/translate/remove them, \n "
         + "2. Refine each translated text to make it more conversational and natural in the target language,\n"
-        + "3. if the target language is Simplified Chinese, Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
+        + "3. Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
         + 'Finally, return a valid json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], output the josn list only, do not output any other text or json code block marks.'
     )
     user_prompt = (

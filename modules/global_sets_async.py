@@ -90,7 +90,7 @@ async def conn_bulb(yeelight_url):
         bulb.toggle()
         logging.info(f"Bulb Power: {bulb.get_properties()['power']}") 
     except Exception as e:
-        # logging.info(f"Error during turn on Bulb: {e}")
+        logging.info(f"Error during turn on Bulb: {e}")
 
         class bulb_null:
             def __init__(self) -> None:

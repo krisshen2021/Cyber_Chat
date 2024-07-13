@@ -1,4 +1,7 @@
-from modules.global_sets_async import config_data
+from modules.global_sets_async import getGlobalConfig
+import asyncio
+
+config_data = asyncio.run(getGlobalConfig('config_data'))
 
 sd_payload = {
     "hr_negative_prompt":"",

@@ -4,7 +4,7 @@ import yaml
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from deep_translator import GoogleTranslator
-from modules.global_sets import config_data
+from modules.global_sets_async import config_data
 
 sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
     model_name="paraphrase-multilingual-mpnet-base-v2"

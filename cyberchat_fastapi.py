@@ -11,6 +11,7 @@ from modules.global_sets_async import (
 )
 import uvicorn, uuid, json, markdown, os
 from datetime import datetime
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
@@ -56,17 +57,17 @@ def markdownText(text):
     return Mtext
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code
+    print("Starting up...")
+    # Your startup logic here
+    yield
+    # Shutdown code
+    print("Shutting down...")
+
 app = FastAPI(title="cyberchat")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
-
-
-@app.on_event("startup")
-async def startup():
-    # await initialize()
-    # global roleconf, config_data
-    # roleconf = getGlobalConfig("roleconf")
-    # config_data = getGlobalConfig("config_data")
-    pass
 
 
 def non_cache_response(template_name: str, context: dict) -> Response:
@@ -103,7 +104,7 @@ async def enter_room(
     request: Request,
     form_data: EnterRoom = Depends(as_form(EnterRoom), use_cache=False),
 ):
-    context = form_data.dict()
+    context = form_data.model_dump()
     suggestions = await getGlobalConfig("suggestions_params")
     context["suggestions"] = suggestions
     ai_role_data = database.get_airole(context["ai_role_name"])
