@@ -70,7 +70,6 @@ class OAIParam(BaseModel):
 class XiaoaiParam(OAIParam):
     model: Optional[str] = "gpt-4o"
 
-
 class CohereParam(BaseModel):  # for cohere
     preamble: Optional[str] = None
     message: str
