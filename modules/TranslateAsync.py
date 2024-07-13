@@ -94,7 +94,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
             def replace_func(match):
                 # logging.info("match found!!!")
                 index, text = match.groups()
-                escaped_text = text.replace('"', "'").replace("\\*", "*")
+                escaped_text = text.replace('"', "'").replace("\\*", "*").replace('\\','%').replace('%n','\\n')
                 return f'{{"index":{index},"text":"{escaped_text}"}}'
 
             processed_content = re.sub(

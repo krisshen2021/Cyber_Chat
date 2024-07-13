@@ -79,7 +79,7 @@ async def load_roles():
 async def gen_sentimodel(model_path):
     global sentiment_pipeline
     sentiment_pipeline = pipeline(
-        "sentiment-analysis", model=model_path, tokenizer=model_path
+        "sentiment-analysis", model=model_path, tokenizer=model_path, device="cuda"
     )
 
 

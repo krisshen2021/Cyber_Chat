@@ -11,7 +11,7 @@ openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional
 openai_api_rephase_base: http://127.0.0.1:5010/v1
 using_remoteapi: True
 #the remote api endpoints: cohere, mistral, deepseek, togetherai, nvidia, xiaoai
-remoteapi_endpoint: xiaoai
+remoteapi_endpoint: mistral
 #xtts api
 xtts_api_base: http://127.0.0.1:8020/tts_to_audio/
 #StableDiffusion Configuration

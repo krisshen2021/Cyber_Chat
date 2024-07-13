@@ -1,7 +1,5 @@
-chromadb==0.3.29
-gevent==22.10.2
 Markdown
-openai==1.9.0
+openai
 Pillow
 protobuf
 PyYAML
@@ -10,10 +8,9 @@ tiktoken
 transformers
 yeelight
 sentence_transformers
-gevent-websocket
 pymdown-extensions
 pygments
-pydantic[email]
+pydantic
 multipart
 aiofiles
 fastapi
