@@ -56,7 +56,7 @@ class tabby_fastapi:
                                 if datastr != "[DONE]":
                                     output = json.loads(datastr)
                                     output_char = output["choices"][0]["text"]
-                                    await asyncio.sleep(0.1)
+                                    # await asyncio.sleep(0.1)
                                     yield output_char
                                 else:
                                     yield "[DONE]"

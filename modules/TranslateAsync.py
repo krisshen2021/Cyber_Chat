@@ -12,10 +12,45 @@ def create_syspath():
 create_syspath()
 
 import re, logging, json
-from modules.global_sets_async import config_data
+from modules.global_sets_async import getGlobalConfig
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi as tabby
 
+config_data:dict
+def convert_punctuation(match):
+    punctuation_map = {
+        "，": ",",
+        "。": ".",
+        "！": "!",
+        "？": "?",
+        "；": ";",
+        "：": ":",
+        "“": '"',
+        "”": '"',
+        "‘": "'",
+        "’": "'",
+        "（": "(",
+        "）": ")",
+        "【": "[",
+        "】": "]",
+        "《": "<",
+        "》": ">",
+        "、": ",",
+        "…": "...",
+        "－": "-",
+        "～": "~",
+        "＊": "*",
+    }
+    char = match.group(0)
+    return punctuation_map.get(char, char)
+
+
+async def convert_text(text):
+    pattern = "[，。！？；：“”‘’（）【】《》、…－～＊]"
+    return re.sub(pattern, convert_punctuation, text)
+
+
 async def translate_ai_driven(translater_prompt, target, prompt_template):
+    config_data = await getGlobalConfig('config_data')
     system_prompt = (
         f"You are a professional language translator, Base on the given json list, translate the texts to {target}, "
         + "1. Maintain astriks(*) in the texts, never replace/translate/remove them, \n "
@@ -23,7 +58,9 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         + "3. if the target language is Simplified Chinese, Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
         + 'Finally, return a valid json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], output the josn list only, do not output any other text or json code block marks.'
     )
-    user_prompt = f"The given json list is: \n{translater_prompt}\n, the result will be:"
+    user_prompt = (
+        f"The given json list is: \n{translater_prompt}\n, the result will be:"
+    )
     if config_data["using_remoteapi"] is True:
         prompt = system_prompt + "\n" + user_prompt
     else:
@@ -41,6 +78,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
     try:
         result = await tabby.pure_inference(payloads=payloads)
         # logging.info(f"Translate result: {result}")
+        result = await convert_text(result)
         # 提取方括号中的内容
         outer_pattern = r"\{.*\}(?=[^\}]*\])"
         # (?=[^\}]*\]) 向前看，确保当前位置之后存在一系列非右花括号的字符（可以是零个或多个），然后是一个右方括号
@@ -48,21 +86,23 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         if outer_match:
             json_content = outer_match.group()
             # logging.info(f"Translate json_content: {json_content}")
-                # 提取并处理每个对象
+            # 提取并处理每个对象
             object_pattern = r'\{"index":\s*(\d+),\s*"text":\s*"(.*?)"\}'
-            
+
             def replace_func(match):
                 # logging.info("match found!!!")
                 index, text = match.groups()
-                escaped_text = text.replace('"', "'").replace('\\*','*')
+                escaped_text = text.replace('"', "'").replace("\\*", "*")
                 return f'{{"index":{index},"text":"{escaped_text}"}}'
-            
-            processed_content = re.sub(object_pattern, replace_func, json_content, flags=re.DOTALL)
-            
+
+            processed_content = re.sub(
+                object_pattern, replace_func, json_content, flags=re.DOTALL
+            )
+
             # 重建完整的 JSON 字符串
-            rebuilt_json = f'[{processed_content}]'
+            rebuilt_json = f"[{processed_content}]"
             logging.info(f"Translate rebuilt_json: {rebuilt_json}")
-            
+
             try:
                 parsed_result = json.loads(rebuilt_json)
                 return parsed_result
@@ -78,7 +118,6 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         raise
-
 
 
 async def extract_code_blocks(text):
@@ -100,8 +139,16 @@ class AsyncTranslator:
 
     async def translate_text(self, target, text, prompt_template=None):
         # logging.info(f"current prompt template is : {prompt_template}")
+        command_text = None
         if text is not None or text != "":
             text = text.strip()
+            # logging.info(f"Text to translate: {text}")
+            command_pattern = r"^(### Request to A.I assistant: )(.+)$"
+            match = re.match(command_pattern, text, re.DOTALL)
+            if match:
+                command_text = match.group(1)
+                text = match.group(2).strip()
+                # logging.info(f"Command text: {command_text}, text:{text}")
             text_pattern_list = await extract_code_blocks(text)
             text_transtext_list = []
             texts_to_translate = []
@@ -122,6 +169,8 @@ class AsyncTranslator:
                         if item["index"] == index:
                             text_transtext_list[index] = item["text"]
                 finalResult = "\n".join(text_transtext_list)
+                if command_text is not None:
+                    finalResult = command_text + finalResult
                 return finalResult
             else:
                 return text
