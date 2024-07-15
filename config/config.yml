@@ -1,26 +1,30 @@
-#Chat server Settings
+### chat settings
+admin_key: f4b1a7dc92c8a576c918844f440ba90a
+api_key: 0764ee6f39280e8b485e9a18668f6a62
+openai_api_chat_base: http://127.0.0.1:5010/v1
+openai_api_funcall_base: http://127.0.0.1:5002/v1
+openai_api_rephase_base: http://127.0.0.1:5010/v1
+using_remoteapi: true
+remoteapi_endpoint: openairouter
+
+### SD settings
+SDAPI_url: http://127.0.0.1:6006
+hr_upscaler: Latent (nearest)
+sampler_name: DPM++ 2M SDE
+sd_model_checkpoint: majicmixRealistic_v7
+
+### server settings
+debug_mode: true
 server_address: 0.0.0.0
 server_port: 5500
-debug_mode: True
-sentimodelpath: "config/sentimodel/touch20032003_xuyuan-trial-sentiment-bert-chinese"
-#TabbyAPI Configuration
-api_key: "0764ee6f39280e8b485e9a18668f6a62"
-admin_key: "f4b1a7dc92c8a576c918844f440ba90a"
-openai_api_chat_base: http://127.0.0.1:5010/v1
-openai_api_funcall_base: http://127.0.0.1:5002/v1 #optional
-openai_api_rephase_base: http://127.0.0.1:5010/v1
-using_remoteapi: True
-#the remote api endpoints: cohere, mistral, deepseek, togetherai, nvidia, xiaoai
-remoteapi_endpoint: mistral
-#xtts api
-xtts_api_base: http://127.0.0.1:8020/tts_to_audio/
-#StableDiffusion Configuration
-SDAPI_url: http://127.0.0.1:7860
-sd_model_checkpoint: astranime_V6
-sampler_name: DPM++ 2M Karras
-hr_upscaler: Latent (nearest)
-#other configuration
-yeelight_url: 192.168.5.142 #optional
-chroma_server_host: 192.168.5.179 #optional
-chroma_server_http_port: 8000 #optional
 
+### audio settings
+xtts_api_base: http://127.0.0.1:8020/tts_to_audio/
+
+### sentimental settings
+sentimodelpath: config/sentimodel/touch20032003_xuyuan-trial-sentiment-bert-chinese
+
+### optinal settings
+chroma_server_host: 192.168.5.179
+chroma_server_http_port: 8000
+yeelight_url: 192.168.5.142

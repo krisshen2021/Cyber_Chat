@@ -1,10 +1,16 @@
-import httpx, pynvml, asyncio
+import httpx, pynvml, sys
+from pathlib import Path
+project_root = str(Path(__file__).parents[1])
+if project_root not in sys.path:
+    sys.path.append(project_root)
 from httpx import Timeout
 from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import StreamingResponse, Response
 from pydantic import BaseModel
 from typing import List, Optional
+from sd_setting import update_SDAPI_config
+from opanairouter_setting import select_model
 from remote_api_hub import (
     ChatMessage,
     cohere_stream,
@@ -30,10 +36,17 @@ from remote_api_hub import (
     ClaudeParam,
     xiaoai_stream,
     xiaoai_invoke,
-    XiaoaiParam
+    XiaoaiParam,
+    openairouter_stream,
+    openairouter_invoke,
+    OAIParam,
 )
 
 timeout = Timeout(180.0)
+### SD selector
+update_SDAPI_config()
+### Openairouter selector
+openairouter_model = select_model()
 
 
 class OverrideSettings(BaseModel):
@@ -247,7 +260,10 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
         deepseek_dict["messages"] = [
             ChatMessage(role="user", content=deepseek_dict["messages"]),
         ]
-        if "system_prompt" in deepseek_dict and deepseek_dict["system_prompt"] is not None:
+        if (
+            "system_prompt" in deepseek_dict
+            and deepseek_dict["system_prompt"] is not None
+        ):
             deepseek_dict["messages"].insert(
                 0, ChatMessage(role="system", content=deepseek_dict["system_prompt"])
             )
@@ -277,7 +293,10 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
         togetherai_dict["messages"] = [
             ChatMessage(role="user", content=togetherai_dict["messages"]),
         ]
-        if "system_prompt" in togetherai_dict and togetherai_dict["system_prompt"] is not None:
+        if (
+            "system_prompt" in togetherai_dict
+            and togetherai_dict["system_prompt"] is not None
+        ):
             togetherai_dict["messages"].insert(
                 0, ChatMessage(role="system", content=togetherai_dict["system_prompt"])
             )
@@ -406,7 +425,40 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
             return Response(
                 content=await xiaoai_invoke(params), media_type="text/plain"
             )
-
-
+    elif ai_type == "openairouter":
+        keys_to_keep = [
+            "system_prompt",
+            "messages",
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "stop",
+            "model",
+            "presence_penalty",
+            "stream",
+        ]
+        openairouter_dict = {
+            key: params_json[key] for key in keys_to_keep if key in params_json
+        }
+        if "model" not in openairouter_dict or openairouter_dict["model"] is None:
+            openairouter_dict["model"] = openairouter_model or "cohere/command-r"
+        if "stop" in openairouter_dict and openairouter_dict["stop"] is not None:
+            if isinstance(openairouter_dict["stop"], list):
+                if len(openairouter_dict["stop"]) > 4:
+                    openairouter_dict["stop"] = openairouter_dict["stop"][-4:]
+        openairouter_dict["messages"] = [
+            ChatMessage(role="user", content=openairouter_dict["messages"]),
+        ]
+        if "system_prompt" in openairouter_dict and openairouter_dict["system_prompt"] is not None:
+            openairouter_dict["messages"].insert(
+                0, ChatMessage(role="system", content=openairouter_dict["system_prompt"])
+            )
+        params = OAIParam(**openairouter_dict)
+        if params.stream is True:
+            return StreamingResponse(openairouter_stream(params), media_type="text/plain")
+        else:
+            return Response(
+                content=await openairouter_invoke(params), media_type="text/plain"
+            )
     else:
         return "Invalid AI type"
