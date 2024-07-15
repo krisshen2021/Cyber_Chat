@@ -51,10 +51,10 @@ xiaoai_client = AsyncOpenAI(
     api_key=xiaoai_api_key, base_url="https://api.xiaoai.plus/v1", timeout=120
 )
 openairouter_client = AsyncOpenAI(
-    api_key=openairouter_api_key, base_url=openairouter_url, timeout=120
+    api_key=openairouter_api_key, base_url=openairouter_url, timeout=600
 )
 openairouter_sync_client = OpenAI(
-    api_key=openairouter_api_key, base_url=openairouter_url
+    api_key=openairouter_api_key, base_url=openairouter_url, timeout=600
 )
 # Pydantic models for different remote api params
 class ChatMessage(BaseModel):

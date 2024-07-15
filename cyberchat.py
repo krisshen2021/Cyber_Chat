@@ -767,6 +767,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 
 if __name__ == "__main__":
-    host = "127.0.0.1"
-    port = 5500
-    uvicorn.run(app, host=host, port=port, access_log=False)
+    host = config_data["server_address"]
+    port = config_data["server_port"]
+    try:
+        uvicorn.run(app, host=host, port=port, access_log=False)
+    except KeyboardInterrupt:
+       logging.info("Server has been shut down.")
