@@ -1,4 +1,4 @@
-import sys,os,math
+import sys,os,math,yaml
 from pathlib import Path
 from httpx import Timeout
 project_root = str(Path(__file__).parents[1])
@@ -7,6 +7,10 @@ if project_root not in sys.path:
 from modules.ANSI_tool import ansiColor
 from modules.colorlogger import logger
 from remote_api_hub import openairouter_sync_client
+config_path = os.path.join(project_root, 'config', 'config.yml')
+with open(config_path, 'r') as file:
+    config_data = yaml.safe_load(file)
+    
 ### Model selector
 BLUE = ansiColor.BLUE
 CYAN = ansiColor.CYAN
@@ -26,7 +30,7 @@ def clear_screen():
 
 def display_models(models, page, items_per_page=10):
     clear_screen()
-    logger.info("Available models:")
+    print(f"{BOLD}{YELLOW}<< Available models from opanai router >>{RESET}\n")
     start = (page - 1) * items_per_page
     end = start + items_per_page
     for index, model in enumerate(models[start:end], start=start):
@@ -41,14 +45,18 @@ def display_models(models, page, items_per_page=10):
     )
 
 def select_model():
+    if not config_data['using_remoteapi'] or config_data['remoteapi_endpoint']!='openairouter':
+        return "openai/gpt-3.5-turbo"
     openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)
+    # 对模型列表按id进行排序
+    sorted_models = sorted(openairouter_modellist.data, key=lambda x: x.id.lower())
     openairouter_model: str = ""
     current_page = 1
     items_per_page = 20
-    total_pages = math.ceil(len(openairouter_modellist.data) / items_per_page)
+    total_pages = math.ceil(len(sorted_models) / items_per_page)
 
     while True:
-        display_models(openairouter_modellist.data, current_page, items_per_page)
+        display_models(sorted_models, current_page, items_per_page)
         user_input = input(">>> ").lower()
 
         if user_input == "q":
@@ -66,8 +74,8 @@ def select_model():
                 input("Already on the first page. Press Enter to continue...")
         elif user_input.isdigit():
             selected_index = int(user_input)
-            if 0 <= selected_index < len(openairouter_modellist.data):
-                openairouter_model = openairouter_modellist.data[selected_index].id
+            if 0 <= selected_index < len(sorted_models):
+                openairouter_model = sorted_models[selected_index].id
                 break
             else:
                 input(
@@ -78,9 +86,9 @@ def select_model():
 
     clear_screen()  # 最后清屏
     if openairouter_model:
-        logger.info(f"Selected model: {openairouter_model}")
+        print(f"{BLUE}Selected model:{RESET} {BOLD}{RED}{openairouter_model}{RESET}")
         return openairouter_model
     else:
         openairouter_model = "openai/gpt-3.5-turbo"
-        logger.info(f"No model selected. set the model to default: {openairouter_model}")
+        print(f"{BLUE}No model selected. set the model to default:{RESET} {BOLD}{RED}{openairouter_model}{RESET}")
         return openairouter_model

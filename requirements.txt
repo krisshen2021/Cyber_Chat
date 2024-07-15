@@ -3,6 +3,7 @@ openai
 Pillow
 protobuf
 PyYAML
+ruamel.yaml
 Requests
 tiktoken
 transformers

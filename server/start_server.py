@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI
 import uvicorn, asyncio
 from cyberchat_plugin import router as cyberchat_router
 

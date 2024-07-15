@@ -82,10 +82,10 @@ def update_SDAPI_config():
     # Confirm selections
     clear_screen()
     print(f"\n{BOLD}{CYAN}Your selections:")
-    print(f"{RED}API URL:{RESET} {SDAPI_url}")
-    print(f"{RED}Sampler:{RESET} {sampler_name}")
-    print(f"{RED}Model:{RESET} {sd_model_checkpoint}")
-    print(f"{RED}Upscale mode:{RESET} {hr_upscaler}")
+    print(f"{BOLD}{CYAN}API URL:{RESET} {SDAPI_url}")
+    print(f"{BOLD}{CYAN}Sampler:{RESET} {sampler_name}")
+    print(f"{BOLD}{CYAN}Model:{RESET} {sd_model_checkpoint}")
+    print(f"{BOLD}{CYAN}Upscale mode:{RESET} {hr_upscaler}")
 
     confirm = input(f"{BOLD}{CYAN}Confirm these selections? (yes/no): {RESET}")
     if confirm.lower() != 'yes':
