@@ -30,7 +30,13 @@ templates_path = os.path.join(project_root, "templates")
 static_path = os.path.join(project_root, "static")
 templates = Jinja2Templates(directory=templates_path)
 database.create_table()
-
+def clear_screen():
+    # 针对不同操作系统的清屏命令
+    if os.name == "nt":  # Windows
+        _ = os.system("cls")
+    else:  # Mac and Linux
+        _ = os.system("clear")
+clear_screen()
 
 def generate_timestamp():
     # 获取当前时间的时间戳，以秒为单位

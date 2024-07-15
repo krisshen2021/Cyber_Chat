@@ -58,7 +58,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         + "1. Maintain astriks(*) in the texts, never replace/translate/remove them, \n "
         + "2. Refine each translated text to make it more conversational and natural in the target language,\n"
         + "3. Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
-        + 'Finally, return a valid json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], output the josn list only, do not output any other text or json code block marks.'
+        + 'Finally, return a VALIAD and compliant json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], Output the josn list only, do not output any other text or json code block marks.'
     )
     user_prompt = (
         f"The given json list is: \n{translater_prompt}\n, the result will be:"
@@ -94,7 +94,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
             def replace_func(match):
                 # logging.info("match found!!!")
                 index, text = match.groups()
-                escaped_text = text.replace('"', "'").replace("\\*", "*").replace('\\','%').replace('%n','\\n')
+                escaped_text = text.replace('"', "'").replace("\\*", "*").replace('\\','%').replace('%n','\\n').replace("%'","'")
                 return f'{{"index":{index},"text":"{escaped_text}"}}'
 
             processed_content = re.sub(
@@ -111,15 +111,15 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
             except json.JSONDecodeError as e:
                 logging.error(f"Rebuilt JSON string: {rebuilt_json}")
                 logging.error(f"JSON decode error: {e}")
-                raise ValueError("Failed to parse rebuilt JSON string") from e
+                return json.loads(translater_prompt)
         else:
             logging.error("No JSON-like list found in the result")
             logging.error(f"Raw result: {result}")
-            raise ValueError("No valid JSON list found in the translation result")
+            return json.loads(translater_prompt)
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-        raise
+        return json.loads(translater_prompt)
 
 
 async def extract_code_blocks(text):

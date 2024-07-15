@@ -6,8 +6,10 @@ from pathlib import Path
 from modules.ConnectionManager import ConnectionManager
 from httpx import Timeout
 from modules.FormatedLogger import logger
+from modules.sentiment import SentiAna
 
 timeout = Timeout(60.0)
+sentiment_anlyzer = SentiAna
 logging = logger
 dir_path = Path(__file__).parents[1]
 config_path = os.path.join(dir_path, "config", "config.yml")
@@ -106,9 +108,9 @@ async def multitask():
     func_prompt_temp = asyncio.create_task(load_prompts_template())
     func_prompt_param = asyncio.create_task(load_prompts_params())
     func_suggestions = asyncio.create_task(load_suggestions())
-    sentiment = asyncio.create_task(gen_sentimodel(config_data["sentimodelpath"]))
-    bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
-    await asyncio.gather(roles,func_prompt_temp,func_prompt_param, func_suggestions, sentiment, bulbstatus)
+    # sentiment = asyncio.create_task(gen_sentimodel(config_data["sentimodelpath"]))
+    # bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
+    await asyncio.gather(roles,func_prompt_temp,func_prompt_param, func_suggestions)
     
 async def initialize():
     await load_config()

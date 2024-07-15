@@ -1,4 +1,4 @@
-import httpx, pynvml, sys
+import httpx, pynvml, sys, os
 from pathlib import Path
 project_root = str(Path(__file__).parents[1])
 if project_root not in sys.path:
@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sd_setting import update_SDAPI_config
 from opanairouter_setting import select_model
+from modules.colorlogger import logger
 from remote_api_hub import (
     ChatMessage,
     cohere_stream,
@@ -446,6 +447,7 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
             if isinstance(openairouter_dict["stop"], list):
                 if len(openairouter_dict["stop"]) > 4:
                     openairouter_dict["stop"] = openairouter_dict["stop"][-4:]
+                    logger.info(f"openairouter stop: {openairouter_dict['stop']}")
         openairouter_dict["messages"] = [
             ChatMessage(role="user", content=openairouter_dict["messages"]),
         ]

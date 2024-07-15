@@ -1,7 +1,6 @@
 from modules.global_sets_async import (
     database,
-    sentiment_pipeline,
-    bulb,
+    sentiment_anlyzer,
     logging,
     getGlobalConfig,
 )
@@ -81,7 +80,7 @@ class chatRoom_unsensor:
         self.ai_speakers = ""
         self.speaker_tone = ""
         self.ttskey = os.environ.get("SPEECH_KEY")
-        self.sentiment_pipeline = sentiment_pipeline
+        self.sentiment_anlyzer = sentiment_anlyzer
         self.dynamic_picture = ""
         self.state = copy.deepcopy(state)
         self.ai_role = airole(
@@ -190,8 +189,6 @@ class chatRoom_unsensor:
         if self.ai_role.prompt_to_load is not False:
             self.my_generate.state["prompt_template"] = self.ai_role.prompt_to_load
             self.my_generate.get_rephrase_template()
-            
-        
 
     async def create_envart(self):
         await self.send_msg_websocket(
@@ -259,7 +256,9 @@ class chatRoom_unsensor:
             r"{{user}}", self.username
         ).replace(r"{{char}}", self.ainame)
         self.welcome_text = (
-            await myTrans.translate_text("Simplified Chinese", self.first_message, self.rephrase_template)
+            await myTrans.translate_text(
+                "Simplified Chinese", self.first_message, self.rephrase_template
+            )
             if istranslated
             else self.first_message
         )
@@ -300,26 +299,26 @@ class chatRoom_unsensor:
             if char_outfit is not None:
                 char_looks = f"{char_looks},{char_outfit['normal']}"
 
-            tabbyGen.image_payload["hr_scale"] = 1.5
+            tabbyGen.image_payload["hr_scale"] = 2
             tabbyGen.image_payload["width"] = 1024 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload["height"] = int(
                 tabbyGen.image_payload["width"] / self.windowRatio
             )
-            tabbyGen.image_payload["steps"] = 20
+            tabbyGen.image_payload["steps"] = 30
             portraitprefix = "Upper body portrait, looking at the viewer"
             logging.info(
                 f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             )
             logging.info(">>>Generate Character Background\n")
         elif is_user:
-            tabbyGen.image_payload["hr_scale"] = 1.25
+            tabbyGen.image_payload["hr_scale"] = 1.5
             tabbyGen.image_payload["width"] = 768 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload["height"] = (
                 512
                 if self.windowRatio >= 1
                 else int((tabbyGen.image_payload["width"] / self.windowRatio) * 0.5)
             )
-            tabbyGen.image_payload["steps"] = 20
+            tabbyGen.image_payload["steps"] = 30
             portraitprefix = "Upper body portrait, looking at the viewer"
             logging.info(
                 f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
@@ -353,9 +352,9 @@ class chatRoom_unsensor:
             env_setting = "plain background"
         tabbyGen.image_payload["enable_hr"] = True
         tabbyGen.image_payload["hr_scale"] = 1.25
-        tabbyGen.image_payload["width"] = 256
-        tabbyGen.image_payload["height"] = 256
-        tabbyGen.image_payload["steps"] = 15
+        tabbyGen.image_payload["width"] = 512
+        tabbyGen.image_payload["height"] = 512
+        tabbyGen.image_payload["steps"] = 30
         char_avatar = char_avatar.replace("<|emotion|>", emotion)
         logging.info(">>>Generate avatar\n")
         avatarImg = await tabbyGen.generate_image(
@@ -428,7 +427,9 @@ class chatRoom_unsensor:
             self.dynamic_picture = False
 
         result_text_cn = (
-            await myTrans.translate_text("Simplified Chinese", result_text, self.rephrase_template)
+            await myTrans.translate_text(
+                "Simplified Chinese", result_text, self.rephrase_template
+            )
             if self.state["translate"] is True
             else result_text
         )
@@ -437,45 +438,54 @@ class chatRoom_unsensor:
         logging.info(f">>> The TTS Text:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:
-            if result_text_cn != "":
-                sentiment_text = (
-                    result_text_cn
-                    if self.state["translate"] is True
-                    else await myTrans.translate_text("Simplified Chinese", result_text_cn, self.rephrase_template)
+            if result_text != "*Silent*":
+                # if result_text_cn != "":
+                # sentiment_text = (
+                #     result_text_cn
+                #     if self.state["translate"] is True
+                #     else await myTrans.translate_text("Simplified Chinese", result_text_cn, self.rephrase_template)
+                # )
+                # emotion = await self.async_sentiment_analysis(sentiment_text)
+                emotion_des = await self.sentiment_anlyzer.get_sentiment(result_text)
+                positive_emotions = ["joy", "surprise", "love", "fun"]
+                negative_emotions = ["sadness", "anger", "fear", "disgust"]
+                emotion_des = (
+                    str(emotion_des)
+                    .replace("POSITIVE", random.choice(positive_emotions))
+                    .replace("NEGATIVE", random.choice(negative_emotions))
                 )
-                emotion = await self.async_sentiment_analysis(sentiment_text)
-                emotion_des = emotion[0]["label"]
+                logging.info(f"The emotion is: {emotion_des}")
+                # emotion_des = emotion[0]["label"]
             else:
                 emotion_des = "none"
-
-            if emotion_des == "none":
-                self.speaker_tone = "affectionate"
-                bulb.set_hsv(50, 100, 100)
-            elif emotion_des == "happiness":
-                self.speaker_tone = "cheerful"
-                bulb.set_hsv(34, 100, 100)
-            elif emotion_des == "anger":
-                self.speaker_tone = "sad"
-                bulb.set_hsv(12, 100, 100)
-            elif emotion_des == "disgust":
-                self.speaker_tone = "disgruntled"
-                bulb.set_hsv(188, 100, 100)
-            elif emotion_des == "fear":
-                self.speaker_tone = "fearful"
-                bulb.set_hsv(220, 100, 100)
-            elif emotion_des == "like":
-                self.speaker_tone = "gentle"
-                bulb.set_hsv(313, 100, 100)
-            elif emotion_des == "sadness":
-                self.speaker_tone = "depressed"
-                bulb.set_hsv(270, 100, 100)
-            elif emotion_des == "surprise":
-                self.speaker_tone = "cheerful"
-                bulb.set_hsv(337, 100, 100)
+            # if emotion_des == "none":
+            #     self.speaker_tone = "affectionate"
+            #     bulb.set_hsv(50, 100, 100)
+            # elif emotion_des == "happiness":
+            #     self.speaker_tone = "cheerful"
+            #     bulb.set_hsv(34, 100, 100)
+            # elif emotion_des == "anger":
+            #     self.speaker_tone = "sad"
+            #     bulb.set_hsv(12, 100, 100)
+            # elif emotion_des == "disgust":
+            #     self.speaker_tone = "disgruntled"
+            #     bulb.set_hsv(188, 100, 100)
+            # elif emotion_des == "fear":
+            #     self.speaker_tone = "fearful"
+            #     bulb.set_hsv(220, 100, 100)
+            # elif emotion_des == "like":
+            #     self.speaker_tone = "gentle"
+            #     bulb.set_hsv(313, 100, 100)
+            # elif emotion_des == "sadness":
+            #     self.speaker_tone = "depressed"
+            #     bulb.set_hsv(270, 100, 100)
+            # elif emotion_des == "surprise":
+            #     self.speaker_tone = "cheerful"
+            #     bulb.set_hsv(337, 100, 100)
         except Exception as e:
             logging.info("Error get emotion: ", e)
             emotion_des = "none"
-        logging.info(f"The emotion is: {emotion_des}")
+        
 
         avatarimg_base64 = await self.gen_avatar(
             self.my_generate, self.state["char_avatar"], emotion_des
@@ -507,10 +517,10 @@ class chatRoom_unsensor:
         )
 
     # Assistant functions for server reply function
-    async def async_sentiment_analysis(self, text):
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, lambda: self.sentiment_pipeline(text))
-        return result
+    # async def async_sentiment_analysis(self, text):
+    #     loop = asyncio.get_event_loop()
+    #     result = await loop.run_in_executor(None, lambda: self.sentiment_anlyzer.get_sentiment(text))
+    #     return result
 
     @staticmethod
     def is_chinese(text):

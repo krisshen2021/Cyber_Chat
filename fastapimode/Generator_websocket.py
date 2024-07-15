@@ -2,7 +2,13 @@
 from fastapimode.sys_path import project_root
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 import json, os, tiktoken, yaml, httpx, aiofiles
-from modules.global_sets_async import logging, config_data, timeout, prompt_params, getGlobalConfig
+from modules.global_sets_async import (
+    logging,
+    config_data,
+    timeout,
+    prompt_params,
+    getGlobalConfig,
+)
 from modules.payload_state import completions_data
 
 dir_path = project_root
@@ -135,7 +141,7 @@ class CoreGenerator:
         using_remoteapi: bool = None,
     ) -> str:
         if using_remoteapi is None:
-            config_data = await getGlobalConfig('config_data')
+            config_data = await getGlobalConfig("config_data")
             using_remoteapi = config_data["using_remoteapi"]
         self.completions_data.update(
             {
@@ -187,7 +193,7 @@ class CoreGenerator:
         using_remoteapi: bool = None,
     ) -> str:
         if using_remoteapi is None:
-            config_data = await getGlobalConfig('config_data')
+            config_data = await getGlobalConfig("config_data")
             using_remoteapi = config_data["using_remoteapi"]
         if using_remoteapi is not True:
             prompt = self.rephrase_template.replace(
@@ -228,11 +234,11 @@ class CoreGenerator:
         if prompt_main != "":
             prompt_main = await self.generate_prompt_main(prompt_main)
             prompt_main.strip(", ")
-            prompt_main = f"({prompt_main}:1.15), "
+            prompt_main = f"{prompt_main}, "
         if env_setting != "":
             env_setting = f"{env_setting}, "
         if lora_prompt != "":
-            lora_prompt = f"({lora_prompt}:1.12), "
+            lora_prompt = f"{lora_prompt}, "
 
         prompt_api = f"{prompt_prefix}{char_looks}{prompt_main}{env_setting}{lora_prompt}{prompt_suffix}"
         logging.info(f"The SD prompt: \n {prompt_api}")
