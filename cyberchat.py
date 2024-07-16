@@ -66,14 +66,14 @@ def markdownText(text):
     return Mtext
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup code
-    print("Starting up...")
-    # Your startup logic here
-    yield
-    # Shutdown code
-    print("Shutting down...")
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # Startup code
+#     print("Starting up...")
+#     # Your startup logic here
+#     yield
+#     # Shutdown code
+#     print("Shutting down...")
 
 
 app = FastAPI(title="cyberchat")
@@ -134,7 +134,7 @@ async def enter_room(
 
 
 async def client_connect(client_info, client_id):
-    print("Client {} connected".format(ansiColor.color_text(client_id,ansiColor.BG_BRIGHT_BLUE)))
+    print("{}".format(ansiColor.color_text(client_id,ansiColor.BG_BRIGHT_BLUE)))
     send_data = {
         "name": "connect_status",
         "msg": {"status": "Success", "data": "Welcome to CyberChat Server"},
@@ -792,7 +792,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 ws_event_client = client_info["wsevent_client"]
                 await execute_function(ws_event_client, client_info, client_id)
         except WebSocketDisconnect:
-            logging.info(f"<< Client >> {client_id} disconnected")
+            print("{}".format(ansiColor.color_text(client_id,ansiColor.BG_BRIGHT_RED)))
 
 
 if __name__ == "__main__":

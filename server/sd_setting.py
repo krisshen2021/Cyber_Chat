@@ -42,6 +42,7 @@ def get_valid_url():
                 sys.exit("Exiting the program.")
 
 def update_SDAPI_config():
+    clear_screen()
     update = input(f"{BOLD}{CYAN}Do you want to update stable diffusion api parameters? (yes/no): {RESET}")
     if update.lower() != 'yes':
         return

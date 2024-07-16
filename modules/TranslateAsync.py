@@ -15,8 +15,6 @@ import re, logging, json
 from modules.global_sets_async import getGlobalConfig
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi as tabby
 
-config_data: dict
-
 
 def convert_punctuation(match):
     punctuation_map = {
@@ -52,7 +50,6 @@ async def convert_text(text):
 
 
 async def translate_ai_driven(translater_prompt, target, prompt_template):
-    config_data = await getGlobalConfig("config_data")
     system_prompt = (
         f"You are a professional language translator, Base on the given json list, translate the texts to {target}, "
         + "1. Maintain astriks(*) in the texts, never replace/translate/remove them, \n "
@@ -138,6 +135,9 @@ async def extract_code_blocks(text):
 class AsyncTranslator:
     def __init__(self) -> None:
         pass
+    async def init(self):
+        global config_data
+        config_data = await getGlobalConfig('config_data')
 
     async def translate_text(self, target, text, prompt_template=None):
         # logging.info(f"current prompt template is : {prompt_template}")
@@ -184,6 +184,7 @@ if __name__ == "__main__":
     import asyncio
 
     mytrans = AsyncTranslator()
+    asyncio.run(mytrans.init())
     text = """
     here is the code you asked for:
     ```python

@@ -27,6 +27,7 @@ async def get_instr_temp_list():
 
 
 myTrans = AsyncTranslator()
+asyncio.run(myTrans.init())
 
 
 def markdownText(text):
