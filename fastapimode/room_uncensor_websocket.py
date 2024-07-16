@@ -221,7 +221,11 @@ class chatRoom_unsensor:
             self.conversation_id,
         )
         avatarimg_base64 = await self.gen_avatar(
-            self.my_generate, self.state["char_avatar"], "smile", True
+            tabbyGen=self.my_generate,
+            char_avatar=self.state["char_avatar"],
+            emotion="smile",
+            char_outfit=self.state["char_outfit"],
+            is_save=True,
         )
         self.G_avatar_url = "data:image/png;base64," + avatarimg_base64
         await self.send_msg_websocket(
@@ -230,10 +234,10 @@ class chatRoom_unsensor:
         )
         userlooksprefix = ", Perfect face portrait, (close-up:0.8)"
         avatarimg_base64 = await self.gen_avatar(
-            self.my_generate,
-            self.user_facelooks["prompt"] + userlooksprefix,
-            "smile",
-            False,
+            tabbyGen=self.my_generate,
+            char_avatar=self.user_facelooks["prompt"] + userlooksprefix,
+            emotion="smile",
+            is_save=False,
         )
         self.G_userlooks_url = "data:image/png;base64," + avatarimg_base64
         return True
@@ -328,7 +332,7 @@ class chatRoom_unsensor:
 
         bkImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
-            char_looks=f"{char_looks}" + ", " + portraitprefix,
+            char_looks=char_looks + ", " + portraitprefix,
             env_setting=bgImgstr,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
         )
@@ -345,12 +349,19 @@ class chatRoom_unsensor:
 
         return bkImg
 
-    async def gen_avatar(self, tabbyGen, char_avatar, emotion, is_save=True):
+    async def gen_avatar(
+        self, tabbyGen, char_avatar, emotion:str="", char_outfit:dict={}, is_save=True
+    ):
         env_setting = ",".join(
             (self.state.get("env_setting", "").split(",") + ["", ""])[:2]
         )
         if not env_setting.strip(","):
             env_setting = "plain background"
+        char_outfit_setting =  ",".join(
+            (char_outfit.get("normal", "").split(",") + ["", ""])[:2]
+        )
+        if not char_outfit_setting.strip(","):
+            char_outfit_setting = ""
         tabbyGen.image_payload["enable_hr"] = True
         tabbyGen.image_payload["hr_scale"] = 1.25
         tabbyGen.image_payload["width"] = 512
@@ -360,7 +371,7 @@ class chatRoom_unsensor:
         logging.info(">>>Generate avatar\n")
         avatarImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
-            char_looks=char_avatar,
+            char_looks=char_avatar+", "+char_outfit_setting,
             env_setting=env_setting,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
         )
@@ -486,10 +497,13 @@ class chatRoom_unsensor:
         except Exception as e:
             logging.info("Error get emotion: ", e)
             emotion_des = "none"
-        
 
         avatarimg_base64 = await self.gen_avatar(
-            self.my_generate, self.state["char_avatar"], emotion_des
+            tabbyGen=self.my_generate,
+            char_avatar=self.state["char_avatar"],
+            emotion=emotion_des,
+            char_outfit=self.state["char_outfit"],
+            is_save=True,
         )
         avatar_url = "data:image/png;base64," + avatarimg_base64
 
