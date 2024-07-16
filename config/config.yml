@@ -8,9 +8,9 @@ using_remoteapi: true
 remoteapi_endpoint: openairouter
 
 ### SD settings
-SDAPI_url: http://127.0.0.1:6006
-hr_upscaler: Latent (bicubic)
-sampler_name: DPM++ 3M SDE
+SDAPI_url: http://127.0.0.1:7860
+hr_upscaler: Latent (nearest)
+sampler_name: DPM++ 2M SDE
 sd_model_checkpoint: astranime_V6
 
 ### server settings
