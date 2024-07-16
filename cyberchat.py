@@ -7,7 +7,7 @@ from modules.global_sets_async import (
     conn_ws_mgr,
     logging,
     config_data,
-    prompt_params
+    prompt_params,
 )
 import uvicorn, uuid, json, markdown, os
 from datetime import datetime
@@ -22,6 +22,7 @@ from fastapimode.room_uncensor_websocket import chatRoom_unsensor
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 from modules.payload_state import sd_payload, completions_data
 from modules.AiRoleOperator import AiRoleOperator as ARO
+from modules.ANSI_tool import ansiColor
 
 sd_payload = sd_payload.copy()
 config_data = config_data.copy()
@@ -30,13 +31,15 @@ templates_path = os.path.join(project_root, "templates")
 static_path = os.path.join(project_root, "static")
 templates = Jinja2Templates(directory=templates_path)
 database.create_table()
+
+
 def clear_screen():
     # 针对不同操作系统的清屏命令
     if os.name == "nt":  # Windows
         _ = os.system("cls")
     else:  # Mac and Linux
         _ = os.system("clear")
-clear_screen()
+
 
 def generate_timestamp():
     # 获取当前时间的时间戳，以秒为单位
@@ -72,6 +75,7 @@ async def lifespan(app: FastAPI):
     # Shutdown code
     print("Shutting down...")
 
+
 app = FastAPI(title="cyberchat")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
@@ -93,13 +97,13 @@ async def initpage(request: Request):
     roleconf = await getGlobalConfig("roleconf")
     roleconf_reversed = dict(reversed(list(roleconf.items())))
     for key, value in roleconf_reversed.items():
-        ai_role_list.append({"aiRoleId":key,"Data":value})
+        ai_role_list.append({"aiRoleId": key, "Data": value})
     timestamp = generate_timestamp()
     context = {
         "request": request,
         "timestamp": timestamp,
         "ai_role_list": ai_role_list,
-        "cookid_server": cookid_server
+        "cookid_server": cookid_server,
     }
     return non_cache_response("role_selector_websocket.html", context)
 
@@ -117,7 +121,11 @@ async def enter_room(
     prologue = ai_role_data["Prologue"]
     username = context["username"]
     ainame = context["ainame"]
-    prologue = prologue.replace('\n','<br>').replace(r"{{user}}", f"<em>{username}</em>").replace(r"{{char}}", f"<em>{ainame}</em>")
+    prologue = (
+        prologue.replace("\n", "<br>")
+        .replace(r"{{user}}", f"<em>{username}</em>")
+        .replace(r"{{char}}", f"<em>{ainame}</em>")
+    )
     context["Prologue"] = prologue
     context["request"] = request
     timestamp = generate_timestamp()
@@ -126,7 +134,7 @@ async def enter_room(
 
 
 async def client_connect(client_info, client_id):
-    logging.info(f"<< Client >> {client_info['data']['from']} connected")
+    print("Client {} connected".format(ansiColor.color_text(client_id,ansiColor.BG_BRIGHT_BLUE)))
     send_data = {
         "name": "connect_status",
         "msg": {"status": "Success", "data": "Welcome to CyberChat Server"},
@@ -606,9 +614,7 @@ async def createchar_wizard(client_info, client_id):
 
     def firstwords():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["firstwords"]
-        userinstruct = (
-            f"The given plot of story and the information of {{{{char}}}}'s speaking tone are: \n{wizardstr}\n\nThe final output(speaking without double quotes)will be: "
-        )
+        userinstruct = f"The given plot of story and the information of {{{{char}}}}'s speaking tone are: \n{wizardstr}\n\nThe final output(speaking without double quotes)will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
 
     def char_outfit():
@@ -625,7 +631,7 @@ async def createchar_wizard(client_info, client_id):
         sysinstruct = prompt_params["createchar_wizard_prompt"]["chat_bg"]
         userinstruct = f"The given plot of story and the guide for generating prompt are: \n{wizardstr}\n\nThe final output of text2img prompt for enviornment background will be: "
         return {"sysinstruct": sysinstruct, "userinstruct": userinstruct}
-    
+
     def story_intro():
         sysinstruct = prompt_params["createchar_wizard_prompt"]["story_intro"]
         userinstruct = f"The given plot of story and the guideline for generate story intro are: \n{wizardstr}\n\nThe final output will be: "
@@ -643,7 +649,7 @@ async def createchar_wizard(client_info, client_id):
         "char_outfit": char_outfit,
         "user_persona": user_persona,
         "chat_bg": chat_bg,
-        "story_intro": story_intro
+        "story_intro": story_intro,
     }
 
     def switchfunc(task):
@@ -661,8 +667,22 @@ async def createchar_wizard(client_info, client_id):
         temperature = 0.8 if task == "prologue" or task == "firstwords" else 0.5
         smoothing_factor = 0.55 if task == "prologue" or task == "firstwords" else 0.1
         max_tokens = 300 if task == "prologue" or task == "char_persona" else 150
-        presence_penalty = 1.25 if task == "prologue" or task == "firstwords" or task == "char_persona" or task == "user_persona" else 1.05
-        repetition_penalty = 1.18 if task == "prologue" or task == "firstwords" or task == "char_persona" or task == "user_persona" else 1.05
+        presence_penalty = (
+            1.25
+            if task == "prologue"
+            or task == "firstwords"
+            or task == "char_persona"
+            or task == "user_persona"
+            else 1.05
+        )
+        repetition_penalty = (
+            1.18
+            if task == "prologue"
+            or task == "firstwords"
+            or task == "char_persona"
+            or task == "user_persona"
+            else 1.05
+        )
         completions_data.update(
             {
                 "stream": False,
@@ -699,29 +719,38 @@ async def createchar_wizard(client_info, client_id):
     else:
         logging.info("Invalid task")
 
+
 # save created character
 async def client_save_character(client_info, client_id):
-    createchar_data = client_info['data']['createchar_data']
+    createchar_data = client_info["data"]["createchar_data"]
     logging.info(createchar_data)
-    createchar_data["User_Persona"] = f"Appearance: <|User_Looks|>\n{createchar_data['User_Persona']}"
-    
-    createchar_data["json_Chapters"] = json.dumps(createchar_data["json_Chapters"],indent=4)
-    createchar_data["json_Char_outfit"] = json.dumps(createchar_data["json_Char_outfit"],indent=4)
-    createchar_data["json_Completions_data"] = json.dumps(createchar_data["json_Completions_data"],indent=4)
-    createchar_data["json_Story_intro"] = json.dumps(createchar_data["json_Story_intro"],indent=4)
+    createchar_data["User_Persona"] = (
+        f"Appearance: <|User_Looks|>\n{createchar_data['User_Persona']}"
+    )
+
+    createchar_data["json_Chapters"] = json.dumps(
+        createchar_data["json_Chapters"], indent=4
+    )
+    createchar_data["json_Char_outfit"] = json.dumps(
+        createchar_data["json_Char_outfit"], indent=4
+    )
+    createchar_data["json_Completions_data"] = json.dumps(
+        createchar_data["json_Completions_data"], indent=4
+    )
+    createchar_data["json_Story_intro"] = json.dumps(
+        createchar_data["json_Story_intro"], indent=4
+    )
     result = await ARO.create_role(createchar_data)
     if result[0]:
         msg_to_send = "success"
         logging.info("save character successfuly")
     else:
         msg_to_send = result[1]
-    data_to_send = {"result":msg_to_send, "task":"after_char_saved"}
+    data_to_send = {"result": msg_to_send, "task": "after_char_saved"}
     await send_datapackage("save_character_result", data_to_send, client_id)
-    
-    
 
 
-#ws event handler
+# ws event handler
 ws_events_dict = {
     "connect to server": client_connect,
     "client_login": client_login,
@@ -741,7 +770,7 @@ ws_events_dict = {
     "preview_avatar": preview_avatar,
     "createchar_wizard": createchar_wizard,
     "preview_createchar": preview_createchar,
-    "client_save_character" : client_save_character,
+    "client_save_character": client_save_character,
 }
 
 
@@ -770,6 +799,8 @@ if __name__ == "__main__":
     host = config_data["server_address"]
     port = config_data["server_port"]
     try:
-        uvicorn.run(app, host=host, port=port, access_log=False)
+        clear_screen()
+        ansiColor.color_print("Cyber Chat Ver 1.0 by muffin",ansiColor.BG_BRIGHT_MAGENTA, ansiColor.BOLD)
+        uvicorn.run(app, host=host, port=port, access_log=False)   
     except KeyboardInterrupt:
-       logging.info("Server has been shut down.")
+        logging.info("Server has been shut down.")

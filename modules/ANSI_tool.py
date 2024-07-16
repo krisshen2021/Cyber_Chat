@@ -53,12 +53,16 @@ class AnsiColor:
     STRIKETHROUGH = '\033[9m'
 
     @staticmethod
-    def color_text(text, color):
-        return f"{color}{text}{AnsiColor.RESET}"
+    def color_text(text, color, style=None):
+        text_style = style + color if style else color
+        return f"{text_style}{text}{AnsiColor.RESET}"
 
     @staticmethod
-    def color_print(text, color):
-        print(AnsiColor.color_text(text, color))
+    def color_print(text, color, style=None):
+        """
+        stylize text with ansi color code
+        """
+        print(AnsiColor.color_text(text, color, style))
 
 # 创建一个实例，以便更方便地使用
 ansiColor = AnsiColor()
