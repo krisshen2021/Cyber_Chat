@@ -5,13 +5,13 @@ openai_api_chat_base: http://127.0.0.1:5010/v1
 openai_api_funcall_base: http://127.0.0.1:5002/v1
 openai_api_rephase_base: http://127.0.0.1:5010/v1
 using_remoteapi: true
-remoteapi_endpoint: openairouter
+remoteapi_endpoint: deepseek #openairouter,cohere, mistral, claude, xiaoai
 
 ### SD settings
 SDAPI_url: http://127.0.0.1:7860
 hr_upscaler: Latent (nearest)
-sampler_name: DPM++ 2M
-sd_model_checkpoint: duchaitenPonyXLNo_ponyNoScoreV40
+sampler_name: Euler a
+sd_model_checkpoint: astranime_V6
 
 ### server settings
 debug_mode: true

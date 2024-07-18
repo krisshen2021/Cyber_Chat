@@ -1,5 +1,6 @@
-import httpx, pynvml, sys, os
+import httpx, pynvml, sys, os, tqdm, asyncio, json
 from pathlib import Path
+
 project_root = str(Path(__file__).parents[1])
 if project_root not in sys.path:
     sys.path.append(project_root)
@@ -12,6 +13,7 @@ from typing import List, Optional
 from sd_setting import update_SDAPI_config
 from opanairouter_setting import select_model
 from modules.colorlogger import logger
+from modules.ANSI_tool import ansiColor
 from remote_api_hub import (
     ChatMessage,
     cohere_stream,
@@ -49,21 +51,26 @@ update_SDAPI_config()
 ### Openairouter selector
 openairouter_model = select_model()
 
+ansiColor.color_print("Remote Server Started\nWaiting for connection...", ansiColor.BG_BRIGHT_MAGENTA+ansiColor.WHITE, ansiColor.BOLD)
+
 
 class OverrideSettings(BaseModel):
-    sd_vae: Optional[str] = None
-    sd_model_checkpoint: Optional[str] = None
+    sd_vae: Optional[str] = "Automatic"
+    sd_model_checkpoint: str
+    face_restoration_model: Optional[str] = "CodeFormer"
+    CLIP_stop_at_last_layers: Optional[int] = 2
 
 
 class SDPayload(BaseModel):
+    force_task_id: Optional[str] = "SD_task_id"
     hr_negative_prompt: Optional[str] = None
-    hr_prompt: str
+    hr_prompt: Optional[str] = None
     hr_scale: Optional[float] = None
     hr_second_pass_steps: Optional[int] = None
     seed: Optional[int] = None
-    enable_hr: Optional[bool] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
+    enable_hr: Optional[bool] = False
+    width: int
+    height: int
     hr_upscaler: Optional[str] = None
     negative_prompt: Optional[str] = None
     prompt: str
@@ -71,8 +78,20 @@ class SDPayload(BaseModel):
     cfg_scale: Optional[float] = None
     denoising_strength: Optional[float] = None
     steps: Optional[int] = None
-    override_settings: Optional[OverrideSettings] = None
-    override_settings_restore_afterwards: Optional[bool] = None
+    restore_faces: Optional[bool] = False
+    override_settings: OverrideSettings
+    override_settings_restore_afterwards: Optional[bool] = True
+
+
+class SDProcessPayload(BaseModel):
+    id_task: str = ("SD_task_id",)
+    id_live_preview: Optional[float] = (-1,)
+    live_preview: Optional[bool] = True
+
+
+class TaskRequest(BaseModel):
+    txt2img_payload: Optional[SDPayload] = None
+    progress_payload: Optional[SDProcessPayload] = None
 
 
 class XTTSPayload(BaseModel):
@@ -80,6 +99,69 @@ class XTTSPayload(BaseModel):
     speaker_wav: Optional[str] = "en_female_01"
     language: Optional[str] = "en"
     server_url: Optional[str] = "http://127.0.0.1:8020/tts_to_audio/"
+
+
+sd_api_url = "http://127.0.0.1:7860"
+api_txt2img_path = "/sdapi/v1/txt2img"
+api_progress_path = "/internal/progress"
+
+
+class StableDiffusionAPI:
+    def __init__(self):
+        pass
+
+    async def send_txt2img_request(
+        self,
+        sd_api_url=sd_api_url,
+        api_txt2img_path=api_txt2img_path,
+        txt2img_payload=None,
+    ):
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{sd_api_url}{api_txt2img_path}",
+                    json=txt2img_payload,
+                    timeout=300.0,
+                )
+                # logger.error("txt2img request sent successfully")
+                return response.json()
+            except Exception as e:
+                logger.error(f"An unexpected error occurred: {e}")
+
+    async def check_progress(
+        self,
+        sd_api_url=sd_api_url,
+        api_progress_path=api_progress_path,
+        progress_payload=None,
+    ):
+        async with httpx.AsyncClient() as client:
+            self.pbar = tqdm(total=100, desc="Image processing")
+            while True:
+                try:
+                    response = await client.post(
+                        f"{sd_api_url}{api_progress_path}",
+                        json=progress_payload,
+                        timeout=300.0,
+                    )
+                    progress_info = response.json()
+                    if (
+                        progress_info["progress"] is not None
+                        and progress_info["progress"] < 0.99
+                        and progress_info["completed"] is False
+                    ):
+                        self.pbar.n = int(progress_info["progress"] * 100)
+                        yield progress_info
+                    elif progress_info["completed"]:
+                        self.pbar.n = 100
+                        progress_info["progress"] = 1
+                        yield progress_info
+                        self.pbar.close()
+                        break
+                    self.pbar.update(0)
+                    await asyncio.sleep(1)
+                except Exception as e:
+                    logger.error(f"Error checking progress: {e}")
 
 
 router = APIRouter(tags=["cyberchat"])
@@ -114,25 +196,45 @@ async def xtts_to_audio(payload: XTTSPayload):
 
 # SD Picture Generator
 @router.post("/v1/SDapi")
-async def SD_api_generate(payload: SDPayload, SD_URL: str = Header(None)):
+async def generate_image(payload: SDPayload, SD_URL: str = Header(None)):
+    SD_URL = SD_URL.replace("/sdapi/v1/txt2img", "")
+    logger.info(f"Generate Image from {SD_URL}, task_id: {payload.force_task_id}")
     payload_dict = payload.model_dump()
-    print(f">>>Generate Image from {SD_URL}")
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url=SD_URL, json=payload_dict, timeout=timeout)
-            response.raise_for_status()
-            response_data = response.json()
-            return response_data
-    except httpx.HTTPStatusError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    api_instance = StableDiffusionAPI()
+    txt2img_result = await api_instance.send_txt2img_request(
+        txt2img_payload=payload_dict, sd_api_url=SD_URL
+    )
+    return txt2img_result
+
+@router.post("/v1/check-progress")
+async def check_progress(payload: SDProcessPayload):
+    payload_dict = payload.model_dump()
+    api_instance = StableDiffusionAPI()
+    async def progress_generator():
+        async for progress_info in api_instance.check_progress(progress_payload=payload_dict):
+            yield json.dumps(progress_info) + "\n"
+    return StreamingResponse(progress_generator(), media_type="application/x-ndjson")
+
+# @router.post("/v1/SDapi")
+# async def SD_api_generate(payload: SDPayload, SD_URL: str = Header(None)):
+#     payload_dict = payload.model_dump()
+#     print(f">>>Generate Image from {SD_URL}")
+#     try:
+#         async with httpx.AsyncClient() as client:
+#             response = await client.post(url=SD_URL, json=payload_dict, timeout=timeout)
+#             response.raise_for_status()
+#             response_data = response.json()
+#             return response_data
+#     except httpx.HTTPStatusError as http_err:
+#         print(f"HTTP error occurred: {http_err}")
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
 
 
 # SD model list
 @router.post("/v1/SDapiModelList")
 async def SD_api_modellist(SD_URL: str = Header(None)):
-    print(f">>>Getting Model list from {SD_URL}")
+    logger.info(f"Getting Model list from {SD_URL.replace('/sdapi/v1/sd-models','')}")
     headers = {"accept": "application/json"}
     try:
         async with httpx.AsyncClient() as client:
@@ -451,13 +553,19 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
         openairouter_dict["messages"] = [
             ChatMessage(role="user", content=openairouter_dict["messages"]),
         ]
-        if "system_prompt" in openairouter_dict and openairouter_dict["system_prompt"] is not None:
+        if (
+            "system_prompt" in openairouter_dict
+            and openairouter_dict["system_prompt"] is not None
+        ):
             openairouter_dict["messages"].insert(
-                0, ChatMessage(role="system", content=openairouter_dict["system_prompt"])
+                0,
+                ChatMessage(role="system", content=openairouter_dict["system_prompt"]),
             )
         params = OAIParam(**openairouter_dict)
         if params.stream is True:
-            return StreamingResponse(openairouter_stream(params), media_type="text/plain")
+            return StreamingResponse(
+                openairouter_stream(params), media_type="text/plain"
+            )
         else:
             return Response(
                 content=await openairouter_invoke(params), media_type="text/plain"

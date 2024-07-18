@@ -5,12 +5,11 @@ from yeelight import Bulb
 from pathlib import Path
 from modules.ConnectionManager import ConnectionManager
 from httpx import Timeout
-from modules.FormatedLogger import logger
+from modules.colorlogger import logger
 from modules.sentiment import SentiAna
 
 timeout = Timeout(60.0)
 sentiment_anlyzer = SentiAna
-logging = logger
 dir_path = Path(__file__).parents[1]
 config_path = os.path.join(dir_path, "config", "config.yml")
 database_path = os.path.join(dir_path, "database", "cyberchat.db")
@@ -90,9 +89,9 @@ async def conn_bulb(yeelight_url):
     try:
         bulb = Bulb(yeelight_url, auto_on=True, effect="smooth", duration=2000)
         bulb.toggle()
-        logging.info(f"Bulb Power: {bulb.get_properties()['power']}") 
+        logger.info(f"Bulb Power: {bulb.get_properties()['power']}") 
     except Exception as e:
-        logging.info(f"Error during turn on Bulb: {e}")
+        logger.info(f"Error during turn on Bulb: {e}")
 
         class bulb_null:
             def __init__(self) -> None:

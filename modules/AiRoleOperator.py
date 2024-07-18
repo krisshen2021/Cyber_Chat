@@ -12,7 +12,7 @@ from modules.global_sets_async import (
     config_data,
     prompt_templates,
     prompt_params,
-    logging
+    logger
 )
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 from modules.payload_state import completions_data, sd_payload
@@ -174,7 +174,7 @@ class AiRoleOperator:
             + ", "
             + prompt_params["prmopt_fixed_suffix"]
         )
-        logging.info(image_bg_prompt)
+        logger.info(image_bg_prompt)
         image_avatar_prompt = (
             prompt_params["prmopt_fixed_prefix"]
             + ", "
@@ -198,9 +198,9 @@ class AiRoleOperator:
         }
         image_payload.update(bg_payload)
         bg_img = await tabby_fastapi.SD_image(payload=image_payload)
-        logging.info(bg_img)
+        logger.info(bg_img)
         bg_img_path = os.path.join(role_img_path, "background.png")
-        logging.info(bg_img_path)
+        logger.info(bg_img_path)
         image_save_bg = Image.open(io.BytesIO(base64.b64decode(bg_img)))
         image_save_bg.save(bg_img_path)
 
@@ -218,9 +218,9 @@ class AiRoleOperator:
         }
         image_payload.update(avatar_payload)
         avatar_img = await tabby_fastapi.SD_image(payload=image_payload)
-        logging.info(avatar_img)
+        logger.info(avatar_img)
         avatar_img_path = os.path.join(role_img_path, "none.png")
-        logging.info(avatar_img_path)
+        logger.info(avatar_img_path)
         image_save_avatar = Image.open(io.BytesIO(base64.b64decode(avatar_img)))
         image_save_avatar.save(avatar_img_path)
 
@@ -347,7 +347,7 @@ class AiRoleOperator:
 
 # result = database.get_airole(Name=Name)
 # for key, value in result.items():
-#     logging.info(f"{key}: {value}")
+#     logger.info(f"{key}: {value}")
 
 # result = database.list_data_airole(["Name","Ai_name","Ai_speaker","Ai_speaker_en","is_Uncensored"])
 # rolelist = {}

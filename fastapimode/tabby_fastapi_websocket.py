@@ -1,5 +1,5 @@
 import httpx, time, base64, json, asyncio
-from modules.global_sets_async import config_data, timeout, logging, getGlobalConfig
+from modules.global_sets_async import config_data, timeout, logger, getGlobalConfig
 from modules.payload_state import completions_data, model_load_data, sd_payload
 
 
@@ -66,7 +66,7 @@ class tabby_fastapi:
                         else:
                             continue
         except Exception as e:
-            logging.info("Error to get stream data", e)
+            logger.info("Error to get stream data", e)
 
     async def inference(self, payloads: dict = None, apiurl: str = None):
         """
@@ -85,7 +85,7 @@ class tabby_fastapi:
         stream = payloads["stream"]
         headers = self.headers
         if stream is True:
-            logging.info("Get streaming response from api.")
+            logger.info("Get streaming response from api.")
             completeMsg = ""
             try:
                 async for outputchar in self.inference_stream(
@@ -105,7 +105,7 @@ class tabby_fastapi:
                                 {"name": "chatreply", "msg": msgpack},
                                 self.conversation_id,
                             )
-                            logging.info(completeMsg)
+                            logger.info(completeMsg)
                             return completeMsg
                     else:
                         return None
@@ -122,7 +122,7 @@ class tabby_fastapi:
                     response = response["choices"][0]["text"]
                     return response
             except Exception as e:
-                logging.info("Error on inference: ", e)
+                logger.info("Error on inference: ", e)
 
     async def inference_remoteapi(self, payloads: dict, apiurl: str = None):
         """
@@ -137,7 +137,7 @@ class tabby_fastapi:
         if data["stream"] is True:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 try:
-                    logging.info(
+                    logger.info(
                         f"Get streaming response from remoteapi - {config_data['remoteapi_endpoint']}."
                     )
                     async with client.stream("POST", url, json=data) as response:
@@ -187,12 +187,12 @@ class tabby_fastapi:
                 response = await client.get(url=url, headers=headers, timeout=timeout)
                 if response.status_code == 200:
                     response = response.json()
-                    logging.info(f"Current model: {response['id']}")
+                    logger.info(f"Current model: {response['id']}")
                     return response["id"]
                 else:
                     return "None"
         except Exception as e:
-            logging.info("Error on get current model: ", e)
+            logger.info("Error on get current model: ", e)
             return "None"
 
     async def get_model_list(self) -> list:
@@ -208,7 +208,7 @@ class tabby_fastapi:
                 else:
                     return []
         except Exception as e:
-            logging.info("Error on get current model-list: ", e)
+            logger.info("Error on get current model-list: ", e)
             return []
 
     async def unload_model(self):
@@ -222,7 +222,7 @@ class tabby_fastapi:
                 else:
                     return False
         except Exception as e:
-            logging.info("Error on unloading model: ", e)
+            logger.info("Error on unloading model: ", e)
             return False
 
     async def load_model(
@@ -256,9 +256,9 @@ class tabby_fastapi:
                         for gpu in gpu_info["GPU Info"]:
                             gpu_split.append(int(gpu["GPU_Memory"] * 0.7))
                         self.model_load_data["gpu_split"] = gpu_split
-                        logging.info(f"The Gpu Split to: {gpu_split}")
+                        logger.info(f"The Gpu Split to: {gpu_split}")
             except Exception as e:
-                logging.info("Error during load GPU info: ", e)
+                logger.info("Error during load GPU info: ", e)
                 self.model_load_data["gpu_split_auto"] = True
 
             self.model_load_data["prompt_template"] = prompt_template
@@ -268,13 +268,13 @@ class tabby_fastapi:
                     url=url, headers=headers, json=self.model_load_data, timeout=timeout
                 )
                 if response.status_code == 200:
-                    logging.info(f">>> Model Changed To: {name}")
+                    logger.info(f">>> Model Changed To: {name}")
                     return "Success"
                 else:
-                    logging.info(">>> Model Load Failed")
+                    logger.info(">>> Model Load Failed")
                     return "Fail"
             except Exception as e:
-                logging.info("Error on load model: ", e)
+                logger.info("Error on load model: ", e)
 
     async def get_sd_model_list(self):
         url = config_data["SDAPI_url"] + "/sdapi/v1/sd-models"
@@ -292,10 +292,10 @@ class tabby_fastapi:
                 model_list = []
                 for model_name in response:
                     model_list.append(model_name["model_name"])
-                logging.info(f">>> SD Model List: {model_list}")
+                logger.info(f">>> SD Model List: {model_list}")
                 return model_list
         except Exception as e:
-            logging.info("Error on get SD model list: ", e)
+            logger.info("Error on get SD model list: ", e)
             return None
 
     @staticmethod
@@ -320,7 +320,7 @@ class tabby_fastapi:
         }
         try:
             async with httpx.AsyncClient() as client:
-                logging.info("Start to fetch TTS audio")
+                logger.info("Start to fetch TTS audio")
                 start_time = time.perf_counter()
                 response = await client.post(
                     url=url, headers=headers, json=payload, timeout=timeout
@@ -328,10 +328,10 @@ class tabby_fastapi:
                 response.raise_for_status()
                 end_time = time.perf_counter()
                 total_run_time = end_time - start_time
-                logging.info(f"TTS cost time: {total_run_time:.2f} seconds")
+                logger.info(f"TTS cost time: {total_run_time:.2f} seconds")
                 audio_data_base64 = base64.b64encode(response.content).decode("utf-8")
         except Exception as e:
-            logging.info(f"Error on get xtts audio: {e}")
+            logger.info(f"Error on get xtts audio: {e}")
             audio_data_base64 = False
         finally:
             return audio_data_base64
@@ -355,7 +355,7 @@ class tabby_fastapi:
                 imgBase64 = result["images"][0]
                 return imgBase64
         except Exception as e:
-            logging.info(f"Error to generate SD img: {e}")
+            logger.info(f"Error to generate SD img: {e}")
 
     @staticmethod
     def remove_extra_punctuation(text):
@@ -407,7 +407,7 @@ class tabby_fastapi:
                         print(f"Request failed with status code {response.status_code}")
                         print(await response.aread())
             except Exception as e:
-                logging.info("Error on inference from remote: ", e)
+                logger.info("Error on inference from remote: ", e)
 
         else:
             apiurl = config_data["openai_api_chat_base"] + "/completions"
@@ -427,4 +427,4 @@ class tabby_fastapi:
                         print(f"Request failed with status code {response.status_code}")
                         print(await response.aread())
             except Exception as e:
-                logging.info("Error on inference: ", e)
+                logger.info("Error on inference: ", e)

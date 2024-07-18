@@ -11,8 +11,8 @@ def create_syspath():
 
 create_syspath()
 
-import re, logging, json
-from modules.global_sets_async import getGlobalConfig
+import re, json
+from modules.global_sets_async import getGlobalConfig, logger
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi as tabby
 
 
@@ -73,10 +73,10 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         "top_p": 0.7,
         "stream": False,
     }
-    # logging.info(f"Translate prompt: {prompt}")
+    # logger.info(f"Translate prompt: {prompt}")
     try:
         result = await tabby.pure_inference(payloads=payloads)
-        # logging.info(f"Translate result: {result}")
+        # logger.info(f"Translate result: {result}")
         result = await convert_text(result)
         # 提取方括号中的内容
         outer_pattern = r"\{.*\}(?=[^\}]*\])"
@@ -84,12 +84,12 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         outer_match = re.search(outer_pattern, result, re.DOTALL)
         if outer_match:
             json_content = outer_match.group()
-            # logging.info(f"Translate json_content: {json_content}")
+            # logger.info(f"Translate json_content: {json_content}")
             # 提取并处理每个对象
             object_pattern = r'\{"index":\s*(\d+),\s*"text":\s*"(.*?)"\}'
 
             def replace_func(match):
-                # logging.info("match found!!!")
+                # logger.info("match found!!!")
                 index, text = match.groups()
                 escaped_text = text.replace('"', "'").replace("\\*", "*").replace('\\','%').replace('%n','\\n').replace("%'","'")
                 return f'{{"index":{index},"text":"{escaped_text}"}}'
@@ -100,22 +100,22 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
 
             # 重建完整的 JSON 字符串
             rebuilt_json = f"[{processed_content}]"
-            logging.info(f"Translate rebuilt_json: {rebuilt_json}")
+            logger.info(f"Translate rebuilt_json: {rebuilt_json}")
 
             try:
                 parsed_result = json.loads(rebuilt_json)
                 return parsed_result
             except json.JSONDecodeError as e:
-                logging.error(f"Rebuilt JSON string: {rebuilt_json}")
-                logging.error(f"JSON decode error: {e}")
+                logger.error(f"Rebuilt JSON string: {rebuilt_json}")
+                logger.error(f"JSON decode error: {e}")
                 return json.loads(translater_prompt)
         else:
-            logging.error("No JSON-like list found in the result")
-            logging.error(f"Raw result: {result}")
+            logger.error("No JSON-like list found in the result")
+            logger.error(f"Raw result: {result}")
             return json.loads(translater_prompt)
 
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
         return json.loads(translater_prompt)
 
 
@@ -140,23 +140,23 @@ class AsyncTranslator:
         config_data = await getGlobalConfig('config_data')
 
     async def translate_text(self, target, text, prompt_template=None):
-        # logging.info(f"current prompt template is : {prompt_template}")
+        # logger.info(f"current prompt template is : {prompt_template}")
         command_text = None
         if text is not None or text != "":
             text = text.strip()
-            # logging.info(f"Text to translate: {text}")
+            # logger.info(f"Text to translate: {text}")
             command_pattern = r"^(### Request to A.I assistant: )(.+)$"
             match = re.match(command_pattern, text, re.DOTALL)
             if match:
                 command_text = match.group(1)
                 text = match.group(2).strip()
-                # logging.info(f"Command text: {command_text}, text:{text}")
+                # logger.info(f"Command text: {command_text}, text:{text}")
             text_pattern_list = await extract_code_blocks(text)
             text_transtext_list = []
             texts_to_translate = []
             for item in text_pattern_list:
                 text_transtext_list.append(item["text"])
-            # logging.info(f"Text pattern list: {text_pattern_list}")
+            # logger.info(f"Text pattern list: {text_pattern_list}")
             for index, element in enumerate(text_pattern_list):
                 if element["if_translated"] is True:
                     texts_to_translate.append({"index": index, "text": element["text"]})
@@ -165,7 +165,7 @@ class AsyncTranslator:
                 translated_json_list = await translate_ai_driven(
                     translater_prompt, target, prompt_template
                 )
-                # logging.info(f"Translated json list: {translated_json_list}")
+                # logger.info(f"Translated json list: {translated_json_list}")
                 for index, text in enumerate(text_transtext_list):
                     for item in translated_json_list:
                         if item["index"] == index:
@@ -194,4 +194,4 @@ if __name__ == "__main__":
     hope it helps!
     """
     result = asyncio.run(mytrans.translate_text("simplified chinese", text))
-    logging.info(f"Translate result: {result}")
+    logger.info(f"Translate result: {result}")

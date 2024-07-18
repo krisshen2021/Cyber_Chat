@@ -3,7 +3,7 @@ from fastapimode.sys_path import project_root
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 import json, os, tiktoken, yaml, httpx, aiofiles
 from modules.global_sets_async import (
-    logging,
+    logger,
     config_data,
     timeout,
     prompt_params,
@@ -34,9 +34,9 @@ async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key
                 model_name = datas["id"]
                 return model_name
             else:
-                logging.info(f"请求失败，状态码：{response.status_code}")
+                logger.info(f"请求失败，状态码：{response.status_code}")
     except Exception as e:
-        logging.info(
+        logger.info(
             f"Error to get model from {api_base}, \nPlease set up the {model_type} model address in config.yml before chatting"
         )
     finally:
@@ -122,7 +122,7 @@ class CoreGenerator:
         self.restruct_prompt = self.restruct_prompt.replace(
             "<|default_bg|>", self.state["env_setting"]
         )
-        logging.info(
+        logger.info(
             f"Chat model: {self.chat_model} | Rephase model: {self.rephase_model}"
         )
 
@@ -241,7 +241,7 @@ class CoreGenerator:
             lora_prompt = f"{lora_prompt}, "
 
         prompt_api = f"{prompt_prefix}{char_looks}{prompt_main}{env_setting}{lora_prompt}{prompt_suffix}"
-        logging.info(f"The SD prompt: \n {prompt_api}")
+        logger.info(f"The SD prompt: \n {prompt_api}")
         payload = {
             "hr_negative_prompt": self.nagetive_prompt,
             "hr_prompt": prompt_api,
@@ -274,20 +274,20 @@ class CoreGenerator:
     # Process if trigger key words
     async def generate_picture_by_sdapi(self, prompt: str = "", loraword: str = ""):
         lora_prompt = self.lora.get(loraword.strip(), "")
-        logging.info(f"Lora :{lora_prompt}")
+        logger.info(f"Lora :{lora_prompt}")
         char_looks = self.state["char_looks"]
         if self.state["char_outfit"] and lora_prompt in self.state["char_outfit"]:
             char_outfit = self.state["char_outfit"][lora_prompt]
             if char_outfit:
                 char_looks = f"{char_looks},{char_outfit}"
                 lora_prompt = ""
-                logging.info(char_looks)
+                logger.info(char_looks)
         if self.send_msg_websocket:
             await self.send_msg_websocket(
                 {"name": "chatreply", "msg": "Generating Scene Image"},
                 self.conversation_id,
             )
-        logging.info(">>>Generate Dynamic Picture\n")
+        logger.info(">>>Generate Dynamic Picture\n")
         image = await self.generate_image(
             prompt_prefix=self.prmopt_fixed_prefix,
             char_looks=char_looks,
@@ -315,14 +315,14 @@ class CoreGenerator:
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )
-            logging.info(f">>>The rephrased result is {response}")
+            logger.info(f">>>The rephrased result is {response}")
 
             is_word_triggered, match_result = contains_vocabulary(
                 response, self.resultslist
             )
 
             if is_word_triggered:
-                logging.info(f">>>Matched result is: {match_result}")
+                logger.info(f">>>Matched result is: {match_result}")
                 text_to_image = response_text.replace("\n", ". ").strip()
                 result_picture = await self.generate_picture_by_sdapi(
                     prompt=text_to_image, loraword=match_result

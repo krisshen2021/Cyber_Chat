@@ -2,7 +2,7 @@
 from fastapi import WebSocket,WebSocketDisconnect
 from typing import Dict, List, Union
 from contextlib import asynccontextmanager
-from modules.FormatedLogger import logger as logging
+from modules.colorlogger import logger
 class ChatUnit:
     def __init__(self,websocket:WebSocket,room:object=None) -> None:
         self.websocket = websocket
@@ -17,7 +17,7 @@ class ConnectionManager:
     async def connect(self, client_id:str, websocket: WebSocket):
         await websocket.accept()
         if client_id in self.active_connections:
-            logging.info("client has in the active connections")
+            logger.info("client has in the active connections")
             chat_unit = self.active_connections.get(client_id)
             chat_unit.websocket = websocket
         else:
@@ -78,7 +78,7 @@ class ConnectionManager:
         if chat_unit:
             chat_unit.room = room
         else:
-            logging.info(f"Client {client_id} does not exist.")
+            logger.info(f"Client {client_id} does not exist.")
             
     def get_room(self, client_id: str):
         chat_unit = self.active_connections.get(client_id)
@@ -88,4 +88,4 @@ class ConnectionManager:
             else:
                 return False
         else:
-            logging.info(f"Client {client_id} does not exist.")
+            logger.info(f"Client {client_id} does not exist.")

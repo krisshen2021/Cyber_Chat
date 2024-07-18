@@ -1,10 +1,10 @@
 from modules.global_sets_async import (
     database,
     sentiment_anlyzer,
-    logging,
     getGlobalConfig,
+    logger
 )
-import os, random, re, io, base64, yaml, copy, markdown, asyncio, aiofiles
+import os, random, re, io, base64, copy, markdown, asyncio
 from fastapimode.airole_creator_uncensor_websocket import airole
 from modules.TranslateAsync import AsyncTranslator
 from fastapimode.Generator_websocket import CoreGenerator
@@ -297,7 +297,7 @@ class chatRoom_unsensor:
         is_user=False,
         char_outfit=None,
     ):
-        logging.info(f">>>The window ratio[w/h]: {self.windowRatio}")
+        logger.info(f">>>The window ratio[w/h]: {self.windowRatio}")
         tabbyGen.image_payload["enable_hr"] = True
 
         if not is_user:
@@ -311,10 +311,10 @@ class chatRoom_unsensor:
             )
             tabbyGen.image_payload["steps"] = 30
             portraitprefix = "Upper body portrait, looking at the viewer"
-            logging.info(
+            logger.info(
                 f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             )
-            logging.info(">>>Generate Character Background\n")
+            logger.info(">>>Generate Character Background\n")
         elif is_user:
             tabbyGen.image_payload["hr_scale"] = 1.5
             tabbyGen.image_payload["width"] = 768 if self.windowRatio >= 1 else 512
@@ -325,10 +325,10 @@ class chatRoom_unsensor:
             )
             tabbyGen.image_payload["steps"] = 30
             portraitprefix = "Upper body portrait, looking at the viewer"
-            logging.info(
+            logger.info(
                 f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             )
-            logging.info(">>>Generate User Background\n")
+            logger.info(">>>Generate User Background\n")
 
         bkImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
@@ -368,7 +368,7 @@ class chatRoom_unsensor:
         tabbyGen.image_payload["height"] = 512
         tabbyGen.image_payload["steps"] = 30
         char_avatar = char_avatar.replace("<|emotion|>", emotion)
-        logging.info(">>>Generate avatar\n")
+        logger.info(">>>Generate avatar\n")
         avatarImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
             char_looks=char_avatar+", "+char_outfit_setting,
@@ -397,7 +397,7 @@ class chatRoom_unsensor:
             else usermsg
         )
         self.chathistory.append(f"{self.username}: {input_text}")
-        logging.info(">>> Generate Response:")
+        logger.info(">>> Generate Response:")
         instruct_template = self.create_instruct_template(self.ainame, self.username)
         prompt = "\n".join(self.chathistory)
         prompt = instruct_template.replace(r"<|prompt|>", prompt)
@@ -411,10 +411,10 @@ class chatRoom_unsensor:
                 self.chathistory.pop(1)
             prompt = "\n".join(self.chathistory)
             prompt = instruct_template.replace(r"<|prompt|>", prompt)
-        logging.info(
+        logger.info(
             f">>> The number tokens: {self.my_generate.count_token_numbers(prompt)} \n The limitation token is: {token_limition}"
         )
-        # logging.info(f'>>> The final prompt is :{prompt}') #test the prompt output
+        # logger.info(f'>>> The final prompt is :{prompt}') #test the prompt output
         # llm request
         self.my_generate.image_payload["width"] = 512 if self.windowRatio <= 1 else 768
         self.my_generate.image_payload["height"] = 768 if self.windowRatio <= 1 else 512
@@ -431,7 +431,7 @@ class chatRoom_unsensor:
         if result_text is None:
             result_text = "*Silent*"
 
-        logging.info(f">>> The Response:\n {result_text}")
+        logger.info(f">>> The Response:\n {result_text}")
 
         if picture:
             self.dynamic_picture = "data:image/png;base64," + picture
@@ -447,7 +447,7 @@ class chatRoom_unsensor:
         )
 
         tts_text_extracted = self.extract_text(result_text_cn)
-        logging.info(f">>> The TTS Text:\n {tts_text_extracted}")
+        logger.info(f">>> The TTS Text:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:
             if result_text != "*Silent*":
@@ -466,8 +466,7 @@ class chatRoom_unsensor:
                     .replace("POSITIVE", random.choice(positive_emotions))
                     .replace("NEGATIVE", random.choice(negative_emotions))
                 )
-                logging.info(f"The emotion is: {emotion_des}")
-                # emotion_des = emotion[0]["label"]
+                logger.info(f"The emotion is: {emotion_des}")
             else:
                 emotion_des = "none"
             # if emotion_des == "none":
@@ -476,26 +475,8 @@ class chatRoom_unsensor:
             # elif emotion_des == "happiness":
             #     self.speaker_tone = "cheerful"
             #     bulb.set_hsv(34, 100, 100)
-            # elif emotion_des == "anger":
-            #     self.speaker_tone = "sad"
-            #     bulb.set_hsv(12, 100, 100)
-            # elif emotion_des == "disgust":
-            #     self.speaker_tone = "disgruntled"
-            #     bulb.set_hsv(188, 100, 100)
-            # elif emotion_des == "fear":
-            #     self.speaker_tone = "fearful"
-            #     bulb.set_hsv(220, 100, 100)
-            # elif emotion_des == "like":
-            #     self.speaker_tone = "gentle"
-            #     bulb.set_hsv(313, 100, 100)
-            # elif emotion_des == "sadness":
-            #     self.speaker_tone = "depressed"
-            #     bulb.set_hsv(270, 100, 100)
-            # elif emotion_des == "surprise":
-            #     self.speaker_tone = "cheerful"
-            #     bulb.set_hsv(337, 100, 100)
         except Exception as e:
-            logging.info("Error get emotion: ", e)
+            logger.info("Error get emotion: ", e)
             emotion_des = "none"
 
         avatarimg_base64 = await self.gen_avatar(
@@ -509,13 +490,13 @@ class chatRoom_unsensor:
 
         self.ai_lastword = result_text
         self.chathistory.append(f"{self.ainame}: {result_text}")
-        # logging.info(f">>>chat history in server reply: \n{self.chathistory}")
+        # logger.info(f">>>chat history in server reply: \n{self.chathistory}")
 
         if self.is_chinese(tts_text_extracted):
             self.ai_speakers = self.ai_role.ai_speaker
         else:
             self.ai_speakers = self.ai_role.ai_speaker_en
-        logging.info(self.ai_speakers)
+        logger.info(self.ai_speakers)
         self.G_avatar_url = avatar_url
         self.G_ai_text = result_text_cn
         self.G_voice_text = tts_text_extracted
@@ -637,7 +618,7 @@ class chatRoom_unsensor:
                         .replace(r"{{char}}", self.ainame)
                     )
                     self.chathistory.append(f"{role}: {msgs}")
-                # logging.info(f">>> chat history after loaded is \n {self.chathistory}")
+                # logger.info(f">>> chat history after loaded is \n {self.chathistory}")
                 return self.loadedhistory
             else:
                 return False

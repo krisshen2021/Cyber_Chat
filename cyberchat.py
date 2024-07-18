@@ -5,7 +5,7 @@ from modules.global_sets_async import (
     getGlobalConfig,
     database,
     conn_ws_mgr,
-    logging,
+    logger,
     config_data,
     prompt_params,
 )
@@ -50,7 +50,7 @@ def generate_timestamp():
 async def send_status(messages, client_id, ws_server="status_from_server"):
     send_data = {"wsevent_server": ws_server, "data": {"message": messages}}
     await conn_ws_mgr.send_personal_message(client_id, send_data)
-    # logging.info(f"system status: {messages}")
+    # logger.info(f"system status: {messages}")
 
 
 async def send_datapackage(ws_server, datapackage, client_id):
@@ -201,7 +201,7 @@ async def client_signup(client_info, client_id):
             facelooks=facelooks,
         )
         if isinstance(data_op_result, str):
-            logging.info(data_op_result)
+            logger.info(data_op_result)
             send_data = {
                 "name": "signup_authorization",
                 "msg": {"status": "Fail", "data": data_op_result},
@@ -249,7 +249,7 @@ async def client_edit_profile(client_info, client_id):
             facelooks=facelooks,
         )
         if isinstance(data_op_result, str):
-            logging.info(data_op_result)
+            logger.info(data_op_result)
             send_data = {
                 "name": "edit_authorization",
                 "msg": {"status": "Fail", "data": data_op_result},
@@ -306,7 +306,7 @@ async def initialize_room(client_msg, client_id):
                 send_msg_websocket=send_status,
             ),
         )
-        logging.info(f"Cyber Chat Room created for: {ai_role_name} & {username}")
+        logger.info(f"Cyber Chat Room created for: {ai_role_name} & {username}")
         userCurrentRoom = conn_ws_mgr.get_room(client_id)
         userCurrentRoom.state["translate"] = True if transswitcher else False
 
@@ -342,7 +342,7 @@ async def restart_room(client_msg, client_id):
     userCurrentRoom.windowRatio = round(float(windowRatio), 2)
     await userCurrentRoom.serialize_data()
     user_ai_text = markdownText(userCurrentRoom.G_ai_text)
-    logging.info("chat has been reset")
+    logger.info("chat has been reset")
     data_to_send = {
         "message": user_ai_text,
         "voice_text": userCurrentRoom.G_voice_text,
@@ -513,7 +513,7 @@ async def xtts_audio_generate(client_msg, client_id):
     if audio_data:
         await send_datapackage("xtts_result", data_to_send, client_id)
     else:
-        logging.info("Failed to get audio data")
+        logger.info("Failed to get audio data")
 
 
 # preview avatar
@@ -526,7 +526,7 @@ async def preview_avatar(client_info, client_id):
         hair_style = f"({facelooks['hair_style']}:1.13)"
     ends = ", " if facelooks["beard"] != "" else ""
     facelooks_str = f"(One {facelooks['gender']}:1.15), {facelooks['race']}, {facelooks['age']}, {hair_style}, {facelooks['eye_color']}{ends}{facelooks['beard']}"
-    logging.info(facelooks_str)
+    logger.info(facelooks_str)
     prompt_str = (
         prompt_params["prmopt_fixed_prefix"]
         + ", (face portrait:1.12), "
@@ -543,14 +543,14 @@ async def preview_avatar(client_info, client_id):
     sd_payload["steps"] = 20
     sd_payload["width"] = 512
     sd_payload["height"] = 512
-    # logging.info(sd_payload)
+    # logger.info(sd_payload)
     avatar_data = await tabby_fastapi.SD_image(payload=sd_payload)
     if avatar_data:
         avatar_data_url = "data:image/png;base64," + avatar_data
         data_to_send = {"avatar_img": avatar_data_url, "avatar_for": avatar_for}
         await send_datapackage("preview_avatar_result", data_to_send, client_id)
     else:
-        logging.info("Failed to get avatar image")
+        logger.info("Failed to get avatar image")
 
 
 # preview createchar
@@ -564,7 +564,7 @@ async def preview_createchar(client_info, client_id):
         + ", "
         + prompt_params["prmopt_fixed_suffix"]
     )
-    logging.info(prompt_str)
+    logger.info(prompt_str)
     sd_payload["negative_prompt"] = prompt_params["nagetive_prompt"]
     sd_payload["hr_negative_prompt"] = prompt_params["nagetive_prompt"]
     sd_payload["hr_prompt"] = prompt_str
@@ -580,7 +580,7 @@ async def preview_createchar(client_info, client_id):
         data_to_send = {"result": picture_data_url, "task": task}
         await send_datapackage("preview_char_result", data_to_send, client_id)
     else:
-        logging.info("Failed to get char preview image")
+        logger.info("Failed to get char preview image")
 
 
 # create chars wizard
@@ -663,7 +663,7 @@ async def createchar_wizard(client_info, client_id):
             ).replace(r"<|user_prompt|>", result["userinstruct"])
         else:
             wizard_prompt = result["sysinstruct"] + "\n" + result["userinstruct"]
-        # logging.info(wizard_prompt)
+        # logger.info(wizard_prompt)
         temperature = 0.8 if task == "prologue" or task == "firstwords" else 0.5
         smoothing_factor = 0.55 if task == "prologue" or task == "firstwords" else 0.1
         max_tokens = 300 if task == "prologue" or task == "char_persona" else 150
@@ -713,17 +713,17 @@ async def createchar_wizard(client_info, client_id):
         )
         wizard_result = await tabby_fastapi.pure_inference(payloads=completions_data)
         wizard_result = wizard_result.strip()
-        # logging.info(wizard_result)
+        # logger.info(wizard_result)
         data_to_send = {"result": wizard_result, "task": task}
         await send_datapackage("createchar_wizard_result", data_to_send, client_id)
     else:
-        logging.info("Invalid task")
+        logger.info("Invalid task")
 
 
 # save created character
 async def client_save_character(client_info, client_id):
     createchar_data = client_info["data"]["createchar_data"]
-    logging.info(createchar_data)
+    logger.info(createchar_data)
     createchar_data["User_Persona"] = (
         f"Appearance: <|User_Looks|>\n{createchar_data['User_Persona']}"
     )
@@ -743,7 +743,7 @@ async def client_save_character(client_info, client_id):
     result = await ARO.create_role(createchar_data)
     if result[0]:
         msg_to_send = "success"
-        logging.info("save character successfuly")
+        logger.info("save character successfuly")
     else:
         msg_to_send = result[1]
     data_to_send = {"result": msg_to_send, "task": "after_char_saved"}
@@ -779,7 +779,7 @@ async def execute_function(event_name, *args, **kwargs):
     if func:
         await func(*args, **kwargs)
     else:
-        logging.info("No matched function")
+        logger.info("No matched function")
 
 
 # Websocket connection process
@@ -803,4 +803,4 @@ if __name__ == "__main__":
         ansiColor.color_print("Cyber Chat Ver 1.0 by muffin",ansiColor.BG_BRIGHT_MAGENTA, ansiColor.BOLD)
         uvicorn.run(app, host=host, port=port, access_log=False)   
     except KeyboardInterrupt:
-        logging.info("Server has been shut down.")
+        logger.info("Server has been shut down.")
