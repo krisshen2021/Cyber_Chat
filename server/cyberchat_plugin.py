@@ -1,4 +1,5 @@
-import httpx, pynvml, sys, os, tqdm, asyncio, json
+import httpx, pynvml, sys, asyncio, json
+from tqdm import tqdm
 from pathlib import Path
 
 project_root = str(Path(__file__).parents[1])
@@ -84,8 +85,8 @@ class SDPayload(BaseModel):
 
 
 class SDProcessPayload(BaseModel):
-    id_task: str = ("SD_task_id",)
-    id_live_preview: Optional[float] = (-1,)
+    id_task: str = "SD_task_id"
+    id_live_preview: Optional[float] = -1
     live_preview: Optional[bool] = True
 
 
@@ -136,6 +137,7 @@ class StableDiffusionAPI:
         progress_payload=None,
     ):
         async with httpx.AsyncClient() as client:
+            logger.info(f"Generate Image from {sd_api_url}, task_id: {progress_payload.get('id_task','Empty')}")
             self.pbar = tqdm(total=100, desc="Image processing")
             while True:
                 try:
@@ -158,7 +160,7 @@ class StableDiffusionAPI:
                         yield progress_info
                         self.pbar.close()
                         break
-                    self.pbar.update(0)
+                    self.pbar.refresh()
                     await asyncio.sleep(1)
                 except Exception as e:
                     logger.error(f"Error checking progress: {e}")
@@ -198,7 +200,6 @@ async def xtts_to_audio(payload: XTTSPayload):
 @router.post("/v1/SDapi")
 async def generate_image(payload: SDPayload, SD_URL: str = Header(None)):
     SD_URL = SD_URL.replace("/sdapi/v1/txt2img", "")
-    logger.info(f"Generate Image from {SD_URL}, task_id: {payload.force_task_id}")
     payload_dict = payload.model_dump()
     api_instance = StableDiffusionAPI()
     txt2img_result = await api_instance.send_txt2img_request(
@@ -207,28 +208,13 @@ async def generate_image(payload: SDPayload, SD_URL: str = Header(None)):
     return txt2img_result
 
 @router.post("/v1/check-progress")
-async def check_progress(payload: SDProcessPayload):
+async def check_progress(payload: SDProcessPayload, SD_URL:str = Header(None)):
     payload_dict = payload.model_dump()
     api_instance = StableDiffusionAPI()
     async def progress_generator():
-        async for progress_info in api_instance.check_progress(progress_payload=payload_dict):
+        async for progress_info in api_instance.check_progress(progress_payload=payload_dict, sd_api_url=SD_URL):
             yield json.dumps(progress_info) + "\n"
     return StreamingResponse(progress_generator(), media_type="application/x-ndjson")
-
-# @router.post("/v1/SDapi")
-# async def SD_api_generate(payload: SDPayload, SD_URL: str = Header(None)):
-#     payload_dict = payload.model_dump()
-#     print(f">>>Generate Image from {SD_URL}")
-#     try:
-#         async with httpx.AsyncClient() as client:
-#             response = await client.post(url=SD_URL, json=payload_dict, timeout=timeout)
-#             response.raise_for_status()
-#             response_data = response.json()
-#             return response_data
-#     except httpx.HTTPStatusError as http_err:
-#         print(f"HTTP error occurred: {http_err}")
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
 
 
 # SD model list

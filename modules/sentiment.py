@@ -5,10 +5,10 @@ from transformers import DistilBertTokenizer, DistilBertForSequenceClassificatio
 repo_id = "distilbert-base-uncased-finetuned-sst-2-english"
 locals_dir = "./config/sentimodel/"+repo_id
 revision = "main"
-snapshot_download(repo_id=repo_id, local_dir=locals_dir, revision=revision)
+# snapshot_download(repo_id=repo_id, local_dir=locals_dir, revision=revision)
 #load model and tokenizer
-tokenizer = DistilBertTokenizer.from_pretrained(repo_id)
-model = DistilBertForSequenceClassification.from_pretrained(repo_id)
+tokenizer = DistilBertTokenizer.from_pretrained(locals_dir)
+model = DistilBertForSequenceClassification.from_pretrained(locals_dir)
 
 class SentimentAnalyzer:
     @staticmethod

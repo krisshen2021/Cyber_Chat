@@ -196,23 +196,27 @@ class chatRoom_unsensor:
             {"name": "initialization", "msg": "Preparing A.I Role..."},
             self.conversation_id,
         )
+        logger.info("Generate Character Background")
         bgimg_base64 = await self.gen_bgImg(
             self.my_generate,
             self.state["char_looks"],
             self.state["env_setting"],
             char_outfit=self.state["char_outfit"],
+            task_flag="generate_background-ai",
         )
         self.bkImg = "data:image/png;base64," + bgimg_base64
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Preparing Your Role..."},
             self.conversation_id,
         )
+        logger.info("Generate User Background")
         bgimg_base64 = await self.gen_bgImg(
             self.my_generate,
             self.user_facelooks["prompt"],
             self.state["env_setting"],
-            False,
-            True,
+            is_save=False,
+            is_user=True,
+            task_flag="generate_background-user",
         )
         self.user_bkImg = "data:image/png;base64," + bgimg_base64
 
@@ -220,12 +224,14 @@ class chatRoom_unsensor:
             {"name": "initialization", "msg": "Generate A.I Avatar ..."},
             self.conversation_id,
         )
+        logger.info("Generate A.I Avatar")
         avatarimg_base64 = await self.gen_avatar(
             tabbyGen=self.my_generate,
             char_avatar=self.state["char_avatar"],
             emotion="smile",
             char_outfit=self.state["char_outfit"],
             is_save=True,
+            task_flag="generate_avatar-ai",
         )
         self.G_avatar_url = "data:image/png;base64," + avatarimg_base64
         await self.send_msg_websocket(
@@ -233,11 +239,13 @@ class chatRoom_unsensor:
             self.conversation_id,
         )
         userlooksprefix = ", Perfect face portrait, (close-up:0.8)"
+        logger.info("Generate User Avatar")
         avatarimg_base64 = await self.gen_avatar(
             tabbyGen=self.my_generate,
             char_avatar=self.user_facelooks["prompt"] + userlooksprefix,
             emotion="smile",
             is_save=False,
+            task_flag="generate_avatar-user",
         )
         self.G_userlooks_url = "data:image/png;base64," + avatarimg_base64
         return True
@@ -296,8 +304,9 @@ class chatRoom_unsensor:
         is_save=True,
         is_user=False,
         char_outfit=None,
+        task_flag=None,
     ):
-        logger.info(f">>>The window ratio[w/h]: {self.windowRatio}")
+        # logger.info(f">>>The window ratio[w/h]: {self.windowRatio}")
         tabbyGen.image_payload["enable_hr"] = True
 
         if not is_user:
@@ -311,10 +320,9 @@ class chatRoom_unsensor:
             )
             tabbyGen.image_payload["steps"] = 30
             portraitprefix = "Upper body portrait, looking at the viewer"
-            logger.info(
-                f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
-            )
-            logger.info(">>>Generate Character Background\n")
+            # logger.info(
+            #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
+            # )
         elif is_user:
             tabbyGen.image_payload["hr_scale"] = 1.5
             tabbyGen.image_payload["width"] = 768 if self.windowRatio >= 1 else 512
@@ -325,16 +333,17 @@ class chatRoom_unsensor:
             )
             tabbyGen.image_payload["steps"] = 30
             portraitprefix = "Upper body portrait, looking at the viewer"
-            logger.info(
-                f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
-            )
-            logger.info(">>>Generate User Background\n")
+            # logger.info(
+            #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
+            # )
+            
 
         bkImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
             char_looks=char_looks + ", " + portraitprefix,
             env_setting=bgImgstr,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
+            task_flag = task_flag
         )
         if is_save:
             img_path = os.path.join(
@@ -350,7 +359,7 @@ class chatRoom_unsensor:
         return bkImg
 
     async def gen_avatar(
-        self, tabbyGen, char_avatar, emotion:str="", char_outfit:dict={}, is_save=True
+        self, tabbyGen, char_avatar, emotion:str="", char_outfit:dict={}, task_flag=None, is_save=True
     ):
         env_setting = ",".join(
             (self.state.get("env_setting", "").split(",") + ["", ""])[:2]
@@ -364,16 +373,17 @@ class chatRoom_unsensor:
             char_outfit_setting = ""
         tabbyGen.image_payload["enable_hr"] = True
         tabbyGen.image_payload["hr_scale"] = 1.25
+        tabbyGen.image_payload["hr_second_pass_steps"] = 20
         tabbyGen.image_payload["width"] = 512
         tabbyGen.image_payload["height"] = 512
-        tabbyGen.image_payload["steps"] = 30
+        tabbyGen.image_payload["steps"] = 20
         char_avatar = char_avatar.replace("<|emotion|>", emotion)
-        logger.info(">>>Generate avatar\n")
         avatarImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
             char_looks=char_avatar+", "+char_outfit_setting,
             env_setting=env_setting,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
+            task_flag = task_flag
         )
 
         if is_save:
@@ -397,7 +407,7 @@ class chatRoom_unsensor:
             else usermsg
         )
         self.chathistory.append(f"{self.username}: {input_text}")
-        logger.info(">>> Generate Response:")
+        logger.info(f"Reply base on input text:\n{self.username}:{input_text}")
         instruct_template = self.create_instruct_template(self.ainame, self.username)
         prompt = "\n".join(self.chathistory)
         prompt = instruct_template.replace(r"<|prompt|>", prompt)
@@ -411,9 +421,9 @@ class chatRoom_unsensor:
                 self.chathistory.pop(1)
             prompt = "\n".join(self.chathistory)
             prompt = instruct_template.replace(r"<|prompt|>", prompt)
-        logger.info(
-            f">>> The number tokens: {self.my_generate.count_token_numbers(prompt)} \n The limitation token is: {token_limition}"
-        )
+        # logger.info(
+        #     f"The number tokens: {self.my_generate.count_token_numbers(prompt)} \n The limitation token is: {token_limition}"
+        # )
         # logger.info(f'>>> The final prompt is :{prompt}') #test the prompt output
         # llm request
         self.my_generate.image_payload["width"] = 512 if self.windowRatio <= 1 else 768
@@ -431,7 +441,7 @@ class chatRoom_unsensor:
         if result_text is None:
             result_text = "*Silent*"
 
-        logger.info(f">>> The Response:\n {result_text}")
+        logger.info(f"Raw Reply Content:\n {result_text}")
 
         if picture:
             self.dynamic_picture = "data:image/png;base64," + picture
@@ -446,18 +456,11 @@ class chatRoom_unsensor:
             else result_text
         )
 
-        tts_text_extracted = self.extract_text(result_text_cn)
-        logger.info(f">>> The TTS Text:\n {tts_text_extracted}")
+        tts_text_extracted = self.extract_text(result_text_cn).replace(r"\\n"," ")
+        logger.info(f"Extracted TTS:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:
             if result_text != "*Silent*":
-                # if result_text_cn != "":
-                # sentiment_text = (
-                #     result_text_cn
-                #     if self.state["translate"] is True
-                #     else await myTrans.translate_text("Simplified Chinese", result_text_cn, self.rephrase_template)
-                # )
-                # emotion = await self.async_sentiment_analysis(sentiment_text)
                 emotion_des = await self.sentiment_anlyzer.get_sentiment(result_text)
                 positive_emotions = ["joy", "surprise", "love", "fun"]
                 negative_emotions = ["sadness", "anger", "fear", "disgust"]
@@ -466,15 +469,9 @@ class chatRoom_unsensor:
                     .replace("POSITIVE", random.choice(positive_emotions))
                     .replace("NEGATIVE", random.choice(negative_emotions))
                 )
-                logger.info(f"The emotion is: {emotion_des}")
+                logger.info(f"{self.ainame}'s Emotion: {emotion_des}")
             else:
                 emotion_des = "none"
-            # if emotion_des == "none":
-            #     self.speaker_tone = "affectionate"
-            #     bulb.set_hsv(50, 100, 100)
-            # elif emotion_des == "happiness":
-            #     self.speaker_tone = "cheerful"
-            #     bulb.set_hsv(34, 100, 100)
         except Exception as e:
             logger.info("Error get emotion: ", e)
             emotion_des = "none"
@@ -485,6 +482,7 @@ class chatRoom_unsensor:
             emotion=emotion_des,
             char_outfit=self.state["char_outfit"],
             is_save=True,
+            task_flag="generate_live-CharacterAvatar"
         )
         avatar_url = "data:image/png;base64," + avatarimg_base64
 

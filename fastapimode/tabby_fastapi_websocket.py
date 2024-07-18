@@ -1,4 +1,5 @@
-import httpx, time, base64, json, asyncio
+import httpx, time, base64, json, asyncio, uuid
+from tqdm import tqdm
 from modules.global_sets_async import config_data, timeout, logger, getGlobalConfig
 from modules.payload_state import completions_data, model_load_data, sd_payload
 
@@ -268,10 +269,10 @@ class tabby_fastapi:
                     url=url, headers=headers, json=self.model_load_data, timeout=timeout
                 )
                 if response.status_code == 200:
-                    logger.info(f">>> Model Changed To: {name}")
+                    logger.info(f" Model Changed To: {name}")
                     return "Success"
                 else:
-                    logger.info(">>> Model Load Failed")
+                    logger.info(" Model Load Failed")
                     return "Fail"
             except Exception as e:
                 logger.info("Error on load model: ", e)
@@ -292,7 +293,7 @@ class tabby_fastapi:
                 model_list = []
                 for model_name in response:
                     model_list.append(model_name["model_name"])
-                logger.info(f">>> SD Model List: {model_list}")
+                # logger.info(f"SD Model List: {model_list}")
                 return model_list
         except Exception as e:
             logger.info("Error on get SD model list: ", e)
@@ -336,17 +337,60 @@ class tabby_fastapi:
         finally:
             return audio_data_base64
 
-    @staticmethod
+    @classmethod
     async def SD_image(
-        url: str = None, payload: dict = None, headers: dict = None, timeout=timeout
+        cls,
+        url: str = None,
+        payload: dict = None,
+        headers: dict = None,
+        timeout=timeout,
+        checkprocess: bool = True,
+        task_flag: str = None,
+        send_msg_websocket: callable = None,
+        client_id: str = None,
     ):
         if headers is None:
-            headers = {"SD-URL": f'{config_data["SDAPI_url"]}/sdapi/v1/txt2img'}
+            headers = {"SD-URL": f'{config_data["SDAPI_url"]}'}
         if url is None:
-            url = f'{config_data["openai_api_chat_base"]}/SDapi'
+            url = f'{config_data["openai_api_chat_base"]}'
         if payload is None:
             payload = sd_payload
+        process_payload = {"id_live_preview": -1, "live_preview": True}
+
+        if checkprocess:
+            task_id = str(uuid.uuid4())
+            txt2img_payload = {"force_task_id": task_id, **payload}
+            process_payload = {"id_task": task_id, **process_payload}
+            result, result_process = await asyncio.gather(
+                cls.SD_txt2img(
+                    url=url, payload=txt2img_payload, headers=headers, timeout=timeout
+                ),
+                cls.SD_process(
+                    url=url,
+                    payload=process_payload,
+                    headers=headers,
+                    task_flag=task_flag,
+                    timeout=timeout,
+                    send_msg_websocket=send_msg_websocket,
+                    client_id=client_id
+                ),
+            )
+        else:
+            result = await cls.SD_txt2img(
+                url=url, payload=payload, headers=headers, timeout=timeout
+            )
+        return result
+
+    @classmethod
+    async def SD_txt2img(
+        cls,
+        url: str = None,
+        payload: dict = None,
+        headers: dict = None,
+        timeout=timeout,
+    ):
         try:
+            url = url + "/SDapi"
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     url=url, json=payload, headers=headers, timeout=timeout
@@ -356,6 +400,74 @@ class tabby_fastapi:
                 return imgBase64
         except Exception as e:
             logger.info(f"Error to generate SD img: {e}")
+
+    @classmethod
+    async def SD_process(
+        cls,
+        url: str = None,
+        headers:dict = None,
+        payload: dict = None,
+        task_flag: str = None,
+        timeout=timeout,
+        send_msg_websocket: callable = None,
+        client_id: str = None,
+    ):
+        url = url + "/check-progress"
+        last_id_live_preview = -1
+        preview_img_base64 = None
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            try:
+                async with client.stream("POST", url=url, json=payload, headers=headers) as response:
+                    pbar = tqdm(total=100, desc=f"Generating Image")
+                    try:
+                        async for line in response.aiter_lines():
+                            if line is not None:
+                                progress_info = json.loads(line)
+                                if progress_info is not None:
+                                    percentage = int(
+                                        progress_info.get("progress", 0) * 100
+                                    )
+                                    pbar.n = percentage
+                                    pbar.refresh()
+                                    current_id_live_preview = progress_info.get(
+                                        "id_live_preview", -1
+                                    )
+                                    if current_id_live_preview != -1:
+                                        if (
+                                            progress_info.get("live_preview")
+                                            is not None
+                                            and current_id_live_preview
+                                            != last_id_live_preview
+                                        ):
+                                            uri = progress_info.get("live_preview")
+                                            preview_img_base64 = uri  # .split(",")[1]　if only need base64 <data>
+                                            last_id_live_preview = (
+                                                current_id_live_preview
+                                            )
+
+                                    if (
+                                        send_msg_websocket is not None
+                                        and client_id is not None
+                                    ):
+                                        msgpack = {
+                                            "event": "SD_Process_status",
+                                            "percentage": percentage,
+                                            "task_flag": task_flag,
+                                            "preview_img_base64": preview_img_base64 or "empty",
+                                        }
+                                        await send_msg_websocket(
+                                            {"name": "SD_generation", "msg": msgpack},
+                                            client_id,
+                                        )
+                                if progress_info.get("completed", False):
+                                    pbar.close()
+                                    return True
+                    except Exception as e:
+                        print(f"Error processing progress stream: {e}")
+                        return None
+            except Exception as e:
+                logger.error(f"Error on SD process: {e}")
+                return None
 
     @staticmethod
     def remove_extra_punctuation(text):

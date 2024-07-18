@@ -13,7 +13,6 @@ from modules.payload_state import completions_data
 
 dir_path = project_root
 
-
 # get models
 async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key: str):
     headers = {
@@ -36,9 +35,10 @@ async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key
             else:
                 logger.info(f"请求失败，状态码：{response.status_code}")
     except Exception as e:
-        logger.info(
-            f"Error to get model from {api_base}, \nPlease set up the {model_type} model address in config.yml before chatting"
-        )
+        pass
+        # logger.info(
+        #     f"Error to get model from {api_base}, \nPlease set up the {model_type} model address in config.yml before chatting"
+        # )
     finally:
         return model_name
 
@@ -103,15 +103,15 @@ class CoreGenerator:
             conversation_id=self.conversation_id,
             send_msg_websocket=self.send_msg_websocket,
         )
-        self.chat_model = await get_model_name(
-            self.state["openai_api_chat_base"], "Chat", self.api_key, self.admin_key
-        )
-        self.rephase_model = await get_model_name(
-            self.state["openai_api_rephase_base"],
-            "Rephase",
-            self.api_key,
-            self.admin_key,
-        )
+        # self.chat_model = await get_model_name(
+        #     self.state["openai_api_chat_base"], "Chat", self.api_key, self.admin_key
+        # )
+        # self.rephase_model = await get_model_name(
+        #     self.state["openai_api_rephase_base"],
+        #     "Rephase",
+        #     self.api_key,
+        #     self.admin_key,
+        # )
         self.vocabulary, self.resultslist, self.lora, self.summary_prompt = (
             await load_vocabulary(self.state["match_words_cata"])
         )
@@ -122,9 +122,9 @@ class CoreGenerator:
         self.restruct_prompt = self.restruct_prompt.replace(
             "<|default_bg|>", self.state["env_setting"]
         )
-        logger.info(
-            f"Chat model: {self.chat_model} | Rephase model: {self.rephase_model}"
-        )
+        # logger.info(
+        #     f"Chat model: {self.chat_model} | Rephase model: {self.rephase_model}"
+        # )
 
     def get_rephrase_template(self):
         chat_template_name = self.state["prompt_template"].split("_")
@@ -225,6 +225,8 @@ class CoreGenerator:
         env_setting="",
         prompt_suffix="",
         lora_prompt="",
+        show_prompt:bool = False,
+        task_flag = None
     ):
 
         if prompt_prefix != "":
@@ -241,7 +243,8 @@ class CoreGenerator:
             lora_prompt = f"{lora_prompt}, "
 
         prompt_api = f"{prompt_prefix}{char_looks}{prompt_main}{env_setting}{lora_prompt}{prompt_suffix}"
-        logger.info(f"The SD prompt: \n {prompt_api}")
+        if show_prompt:
+            logger.info(f"The SD prompt: \n {prompt_api}")
         payload = {
             "hr_negative_prompt": self.nagetive_prompt,
             "hr_prompt": prompt_api,
@@ -268,7 +271,7 @@ class CoreGenerator:
                 "override_settings_restore_afterwards"
             ],
         }
-        imgBase64 = await self.tabby_server.SD_image(payload=payload)
+        imgBase64 = await self.tabby_server.SD_image(payload=payload, task_flag = task_flag, send_msg_websocket=self.send_msg_websocket, client_id=self.conversation_id)
         return imgBase64
 
     # Process if trigger key words
@@ -287,13 +290,14 @@ class CoreGenerator:
                 {"name": "chatreply", "msg": "Generating Scene Image"},
                 self.conversation_id,
             )
-        logger.info(">>>Generate Dynamic Picture\n")
+        logger.info("Generate Dynamic Picture")
         image = await self.generate_image(
             prompt_prefix=self.prmopt_fixed_prefix,
             char_looks=char_looks,
             prompt_main=prompt,
             prompt_suffix=self.prmopt_fixed_suffix,
             lora_prompt=lora_prompt,
+            task_flag="generate_live-DynamicPicture"
         )
         return image
 
@@ -315,14 +319,14 @@ class CoreGenerator:
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )
-            logger.info(f">>>The rephrased result is {response}")
+            logger.info(f"Rephrased Result: {response}")
 
             is_word_triggered, match_result = contains_vocabulary(
                 response, self.resultslist
             )
 
             if is_word_triggered:
-                logger.info(f">>>Matched result is: {match_result}")
+                logger.info(f"Matched Result: {match_result}")
                 text_to_image = response_text.replace("\n", ". ").strip()
                 result_picture = await self.generate_picture_by_sdapi(
                     prompt=text_to_image, loraword=match_result
