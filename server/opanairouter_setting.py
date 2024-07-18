@@ -45,6 +45,7 @@ def display_models(models, page, items_per_page=10):
     )
 
 def select_model():
+    # TODO ask user to decide if use openairouter or keep setting in config file, or input a api name to use other remote api
     if not config_data['using_remoteapi'] or config_data['remoteapi_endpoint']!='openairouter':
         return "openai/gpt-3.5-turbo"
     openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)

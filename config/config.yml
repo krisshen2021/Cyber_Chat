@@ -10,8 +10,8 @@ remoteapi_endpoint: openairouter
 ### SD settings
 SDAPI_url: http://127.0.0.1:7860
 hr_upscaler: Latent (nearest)
-sampler_name: DPM++ 2M SDE
-sd_model_checkpoint: astranime_V6
+sampler_name: DPM++ 2M
+sd_model_checkpoint: duchaitenPonyXLNo_ponyNoScoreV40
 
 ### server settings
 debug_mode: true
