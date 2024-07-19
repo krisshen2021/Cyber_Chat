@@ -193,7 +193,7 @@ class chatRoom_unsensor:
 
     async def create_envart(self):
         await self.send_msg_websocket(
-            {"name": "initialization", "msg": "Preparing A.I Role..."},
+            {"name": "initialization", "msg": "Preparing A.I Role"},
             self.conversation_id,
         )
         logger.info("Generate Character Background")
@@ -206,7 +206,7 @@ class chatRoom_unsensor:
         )
         self.bkImg = "data:image/png;base64," + bgimg_base64
         await self.send_msg_websocket(
-            {"name": "initialization", "msg": "Preparing Your Role..."},
+            {"name": "initialization", "msg": "Preparing Your Role"},
             self.conversation_id,
         )
         logger.info("Generate User Background")
@@ -221,7 +221,7 @@ class chatRoom_unsensor:
         self.user_bkImg = "data:image/png;base64," + bgimg_base64
 
         await self.send_msg_websocket(
-            {"name": "initialization", "msg": "Generate A.I Avatar ..."},
+            {"name": "initialization", "msg": "Generate A.I Avatar"},
             self.conversation_id,
         )
         logger.info("Generate A.I Avatar")
@@ -235,7 +235,7 @@ class chatRoom_unsensor:
         )
         self.G_avatar_url = "data:image/png;base64," + avatarimg_base64
         await self.send_msg_websocket(
-            {"name": "initialization", "msg": "Generate Your Avatar..."},
+            {"name": "initialization", "msg": "Generate Your Avatar"},
             self.conversation_id,
         )
         userlooksprefix = ", Perfect face portrait, (close-up:0.8)"

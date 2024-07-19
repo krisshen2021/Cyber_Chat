@@ -60,11 +60,11 @@
 
     var suggestions = JSON.parse('{{ suggestions | tojson | safe }}');
     for (var key in suggestions) {
-        if (suggestions[key].hasOwnProperty('svg')) {
-            var svg_data = suggestions[key].svg;
-            var decoded_svg = atob(svg_data);
-            suggestions[key].svg = decoded_svg;
-        }
+      if (suggestions[key].hasOwnProperty('svg')) {
+        var svg_data = suggestions[key].svg;
+        var decoded_svg = atob(svg_data);
+        suggestions[key].svg = decoded_svg;
+      }
     }
 
     function wsData(wsevent, querydata) {
@@ -141,7 +141,7 @@
       }
     }
 
-/* Display Mode Switcher Functions */
+    /* Display Mode Switcher Functions */
     function resizeComicLayout() {
       let windowSize = getWindowSize();
       let ratio = windowSize.ratio;
@@ -364,7 +364,7 @@
     }
 
 
-/*Major add message processer*/
+    /*Major add message processer*/
     function add_msg({
       message_input = '',
       avatar_url = '',
@@ -421,7 +421,7 @@
         let $msgNormal = $('#msg_container').clone();
         $msgNormal.removeAttr('id');
         $msgNormal.addClass('msg-container-clone');
-        if (from == 'client'){
+        if (from == 'client') {
           $msgNormal.addClass('userMsg');
         }
         $msgNormal.find('.message').html(combinedMessage);
@@ -490,16 +490,16 @@
         $lastMsg.find('.message').html(combinedMessage);
 
         //find code block
-        $lastMsg.on("click", ".codePreDiv", function() {
+        $lastMsg.on("click", ".codePreDiv", function () {
           copyCode(this);
-          
+
         });
 
         //find dynamic pic handlers
-        $lastMsg.on("click", ".dynaPicControl", function() {
+        $lastMsg.on("click", ".dynaPicControl", function () {
           hideDynaPic(this);
         });
-        $lastMsg.on("click", ".dynamicPic", function() {
+        $lastMsg.on("click", ".dynamicPic", function () {
           preDynaPic(this);
         });
 
@@ -649,7 +649,7 @@
       }
     }
 
-/* Chatting functions */
+    /* Chatting functions */
 
     function resetChat() {
       toggleInputs(false);
@@ -890,6 +890,7 @@
             .find('.overlay-content')
             .find('.loadingText')
             .html(msg['msg']);
+          $('.loadingText_Percentage').html(' : 0%')
           gsap.from($('#overLayer').find('.overlay-content'), {
             duration: 1,
             scale: 0.7,
@@ -903,11 +904,25 @@
             .find('.overlay-content')
             .find('.loadingText')
             .html('');
+          $('.loadingText_Percentage').html(' : 0%')
           $('#holder_box').fadeIn(500);
           $('#holder_box').css('display', 'flex');
           if ($('#comicMode').is(':checked')) {
             $('.comic_msg_holder_char').css('display', 'flex');
           }
+        }
+      }
+      if (msg['name'] == 'SD_generation') {
+        if (msg.msg.event == 'SD_Process_status') {
+          if (msg.msg.task_flag.startsWith('generate_background') || msg.msg.task_flag.startsWith('generate_avatar')) {
+            $('.loadingText_Percentage').html(" : " + String(msg.msg.percentage) + "%")
+          } else if (msg.msg.task_flag.startsWith('generate_live')) {
+            if(msg.msg.task_flag=='generate_live-DynamicPicture'){
+              console.log('DynamicPicture : '+String(msg.msg.percentage)+'%')
+            }
+
+          }
+
         }
       }
       if (msg['name'] == 'chatreply') {
@@ -1054,7 +1069,7 @@
         from: 'server',
       });
     }
-    
+
     /* Send msg to server : msg from 'client' */
     function sendmsgtoserver(msg_to_send, command_flag, prompt_flag) {
       toggleInputs(false);
@@ -1161,7 +1176,7 @@
         highlight: 'highlight',
         itemName: 'item_name',
         sugDesc: 'sug_desc',
-        highlight_svg:'highlight_svg'
+        highlight_svg: 'highlight_svg'
       };
       const commandInputHandler = new CommandInputHandler(
         suggestions,
@@ -1418,6 +1433,7 @@
   </script>
 </head>
 <!--HTML BODY CODE-->
+
 <body>
   <div class="flexPage">
     <div class="comic-area">
@@ -1571,6 +1587,7 @@
           </svg>
         </div>
         <div class="loadingText"></div>
+        <div class="loadingText_Percentage"></div>
       </div>
       <div class="overlay-dynpic">
         <div id="closePreview">Close Preview</div>

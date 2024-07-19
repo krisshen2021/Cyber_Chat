@@ -892,9 +892,13 @@ body {
 .loadingText {
   font-weight: 500;
   font-size: 1.1rem;
-  margin-right: 1.1rem;
+  /* margin-right: 1.1rem; */
 }
-
+.loadingText_Percentage {
+  font-weight: 500;
+  font-size: 1.1rem;
+  margin-right: 1.1rem
+}
 ::-webkit-scrollbar-track {
   display: none;
 }
