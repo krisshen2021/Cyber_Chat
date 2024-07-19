@@ -1,8 +1,10 @@
 import httpx, time, base64, json, asyncio, uuid
 from tqdm import tqdm
+from modules.tqdm_barformat import Pbar
 from modules.global_sets_async import config_data, timeout, logger, getGlobalConfig
 from modules.payload_state import completions_data, model_load_data, sd_payload
 
+COLORBAR = Pbar.setBar(Pbar.BarColorer.CYAN, Pbar.BarColorer.MAGENTA, Pbar.BarColorer.CYAN)
 
 class tabby_fastapi:
     """
@@ -418,7 +420,7 @@ class tabby_fastapi:
         async with httpx.AsyncClient(timeout=timeout) as client:
             try:
                 async with client.stream("POST", url=url, json=payload, headers=headers) as response:
-                    pbar = tqdm(total=100, desc=f"Generating Image")
+                    pbar = tqdm(range(100), desc=f"Generating Image", bar_format=COLORBAR)
                     try:
                         async for line in response.aiter_lines():
                             if line is not None:

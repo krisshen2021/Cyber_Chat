@@ -15,6 +15,7 @@ from sd_setting import update_SDAPI_config
 from opanairouter_setting import select_model
 from modules.colorlogger import logger
 from modules.ANSI_tool import ansiColor
+from modules.tqdm_barformat import Pbar
 from remote_api_hub import (
     ChatMessage,
     cohere_stream,
@@ -53,7 +54,7 @@ update_SDAPI_config()
 openairouter_model = select_model()
 
 ansiColor.color_print("Remote Server Started\nWaiting for connection...", ansiColor.BG_BRIGHT_MAGENTA+ansiColor.WHITE, ansiColor.BOLD)
-
+COLORBAR = Pbar.setBar(Pbar.BarColorer.GREEN,Pbar.BarColorer.YELLOW,Pbar.BarColorer.GREEN)
 
 class OverrideSettings(BaseModel):
     sd_vae: Optional[str] = "Automatic"
@@ -138,7 +139,7 @@ class StableDiffusionAPI:
     ):
         async with httpx.AsyncClient() as client:
             logger.info(f"Generate Image from {sd_api_url}, task_id: {progress_payload.get('id_task','Empty')}")
-            self.pbar = tqdm(total=100, desc="Image processing")
+            self.pbar = tqdm(range(100), desc="Generating Image", bar_format=COLORBAR)
             while True:
                 try:
                     response = await client.post(
