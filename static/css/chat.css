@@ -829,7 +829,10 @@ body {
 .genImgDiv > svg {
   margin-right: 6px;
 }
-
+.genImgDiv_progress{
+  color:#a566fc;
+  font-weight:600
+}
 .overlay {
   position: fixed;
   top: 0;

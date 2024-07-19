@@ -915,14 +915,25 @@
       if (msg['name'] == 'SD_generation') {
         if (msg.msg.event == 'SD_Process_status') {
           if (msg.msg.task_flag.startsWith('generate_background') || msg.msg.task_flag.startsWith('generate_avatar')) {
-            $('.loadingText_Percentage').html(" : " + String(msg.msg.percentage) + "%")
+            $('.loadingText_Percentage').html(": " + String(msg.msg.percentage) + "%")
           } else if (msg.msg.task_flag.startsWith('generate_live')) {
             if(msg.msg.task_flag=='generate_live-DynamicPicture'){
-              console.log('DynamicPicture : '+String(msg.msg.percentage)+'%')
+              let percentage_str = String(msg.msg.percentage)+'%'
+              // console.log('DynamicPicture : '+String(msg.msg.percentage)+'%')   
+              let $lastmsg = $('#message_box')
+                .find('.msg-container-clone')
+                .last()
+                .find('.message');
+              $lastmsg.find('.genImgDiv_title').html('Progress:')  
+              $lastmsg.find('.genImgDiv_progress').html(percentage_str)
+              let $lastmsg_comic = $('#msg_box_comic_char')
+                .find('.msg-container-clone')
+                .last()
+                .find('.message-comic');
+              $lastmsg_comic.find('.genImgDiv_title').html('Progress:')  
+              $lastmsg_comic.find('.genImgDiv_progress').html(percentage_str)
             }
-
           }
-
         }
       }
       if (msg['name'] == 'chatreply') {
@@ -946,9 +957,9 @@
           $lastmsg.append(
             "<div class='genImgDiv'>" +
             imgSvg +
-            '<span>' +
+            '<span class="genImgDiv_title">' +
             msg['msg'] +
-            '</span></div>',
+            '</span><span class="genImgDiv_progress"></span></div>',
           );
           let $lastmsg_comic = $('#msg_box_comic_char')
             .find('.msg-container-clone')
@@ -957,9 +968,9 @@
           $lastmsg_comic.append(
             "<div class='genImgDiv'>" +
             imgSvg +
-            '<span>' +
+            '<span class="genImgDiv_title">' +
             msg['msg'] +
-            '</span></div>',
+            '</span><span class="genImgDiv_progress"></span></div>',
           );
           updateScroll();
         }

@@ -313,12 +313,12 @@ class chatRoom_unsensor:
             if char_outfit is not None:
                 char_looks = f"{char_looks},{char_outfit['normal']}"
 
-            tabbyGen.image_payload["hr_scale"] = 2
+            tabbyGen.image_payload["hr_scale"] = 1.5
             tabbyGen.image_payload["width"] = 1024 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload["height"] = int(
                 tabbyGen.image_payload["width"] / self.windowRatio
             )
-            tabbyGen.image_payload["steps"] = 30
+            tabbyGen.image_payload["steps"] = 40
             portraitprefix = "Upper body portrait, looking at the viewer"
             # logger.info(
             #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
@@ -331,7 +331,7 @@ class chatRoom_unsensor:
                 if self.windowRatio >= 1
                 else int((tabbyGen.image_payload["width"] / self.windowRatio) * 0.5)
             )
-            tabbyGen.image_payload["steps"] = 30
+            tabbyGen.image_payload["steps"] = 20
             portraitprefix = "Upper body portrait, looking at the viewer"
             # logger.info(
             #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
@@ -372,8 +372,8 @@ class chatRoom_unsensor:
         if not char_outfit_setting.strip(","):
             char_outfit_setting = ""
         tabbyGen.image_payload["enable_hr"] = True
-        tabbyGen.image_payload["hr_scale"] = 1.25
-        tabbyGen.image_payload["hr_second_pass_steps"] = 20
+        tabbyGen.image_payload["hr_scale"] = 1.2
+        tabbyGen.image_payload["hr_second_pass_steps"] = 10
         tabbyGen.image_payload["width"] = 512
         tabbyGen.image_payload["height"] = 512
         tabbyGen.image_payload["steps"] = 20
