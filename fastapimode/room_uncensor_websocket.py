@@ -319,7 +319,7 @@ class chatRoom_unsensor:
                 tabbyGen.image_payload["width"] / self.windowRatio
             )
             tabbyGen.image_payload["steps"] = 40
-            portraitprefix = "Upper body portrait, looking at the viewer"
+            portraitprefix = "(half body portrait:1.27), looking at the viewer"
             # logger.info(
             #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             # )
