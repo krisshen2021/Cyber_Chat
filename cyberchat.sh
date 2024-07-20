@@ -19,7 +19,7 @@ tmux send-keys -t cyberchat "cd $SCRIPT_DIR && source venv/bin/activate && pytho
 
 # 创建垂直分割的第二个窗格，激活虚拟环境并运行 server/remote_server.py
 tmux split-window -h -t cyberchat
-tmux send-keys -t cyberchat "cd $SCRIPT_DIR && source venv/bin/activate && python server/remote_server.py" C-m
+tmux send-keys -t cyberchat "cd $SCRIPT_DIR && source venv/bin/activate && python server/start_server.py" C-m
 
 # 选择左侧窗格
 tmux select-pane -t cyberchat:0.0
