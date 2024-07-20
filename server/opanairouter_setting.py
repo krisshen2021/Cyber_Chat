@@ -6,7 +6,7 @@ project_root = str(Path(__file__).parents[1])
 if project_root not in sys.path:
     sys.path.append(project_root)
 from modules.ANSI_tool import ansiColor
-from modules.colorlogger import logger
+from clear_screen import clear_screen
 from remote_api_hub import openairouter_sync_client
 config_path = os.path.join(project_root, 'config', 'config.yml')
 with open(config_path, 'r') as file:
@@ -21,12 +21,6 @@ BOLD = ansiColor.BOLD
 YELLOW = ansiColor.YELLOW
 
 timeout = Timeout(180.0)
-def clear_screen():
-    # 针对不同操作系统的清屏命令
-    if os.name == "nt":  # Windows
-        _ = os.system("cls")
-    else:  # Mac and Linux
-        _ = os.system("clear")
 
 
 def display_models(models, page, items_per_page=10):

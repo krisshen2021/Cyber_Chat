@@ -4,6 +4,7 @@ from pathlib import Path
 project_root = str(Path(__file__).parents[1])
 if project_root not in sys.path:
     sys.path.append(project_root)
+from clear_screen import clear_screen
 from modules.ANSI_tool import ansiColor
 
 RED = ansiColor.RED
@@ -18,9 +19,7 @@ yaml.indent(mapping=2, sequence=4, offset=2)  # 设置缩进
 yaml.width = 4096  # 设置很大的行宽，防止自动换行
 yaml.preserve_comments = True  # 保留注释
 
-def clear_screen():
-    # 跨平台清屏
-    os.system('cls' if os.name == 'nt' else 'clear')
+
     
 def get_valid_url():
     while True:

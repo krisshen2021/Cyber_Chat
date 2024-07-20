@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sd_setting import update_SDAPI_config
 from opanairouter_setting import select_model
+from tts_setting import select_endpoint
 from modules.colorlogger import logger
 from modules.ANSI_tool import ansiColor
 from modules.tqdm_barformat import Pbar
@@ -52,7 +53,8 @@ timeout = Timeout(180.0)
 update_SDAPI_config()
 ### Openairouter selector
 openairouter_model = select_model()
-restapi_tts_name = "unrealspeech"
+
+restapi_tts = select_endpoint()
 
 ansiColor.color_print("Remote Server Started\nWaiting for connection...", ansiColor.BG_BRIGHT_MAGENTA+ansiColor.WHITE, ansiColor.BOLD)
 COLORBAR = Pbar.setBar(Pbar.BarColorer.GREEN,Pbar.BarColorer.YELLOW,Pbar.BarColorer.GREEN)
@@ -176,34 +178,14 @@ router = APIRouter(tags=["cyberchat"])
 # Openai like tts to audio
 @router.post("/v1/tts_remote")
 async def remotetts_to_audio(payload:RestAPI_TTSPayload):
-    if restapi_tts_name == 'unrealspeech':
-        server_url = "https://api.v7.unrealspeech.com/stream"
-        payload_tts = {
-        "Text": payload.text,
-        "VoiceId": "Liv",
-        "Bitrate": "192k",
-        "Speed": "0",
-        "Pitch": "1.08",
-        "Codec": "pcm_s16le", #"pcm_s16le" for WAV format, "libmp3lame" for MP3 format
-        "Temperature": 0.45
-        }
-        headers = {
-            "accept": "audio/wav",
-            "content-type": "application/json",
-            "Authorization": "Bearer M5lKo7JuVatOdDKF9S5QcSQ8gwgprqC9ybHAQyEDa8ywHGzqaxYeBU"
-            }
-    elif restapi_tts_name == 'openai':
-        server_url = "https://api.xiaoai.plus/v1/audio/speech"
-        payload_tts = {
-        "model": "tts-1",
-        "input": payload.text,
-        "voice": "nova",
-        "response_format": "wav"
-        }
-        headers = {
-            "content-type": "application/json",
-            "Authorization": "Bearer sk-yyIczakTyMxDpzfi8a429dEe009f4bE19c4cBdB6B70c088b"
-        }
+    server_url = restapi_tts.get("server_url")
+    headers = restapi_tts.get("headers")
+    payload_tts = restapi_tts.get("payload_tts")
+    endpoint_name = restapi_tts.get("name")
+    if endpoint_name == 'unrealspeech':
+        payload_tts["Text"] = payload.text
+    elif endpoint_name == 'openai':
+        payload_tts["input"] = payload.text
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -304,7 +286,6 @@ async def get_gpu_info():
 # remote api endpoint
 @router.post("/v1/remoteapi/{ai_type}")
 async def remote_ai_stream(ai_type: str, params_json: dict):
-    # print(params_json)
     if ai_type == "cohere":
         keys_to_keep = [
             "system_prompt",
@@ -586,7 +567,7 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
             if isinstance(openairouter_dict["stop"], list):
                 if len(openairouter_dict["stop"]) > 4:
                     openairouter_dict["stop"] = openairouter_dict["stop"][-4:]
-                    logger.info(f"openairouter stop: {openairouter_dict['stop']}")
+                    # logger.info(f"openairouter stop: {openairouter_dict['stop']}")
         openairouter_dict["messages"] = [
             ChatMessage(role="user", content=openairouter_dict["messages"]),
         ]
