@@ -504,7 +504,12 @@ async def xtts_audio_generate(client_msg, client_id):
     speaker_wav = client_msg["data"]["speaker_wav"]
     language = client_msg["data"]["language"]
     voice_uid = client_msg["data"]["voice_uid"]
-    url = config_data["openai_api_chat_base"] + "/xtts"
+    remote_api = await getGlobalConfig('config_data')
+    if remote_api.get("using_remoteapi"):
+        endpoint = "/tts_remote"
+    else:
+        endpoint = "/xtts"
+    url = config_data["openai_api_chat_base"] + endpoint
     server_url = config_data["xtts_api_base"]
     audio_data = await tabby_fastapi.xtts_audio(
         url, text, speaker_wav, language, server_url

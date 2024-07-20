@@ -456,7 +456,7 @@ class chatRoom_unsensor:
             else result_text
         )
 
-        tts_text_extracted = self.extract_text(result_text_cn).replace(r"\\n"," ")
+        tts_text_extracted = self.extract_text(result_text_cn).replace(r"\\n"," ").strip()
         logger.info(f"Extracted TTS:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:

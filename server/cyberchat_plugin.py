@@ -52,6 +52,7 @@ timeout = Timeout(180.0)
 update_SDAPI_config()
 ### Openairouter selector
 openairouter_model = select_model()
+restapi_tts_name = "unrealspeech"
 
 ansiColor.color_print("Remote Server Started\nWaiting for connection...", ansiColor.BG_BRIGHT_MAGENTA+ansiColor.WHITE, ansiColor.BOLD)
 COLORBAR = Pbar.setBar(Pbar.BarColorer.GREEN,Pbar.BarColorer.YELLOW,Pbar.BarColorer.GREEN)
@@ -101,7 +102,10 @@ class XTTSPayload(BaseModel):
     speaker_wav: Optional[str] = "en_female_01"
     language: Optional[str] = "en"
     server_url: Optional[str] = "http://127.0.0.1:8020/tts_to_audio/"
-
+    
+class RestAPI_TTSPayload(BaseModel):
+    text: Optional[str] = None
+    
 
 sd_api_url = "http://127.0.0.1:7860"
 api_txt2img_path = "/sdapi/v1/txt2img"
@@ -169,7 +173,53 @@ class StableDiffusionAPI:
 
 router = APIRouter(tags=["cyberchat"])
 
-
+# Openai like tts to audio
+@router.post("/v1/tts_remote")
+async def remotetts_to_audio(payload:RestAPI_TTSPayload):
+    if restapi_tts_name == 'unrealspeech':
+        server_url = "https://api.v7.unrealspeech.com/stream"
+        payload_tts = {
+        "Text": payload.text,
+        "VoiceId": "Liv",
+        "Bitrate": "192k",
+        "Speed": "0",
+        "Pitch": "1.08",
+        "Codec": "pcm_s16le", #"pcm_s16le" for WAV format, "libmp3lame" for MP3 format
+        "Temperature": 0.45
+        }
+        headers = {
+            "accept": "audio/wav",
+            "content-type": "application/json",
+            "Authorization": "Bearer M5lKo7JuVatOdDKF9S5QcSQ8gwgprqC9ybHAQyEDa8ywHGzqaxYeBU"
+            }
+    elif restapi_tts_name == 'openai':
+        server_url = "https://api.xiaoai.plus/v1/audio/speech"
+        payload_tts = {
+        "model": "tts-1",
+        "input": payload.text,
+        "voice": "nova",
+        "response_format": "wav"
+        }
+        headers = {
+            "content-type": "application/json",
+            "Authorization": "Bearer sk-yyIczakTyMxDpzfi8a429dEe009f4bE19c4cBdB6B70c088b"
+        }
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                server_url, json=payload_tts, headers=headers, timeout=timeout
+            )
+            if response.status_code == 200:
+                audio_data = BytesIO(response.content)
+                audio_data.seek(0)
+                return StreamingResponse(
+                    audio_data,
+                    media_type="audio/wav",
+                    headers={"Content-Disposition": "attachment; filename=output.wav"},
+                )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 # XTTS tts to audio
 @router.post("/v1/xtts")
 async def xtts_to_audio(payload: XTTSPayload):
