@@ -24,7 +24,8 @@
   <script type="module" charset="utf-8">
     import { msTTS } from '/static/js/tts.js';
     const msttser = new msTTS();
-    import CommandInputHandler from '/static/js/input_control.js';
+    import { CommandInputHandler } from '/static/js/input_control.js';
+    import { AudioRecorder } from '/static/js/AudioRecorder.js';
     marked.use({
       mangle: false,
       headerIds: false,
@@ -57,6 +58,7 @@
     var holdbox_origin_height;
     var streamingBuffer = [];
     var prompt_variable_str;
+    var micstate = true;
 
     var suggestions = JSON.parse('{{ suggestions | tojson | safe }}');
     for (var key in suggestions) {
@@ -281,6 +283,16 @@
       } else {
         console.error('Audio data is not available.');
       }
+    }
+    function transcript_audio_result(msg) {
+      console.log(msg);
+      const transcripted_text = msg.data['transcripted_text'];
+      console.log(transcripted_text);
+      $("#messageToSend").focus().val(transcripted_text);
+      $("#submit").trigger("click");
+      let svgicon_normal = `<svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff" stroke-width="1.5"><rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-width="1.5"></rect><path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+      $("#recordButton").html(svgicon_normal);
+      
     }
 
     function genUID(prefix) {
@@ -917,20 +929,20 @@
           if (msg.msg.task_flag.startsWith('generate_background') || msg.msg.task_flag.startsWith('generate_avatar')) {
             $('.loadingText_Percentage').html(": " + String(msg.msg.percentage) + "%")
           } else if (msg.msg.task_flag.startsWith('generate_live')) {
-            if(msg.msg.task_flag=='generate_live-DynamicPicture'){
-              let percentage_str = String(msg.msg.percentage)+'%'
+            if (msg.msg.task_flag == 'generate_live-DynamicPicture') {
+              let percentage_str = String(msg.msg.percentage) + '%'
               // console.log('DynamicPicture : '+String(msg.msg.percentage)+'%')   
               let $lastmsg = $('#message_box')
                 .find('.msg-container-clone')
                 .last()
                 .find('.message');
-              $lastmsg.find('.genImgDiv_title').html('Progress:')  
+              $lastmsg.find('.genImgDiv_title').html('Progress:')
               $lastmsg.find('.genImgDiv_progress').html(percentage_str)
               let $lastmsg_comic = $('#msg_box_comic_char')
                 .find('.msg-container-clone')
                 .last()
                 .find('.message-comic');
-              $lastmsg_comic.find('.genImgDiv_title').html('Progress:')  
+              $lastmsg_comic.find('.genImgDiv_title').html('Progress:')
               $lastmsg_comic.find('.genImgDiv_progress').html(percentage_str)
             }
           }
@@ -1079,6 +1091,7 @@
         server_reply_done: true,
         from: 'server',
       });
+      micstate = true;
     }
 
     /* Send msg to server : msg from 'client' */
@@ -1172,6 +1185,7 @@
         $('.voiceController').css('display', 'none');
       }
     }
+
     /*Document Ready Actions*/
     $(document).ready(function () {
       //new command function
@@ -1198,6 +1212,58 @@
         prompt_variable_str,
         cssClasses,
       );
+      // TODO:create a process for audio data, send the data to server and get the response
+      const audioRecorder = new AudioRecorder();
+      let svgicon_normal = `<svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff" stroke-width="1.5"><rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-width="1.5"></rect><path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+      let svgicon_activate = `<svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff" stroke-width="1.5"><rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-width="1.5"></rect><path d="M5 3V5M1 2V6M19 3V5M23 2V6" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+      let svgicon_completed = `<svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff" stroke-width="1.5"><path d="M15.5 20.5L17.5 22.5L22.5 17.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-width="1.5"></rect><path d="M1 10V11C1 14.866 4.13401 18 8 18V18V18C11.866 18 15 14.866 15 11V10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8 18V22M8 22H5M8 22H11" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+
+      let timer;
+      async function recordhandler() {
+        toggleInputs(false);
+        if (audioRecorder.isRecording) {
+          clearTimeout(timer);
+          await sendAudioData();
+        } else {
+          $("#recordButton").html(svgicon_activate);
+          await audioRecorder.startRecording();
+          timer = setTimeout(async () => {
+            console.log('Recording stopped after 5 seconds');
+            await sendAudioData();
+          }, 10000);
+
+        }
+
+      }
+
+      async function sendAudioData() {
+        micstate = false;
+        let data = await audioRecorder.stopRecording();
+        console.log(data);
+        let reader = new FileReader();
+        reader.readAsDataURL(data);
+        reader.onloadend = function () {
+          let base64data = reader.result;
+          // console.log(base64data);
+          let querydata = {
+            conid: clientID,
+            audio_data: base64data,
+          };
+          ws.send(wsData('transcribe_audio', querydata));
+          $("#recordButton").html(svgicon_completed);
+          
+        }
+      }
+
+      $('#recordButton').on('click', function(e){
+        if (micstate){
+          recordhandler();
+        }else{
+          e.preventDefault();
+          return false;
+        }
+      });
+
       $msg_inputer.on('SendMsg', function (event) {
         console.log(
           `command type:${event.command_flag}\nthe message is:${event.msg}\nthe prompt is:${event.prompt_flag}`,
@@ -1417,6 +1483,9 @@
           if (serverData.wsevent_server == 'xtts_result') {
             xtts_audio_data(serverData);
           }
+          if (serverData.wsevent_server == 'transcript_audio_result') {
+            transcript_audio_result(serverData);
+          }
         };
         ws.onerror = (e) => {
           console.log('Websocket error observed: ' + e);
@@ -1559,7 +1628,32 @@
             <textarea type="text" id="messageToSend" rows="1"></textarea>
             <ul id="cmd_dropdownMenu"></ul>
           </div>
-          <div id="submit" class="msgInput">Send</div>
+          <div id="submit" class="msgInput">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+              color="#a25aff" stroke-width="1.5">
+              <g clip-path="url(#clip0_4086_8473)">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M1.84647 7.15123C1.54566 7.21608 1.31498 7.45811 1.26464 7.7617C1.2143 8.06528 1.35452 8.36881 1.6183 8.52729L8.13474 12.4421L14.3544 8.08705C14.6938 7.84947 15.1614 7.93193 15.399 8.27123C15.6366 8.61054 15.5541 9.0782 15.2148 9.31578L8.99537 13.6707L10.4455 21.1339C10.5042 21.436 10.7415 21.6715 11.044 21.7281C11.3465 21.7846 11.6528 21.6506 11.8166 21.3901L22.7919 3.93893C22.9526 3.68349 22.9445 3.35665 22.7714 3.10947C22.5983 2.86228 22.294 2.7429 21.999 2.80649L1.84647 7.15123Z"
+                  fill="#a25aff"></path>
+              </g>
+              <defs>
+                <clipPath id="clip0_4086_8473">
+                  <rect width="24" height="24"></rect>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <div id="recordButton" class="recordButton">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+              color="#ffffff" stroke-width="1.5">
+              <rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5"
+                stroke-width="1.5"></rect>
+              <path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </div>
         </div>
         <div class="messageOptions">
           <div class="subButtonsGroup">

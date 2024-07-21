@@ -1,4 +1,4 @@
-import httpx, time, base64, json, asyncio, uuid
+import httpx, time, base64, json, asyncio, uuid, io
 from tqdm import tqdm
 from modules.tqdm_barformat import Pbar
 from modules.global_sets_async import config_data, timeout, logger, getGlobalConfig
@@ -542,3 +542,23 @@ class tabby_fastapi:
                         print(await response.aread())
             except Exception as e:
                 logger.info("Error on inference: ", e)
+    
+    @staticmethod
+    async def transcribe_audio(audio_data) -> str:
+        url = "https://api.xiaoai.plus/v1/audio/transcriptions"
+        header = {
+            "Authorization": "Bearer sk-yyIczakTyMxDpzfi8a429dEe009f4bE19c4cBdB6B70c088b",
+        }
+        files= {
+            "file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")
+        }
+
+        data={
+            "model": "whisper-1"
+        }
+        try:
+            with httpx.Client() as client:
+                transcript = client.post(url, headers=header, files=files, data=data, timeout=60)
+                return transcript.json().get("text","Silents...")
+        except Exception as e:
+            print(f"Error on transcribe audio: {e}")

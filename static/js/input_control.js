@@ -1,4 +1,6 @@
-class CommandInputHandler {
+//input_control.js
+
+export class CommandInputHandler {
     constructor(suggestions, defaultText, $msg_inputer, $cmd_dropdownMenu, $ai_icon, prompt_variable_str, cssClasses) {
         this.icon_default_svg = `<svg width="30px" height="30px" viewBox="0 0 24 24" data-name="025_SCIENCE" id="_025_SCIENCE" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -215,5 +217,5 @@ class CommandInputHandler {
     }
 }
 
-// 导出类
-export default CommandInputHandler;
+// // 导出类
+// export default CommandInputHandler;

@@ -9,9 +9,9 @@ from modules.global_sets_async import (
     config_data,
     prompt_params,
 )
-import uvicorn, uuid, json, markdown, os
+import uvicorn, uuid, json, markdown, os, base64, io
 from datetime import datetime
-from contextlib import asynccontextmanager
+# from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
@@ -754,6 +754,15 @@ async def client_save_character(client_info, client_id):
     data_to_send = {"result": msg_to_send, "task": "after_char_saved"}
     await send_datapackage("save_character_result", data_to_send, client_id)
 
+async def transcribe_audio(client_info, client_id):
+    audio_data = client_info["data"]["audio_data"]
+    if "," in audio_data:
+        audio_data = audio_data.split(",")[1]
+    audio_data = base64.b64decode(audio_data)
+    transcripted_text = await tabby_fastapi.transcribe_audio(audio_data=audio_data)
+    logger.info("Transripted Text: "+transcripted_text)
+    data_to_send = {"transcripted_text": transcripted_text, "task": "transcript_audio"}
+    await send_datapackage("transcript_audio_result", data_to_send, client_id)
 
 # ws event handler
 ws_events_dict = {
@@ -776,6 +785,7 @@ ws_events_dict = {
     "createchar_wizard": createchar_wizard,
     "preview_createchar": preview_createchar,
     "client_save_character": client_save_character,
+    "transcribe_audio": transcribe_audio,
 }
 
 

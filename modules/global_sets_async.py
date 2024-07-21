@@ -1,7 +1,7 @@
 from database.sqliteclass import SQLiteDB
 from transformers import pipeline
 import os, yaml, json, asyncio, aiofiles, base64
-from yeelight import Bulb
+# from yeelight import Bulb
 from pathlib import Path
 from modules.ConnectionManager import ConnectionManager
 from httpx import Timeout
@@ -27,8 +27,8 @@ prompt_params = None
 suggestions_params = None
 config_data = None
 roleconf = None
-sentiment_pipeline = None
-bulb = None
+# sentiment_pipeline = None
+# bulb = None
 
 
 async def load_config():
@@ -77,30 +77,30 @@ async def load_roles():
     roleconf = rolelist.copy()
 
 
-async def gen_sentimodel(model_path):
-    global sentiment_pipeline
-    sentiment_pipeline = pipeline(
-        "sentiment-analysis", model=model_path, tokenizer=model_path, device="cuda"
-    )
+# async def gen_sentimodel(model_path):
+#     global sentiment_pipeline
+#     sentiment_pipeline = pipeline(
+#         "sentiment-analysis", model=model_path, tokenizer=model_path, device="cuda"
+#     )
 
 
-async def conn_bulb(yeelight_url):
-    global bulb
-    try:
-        bulb = Bulb(yeelight_url, auto_on=True, effect="smooth", duration=2000)
-        bulb.toggle()
-        logger.info(f"Bulb Power: {bulb.get_properties()['power']}") 
-    except Exception as e:
-        logger.info(f"Error during turn on Bulb: {e}")
+# async def conn_bulb(yeelight_url):
+#     global bulb
+#     try:
+#         bulb = Bulb(yeelight_url, auto_on=True, effect="smooth", duration=2000)
+#         bulb.toggle()
+#         logger.info(f"Bulb Power: {bulb.get_properties()['power']}") 
+#     except Exception as e:
+#         logger.info(f"Error during turn on Bulb: {e}")
 
-        class bulb_null:
-            def __init__(self) -> None:
-                pass
+#         class bulb_null:
+#             def __init__(self) -> None:
+#                 pass
 
-            def set_hsv(self, r, g, b) -> None:
-                pass
+#             def set_hsv(self, r, g, b) -> None:
+#                 pass
 
-        bulb = bulb_null()
+#         bulb = bulb_null()
 
 async def multitask():
     roles = asyncio.create_task(load_roles())
@@ -136,9 +136,9 @@ async def getGlobalConfig(data:str):
     if data == "suggestions_params":
         await load_suggestions()
         return suggestions_params
-    if data == "sentiment_pipeline":
-        return sentiment_pipeline
-    if data == "bulb":
-        return bulb
+    # if data == "sentiment_pipeline":
+    #     return sentiment_pipeline
+    # if data == "bulb":
+    #     return bulb
 
 asyncio.run(initialize())

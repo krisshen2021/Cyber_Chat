@@ -624,14 +624,20 @@ body {
   justify-content: center;
   align-items: center;
   font-size: 0.7rem;
-  background-color: #444444;
+  background-color: #000000;
+  color:#a25aff;
   align-self: flex-end;
 }
 
 #submit .msgInput {
   align-self: flex-end;
 }
-
+.recordButton{
+  cursor: pointer;
+  align-self: flex-end;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
 #chat-history-buttons {
   align-self: flex-end;
 }
@@ -648,7 +654,10 @@ body {
   font-size: 0.6rem;
 }
 
-#submit:hover,
+#submit:hover{
+  background-color: #ffffff;
+  cursor: pointer;
+}
 #regenerate:hover,
 #restart:hover,
 #exitchat:hover,
@@ -1089,7 +1098,6 @@ input[type='checkbox']:hover {
     justify-content: center;
     align-items: center;
     font-size: 0.7rem;
-    background-color: #444444;
   }
 
   .border-wrapper {
@@ -1248,7 +1256,6 @@ input[type='checkbox']:hover {
     justify-content: center;
     align-items: center;
     font-size: 0.7rem;
-    background-color: #444444;
   }
 
   .border-wrapper {
