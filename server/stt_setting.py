@@ -11,45 +11,34 @@ YELLOW = ansiColor.YELLOW
 load_dotenv()
 
 openai_api_key = os.getenv("xiaoai_api_key")
-unrealspeech_api_key = os.getenv("unrealspeech_api_key")
+groq_api_key = os.getenv("groq_api_key")
 
 endpoint_list = [
     {
         "name": "openai",
-        "server_url": "https://api.xiaoai.plus/v1/audio/speech",
+        "server_url": "https://api.xiaoai.plus/v1/audio/transcriptions",
         "headers": {
-            "Authorization": f"Bearer {openai_api_key}",
-            "Content-Type": "application/json",
+            "Authorization": f"Bearer {openai_api_key}"
         },
-        "payload_tts": {
-            "model": "tts-1",
-            "input": "",
-            "voice": "nova",
-            "response_format": "wav"
-        },
+        "data":{
+            "model": "whisper-1"
+        }
     },
     {
-        "name": "unrealspeech",
-        "server_url": "https://api.v7.unrealspeech.com/stream",
+        "name": "groq",
+        "server_url": "https://api.groq.com/openai/v1/audio/transcriptions",
         "headers": {
-            "Authorization": f"Bearer {unrealspeech_api_key}",
-            "Content-Type": "application/json",
+            "Authorization": f"Bearer {groq_api_key}"
         },
-        "payload_tts": {
-            "Text": "",
-            "VoiceId": "Liv",
-            "Bitrate": "192k",
-            "Speed": "0",
-            "Pitch": "1.08",
-            "Codec": "pcm_s16le",
-            "Temperature": 0.45
+        "data":{
+            "model": "whisper-large-v3"
         }
     }
 ]
 
-def tts_select_endpoint():
+def stt_select_endpoint():
     clear_screen()
-    print(f"{BOLD}{YELLOW}Available Rest API of TTS endpoints:{RESET}")
+    print(f"{BOLD}{YELLOW}Available Rest API of STT endpoints:{RESET}")
     for i, endpoint in enumerate(endpoint_list, 1):
         print(f"{RED}{i}{RESET}. {CYAN}{endpoint['name']}{RESET}")
     

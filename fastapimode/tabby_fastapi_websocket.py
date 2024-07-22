@@ -545,20 +545,16 @@ class tabby_fastapi:
     
     @staticmethod
     async def transcribe_audio(audio_data) -> str:
-        url = "https://api.xiaoai.plus/v1/audio/transcriptions"
-        header = {
-            "Authorization": "Bearer sk-yyIczakTyMxDpzfi8a429dEe009f4bE19c4cBdB6B70c088b",
+        url = config_data["openai_api_chat_base"] + "/stt_remote"
+        headers ={
+            "accept": "application/json"
         }
-        files= {
-            "file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")
-        }
-
-        data={
-            "model": "whisper-1"
+        payload = {
+            "audio_data":audio_data
         }
         try:
-            with httpx.Client() as client:
-                transcript = client.post(url, headers=header, files=files, data=data, timeout=60)
-                return transcript.json().get("text","Silents...")
+            async with httpx.AsyncClient() as client:
+                transcripted_text = await client.post(url, json=payload, headers=headers, timeout=60)
+                return transcripted_text.json().get("text","Slients....")
         except Exception as e:
             print(f"Error on transcribe audio: {e}")

@@ -1,4 +1,4 @@
-import httpx, pynvml, sys, asyncio, json
+import httpx, pynvml, sys, asyncio, json, base64, io
 from tqdm import tqdm
 from pathlib import Path
 
@@ -13,7 +13,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sd_setting import update_SDAPI_config
 from opanairouter_setting import select_model
-from tts_setting import select_endpoint
+from tts_setting import tts_select_endpoint
+from stt_setting import stt_select_endpoint
 from modules.colorlogger import logger
 from modules.ANSI_tool import ansiColor
 from modules.tqdm_barformat import Pbar
@@ -48,13 +49,16 @@ from remote_api_hub import (
     OAIParam,
 )
 
+
 timeout = Timeout(180.0)
 ### SD selector
 update_SDAPI_config()
 ### Openairouter selector
 openairouter_model = select_model()
 
-restapi_tts = select_endpoint()
+restapi_tts = tts_select_endpoint()
+
+restapi_stt = stt_select_endpoint()
 
 ansiColor.color_print("Remote Server Started\nWaiting for connection...", ansiColor.BG_BRIGHT_MAGENTA+ansiColor.WHITE, ansiColor.BOLD)
 COLORBAR = Pbar.setBar(Pbar.BarColorer.GREEN,Pbar.BarColorer.YELLOW,Pbar.BarColorer.GREEN)
@@ -107,6 +111,9 @@ class XTTSPayload(BaseModel):
     
 class RestAPI_TTSPayload(BaseModel):
     text: Optional[str] = None
+    
+class STTPayload(BaseModel):
+    audio_data:str #{"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
     
 
 sd_api_url = "http://127.0.0.1:7860"
@@ -227,6 +234,28 @@ async def xtts_to_audio(payload: XTTSPayload):
                 )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+# STT speak to text
+@router.post("/v1/stt_remote")
+async def stt_to_text(payload: STTPayload):
+    server_url = restapi_stt.get("server_url")
+    headers = restapi_stt.get("headers")
+    data = restapi_stt.get("data")
+    # print(payload.audio_data)
+    # print(server_url,headers,data)
+    audio_data = base64.b64decode(str(payload.audio_data))
+    files = {
+    "file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")
+    }    
+    try:
+        async with httpx.AsyncClient() as client:
+            transcript = await client.post(url=server_url, headers=headers, files=files, data=data, timeout=60)
+            if transcript.status_code == 200:
+                return transcript.json()
+            else:
+                return {"text":"Error on transcribe audio"}
+    except Exception as e:
+        print(f"Error on transcribe audio: {e}")
 
 
 # SD Picture Generator

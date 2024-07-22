@@ -758,7 +758,7 @@ async def transcribe_audio(client_info, client_id):
     audio_data = client_info["data"]["audio_data"]
     if "," in audio_data:
         audio_data = audio_data.split(",")[1]
-    audio_data = base64.b64decode(audio_data)
+    # audio_data = base64.b64decode(audio_data)
     transcripted_text = await tabby_fastapi.transcribe_audio(audio_data=audio_data)
     logger.info("Transripted Text: "+transcripted_text)
     data_to_send = {"transcripted_text": transcripted_text, "task": "transcript_audio"}

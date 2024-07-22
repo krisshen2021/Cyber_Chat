@@ -472,6 +472,8 @@ async def xiaoai_invoke(params: XiaoaiParam):
 async def openairouter_stream(params: OAIParam):
     final_text = ""
     data = params.model_dump(exclude_none=True)
+    logger.info(openairouter_client.base_url)
+    logger.info(data.get("model"))
     async for chunk in await openairouter_client.chat.completions.create(**data):
         if chunk.choices[0].finish_reason is None:
             if chunk.choices[0].delta.content:

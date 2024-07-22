@@ -19,7 +19,7 @@ server_address: 0.0.0.0
 server_port: 5500
 
 ### audio settings, only for local xtts api server existed, otherwise you can select during remote server starting
-xtts_api_base: http://127.0.0.1:8020/tts_to_audio/S
+xtts_api_base: http://127.0.0.1:8020/tts_to_audio/
 
 ### sentimental settings
 sentimodelpath: config/sentimodel/touch20032003_xuyuan-trial-sentiment-bert-chinese
