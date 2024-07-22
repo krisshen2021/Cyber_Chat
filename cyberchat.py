@@ -88,7 +88,11 @@ def non_cache_response(template_name: str, context: dict) -> Response:
     }
     return templates.TemplateResponse(template_name, context=context, headers=headers)
 
-
+#Develop test page
+@app.get("/test")
+async def test(request: Request):
+    context = {"request": request}
+    return non_cache_response("develop_test.html", context)
 # Role selection page
 @app.get("/")
 async def initpage(request: Request):

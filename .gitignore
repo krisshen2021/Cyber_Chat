@@ -24,3 +24,4 @@ ENV/
 __pycache__/
 *.py[cod]
 *$py.class
+/templates/develop_test.html

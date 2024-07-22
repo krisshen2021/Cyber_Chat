@@ -634,9 +634,19 @@ body {
 }
 .recordButton{
   cursor: pointer;
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform: translate(-50%, -50%)
+
+}
+
+.recordTimer{
   align-self: flex-end;
   padding-left: 0.5rem;
   padding-right: 0.5rem;
+  position: relative;
+
 }
 #chat-history-buttons {
   align-self: flex-end;
