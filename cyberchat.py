@@ -9,7 +9,7 @@ from modules.global_sets_async import (
     config_data,
     prompt_params,
 )
-import uvicorn, uuid, json, markdown, os, base64, io
+import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio
 from datetime import datetime
 # from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
@@ -503,6 +503,28 @@ async def exit_room(client_msg, client_id):
 
 
 # Xtts audio
+# async def xtts_audio_generate(client_msg, client_id):
+#     text = client_msg["data"]["text"]
+#     speaker_wav = client_msg["data"]["speaker_wav"]
+#     language = client_msg["data"]["language"]
+#     voice_uid = client_msg["data"]["voice_uid"]
+#     remote_api = await getGlobalConfig('config_data')
+#     if remote_api.get("using_remoteapi"):
+#         endpoint = "/tts_remote"
+#     else:
+#         endpoint = "/xtts"
+#     url = config_data["openai_api_chat_base"] + endpoint
+#     server_url = config_data["xtts_api_base"]
+#     audio_data = await tabby_fastapi.xtts_audio(
+#         url, text, speaker_wav, language, server_url
+#     )
+#     data_to_send = {"audio_data": audio_data, "voice_uid": voice_uid}
+#     if audio_data:
+#         await send_datapackage("xtts_result", data_to_send, client_id)
+#     else:
+#         logger.info("Failed to get audio data")
+
+#TODO  test audio streaming model.        
 async def xtts_audio_generate(client_msg, client_id):
     text = client_msg["data"]["text"]
     speaker_wav = client_msg["data"]["speaker_wav"]
@@ -510,19 +532,33 @@ async def xtts_audio_generate(client_msg, client_id):
     voice_uid = client_msg["data"]["voice_uid"]
     remote_api = await getGlobalConfig('config_data')
     if remote_api.get("using_remoteapi"):
-        endpoint = "/tts_remote"
+        endpoint = "/tts_remote_stream"
+        url = config_data["openai_api_chat_base"] + endpoint
+        async with httpx.AsyncClient(timeout=300) as client:
+            async with client.stream("POST", url, json={"text": text}) as response:
+                logger.info('Transfer audio to clients')
+                async for chunk in response.aiter_bytes():
+                    if chunk:
+                        audio_data_base64 = base64.b64encode(chunk).decode("utf-8")
+                        data_to_send = {"audio_data": audio_data_base64, "voice_uid": voice_uid, "mode":"stream", "status":"transfer"}
+                        await send_datapackage("xtts_result", data_to_send, client_id)
+                        await asyncio.sleep(0.01)              
+                    else:
+                        logger.info("Failed to get audio data")
+        logger.info("Transfer ends")
+        await send_datapackage("xtts_result", {"voice_uid": voice_uid, "mode":"stream", "status":"end"}, client_id)        
     else:
         endpoint = "/xtts"
-    url = config_data["openai_api_chat_base"] + endpoint
-    server_url = config_data["xtts_api_base"]
-    audio_data = await tabby_fastapi.xtts_audio(
-        url, text, speaker_wav, language, server_url
-    )
-    data_to_send = {"audio_data": audio_data, "voice_uid": voice_uid}
-    if audio_data:
-        await send_datapackage("xtts_result", data_to_send, client_id)
-    else:
-        logger.info("Failed to get audio data")
+        url = config_data["openai_api_chat_base"] + endpoint
+        server_url = config_data["xtts_api_base"]
+        audio_data = await tabby_fastapi.xtts_audio(
+            url, text, speaker_wav, language, server_url
+        )
+        data_to_send = {"audio_data": audio_data, "voice_uid": voice_uid, "mode":"normal"}
+        if audio_data:
+            await send_datapackage("xtts_result", data_to_send, client_id)
+        else:
+            logger.info("Failed to get audio data")
 
 
 # preview avatar

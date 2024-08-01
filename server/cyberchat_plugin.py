@@ -189,10 +189,12 @@ async def remotetts_to_audio(payload:RestAPI_TTSPayload):
     headers = restapi_tts.get("headers")
     payload_tts = restapi_tts.get("payload_tts")
     endpoint_name = restapi_tts.get("name")
-    if endpoint_name == 'unrealspeech':
+    if endpoint_name == 'Unrealspeech':
         payload_tts["Text"] = payload.text
-    elif endpoint_name == 'openai':
+    elif endpoint_name == 'Openai':
         payload_tts["input"] = payload.text
+    elif endpoint_name == 'PlayHT':
+        payload_tts["text"] = payload.text
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -206,6 +208,33 @@ async def remotetts_to_audio(payload:RestAPI_TTSPayload):
                     media_type="audio/wav",
                     headers={"Content-Disposition": "attachment; filename=output.wav"},
                 )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/v1/tts_remote_stream")
+async def remotetts_to_audio_stream(payload:RestAPI_TTSPayload):
+    server_url = restapi_tts.get("server_url")
+    headers = restapi_tts.get("headers")
+    payload_tts = restapi_tts.get("payload_tts")
+    endpoint_name = restapi_tts.get("name")
+    if endpoint_name == 'Unrealspeech':
+        payload_tts["Text"] = payload.text
+    elif endpoint_name == 'Openai':
+        payload_tts["input"] = payload.text
+    elif endpoint_name == 'PlayHT':
+        payload_tts["text"] = payload.text
+    try:
+        async def stream_audio():
+            async with httpx.AsyncClient(timeout=300) as client:
+                async with client.stream("POST", server_url, json=payload_tts, headers=headers) as response:
+                    logger.info('Start to streaming audio')
+                    async for chunk in response.aiter_bytes():
+                        if chunk:
+                            yield chunk
+            logger.info('Streaming ends')
+        return StreamingResponse(stream_audio(), media_type="audio/mpeg")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

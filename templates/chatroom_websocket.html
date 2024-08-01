@@ -258,6 +258,18 @@
       }
     }
 
+
+
+    function base64ToArrayBuffer(base64) {
+      const binaryString = atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
     function base64ToBlob(base64, mimeType) {
       const byteCharacters = atob(base64);
       const byteNumbers = new Array(byteCharacters.length);
@@ -268,22 +280,77 @@
       return new Blob([byteArray], { type: mimeType });
     }
 
+
+    let mediaSourceList = {};
+    let sourceBufferList = {};
+    let sourceBufferReady = false;
+
     function xtts_audio_data(msg) {
       const audioData = msg.data['audio_data'];
       let voicePlayerid = msg.data['voice_uid'];
-      if (audioData) {
-        const audioBlob = base64ToBlob(audioData, 'audio/wav');
-        const audioUrl = URL.createObjectURL(audioBlob);
-        $('#' + voicePlayerid).attr('src', audioUrl);
-        $('#controller' + voicePlayerid).fadeIn(200);
-        $('#controller' + voicePlayerid).css('display', 'flex');
-        $('#controller' + voicePlayerid).trigger('click');
-        $('#voiceController_comic').css('display', 'flex');
-        updateScroll();
-      } else {
-        console.error('Audio data is not available.');
+      let audiomode = msg.data['mode'];
+      let audiostatus = msg.data['status'];
+      let recordedChunks = [];
+      if (audiomode == 'normal') {
+        if (audioData) {
+          const audioBlob = base64ToBlob(audioData, 'audio/wav');
+          const audioUrl = URL.createObjectURL(audioBlob);
+          $('#' + voicePlayerid).attr('src', audioUrl);
+          $('#' + voicePlayerid).attr('preload', 'auto');
+          $('#controller' + voicePlayerid).fadeIn(200);
+          $('#controller' + voicePlayerid).css('display', 'flex');
+          $('#controller' + voicePlayerid).trigger('click');
+          $('#voiceController_comic').css('display', 'flex');
+          updateScroll();
+        } else {
+          console.error('Audio data is not available.');
+        }
+
+      } else if (audiomode == 'stream') {
+        if (!mediaSourceList[voicePlayerid]) {
+          mediaSourceList[voicePlayerid] = new MediaSource();
+          mediaSourceList[voicePlayerid].addEventListener('sourceopen', sourceOpen);
+          function sourceOpen() {
+            if (!sourceBufferList[voicePlayerid]) { // 检查是否已经存在 SourceBuffer
+              sourceBufferList[voicePlayerid] = mediaSourceList[voicePlayerid].addSourceBuffer('audio/mpeg');
+              sourceBufferReady = true;
+              sourceBufferList[voicePlayerid].addEventListener('updateend', () => {
+                if (!sourceBufferList[voicePlayerid].updating && mediaSourceList[voicePlayerid].readyState === 'open') {
+                  if (mediaSourceList[voicePlayerid].readyState === 'open' && sourceBufferReady) {
+                    let audio = $('#' + voicePlayerid)[0];
+                    audio.play()
+                  }
+                }
+              });
+            }
+          }
+          $('#controller' + voicePlayerid).fadeIn(200);
+          $('#controller' + voicePlayerid).css('display', 'flex');
+          $('#voiceController_comic').css('display', 'flex');
+          $('#' + voicePlayerid).attr('src', URL.createObjectURL(mediaSourceList[voicePlayerid]));
+          updateScroll();
+        }
+
+
+        if (audioData && sourceBufferReady) {
+          let sourceBuffer = sourceBufferList[voicePlayerid]; // 获取对应的 SourceBuffer
+          if (sourceBuffer) {
+            console.log('Appending data to SourceBuffer');
+            let audioDataArray = new Uint8Array(base64ToArrayBuffer(audioData));
+            sourceBuffer.appendBuffer(audioDataArray);
+            sourceBufferReady = true;
+          } else {
+            console.warn('SourceBuffer is not ready, skipping append');
+          }
+        } else if (!audioData && mediaSourceList[voicePlayerid].readyState === 'open') {
+          console.log('audio streaming ends');
+          mediaSourceList[voicePlayerid].endOfStream();
+          sourceBufferReady = false;
+        }
       }
     }
+
+
     function transcript_audio_result(msg) {
       console.log(msg);
       const transcripted_text = msg.data['transcripted_text'];
@@ -642,7 +709,7 @@
             }
             voicePlayer.preload = 'metadata';
             $lastMsg.find('.message').append(voicePlayer).append($controls);
-            voice_text = '.....\n....' + voice_text;
+            // voice_text = '.....\n....' + voice_text;
             let querydata = {
               text: voice_text,
               speaker_wav: speaker,
@@ -1225,14 +1292,14 @@
       let interval = null;
       let total_steps = 0;
       function setProgress(percent) {
-          const offset = circumference - percent / total_steps * circumference;
-          circle.style.strokeDashoffset = offset;
-        }
+        const offset = circumference - percent / total_steps * circumference;
+        circle.style.strokeDashoffset = offset;
+      }
 
       function stop_progress_bar() {
         clearInterval(interval);
         interval = null
-        $bar.fadeOut(500,()=>{
+        $bar.fadeOut(500, () => {
           circle.style.strokeDashoffset = circumference;
         });
       }
@@ -1249,7 +1316,7 @@
           }
         }, 10);
       }
-      
+
 
       // audio recorder
       const audioRecorder = new AudioRecorder();
