@@ -1,4 +1,4 @@
-import sys, os, math, yaml
+import sys, os, math, yaml, requests, json
 from pathlib import Path
 from httpx import Timeout
 from ruamel.yaml import YAML
@@ -27,6 +27,11 @@ picked_routers = [
         "url": "https://api.groq.com/openai/v1",
         "api_key": os.environ.get("groq_api_key"),
     },
+    {
+        "name": "togetherAI",
+        "url": "https://api.together.xyz/v1",
+        "api_key": os.environ.get("togetherai_api_key"),
+    },
 ]
 
 ### Model selector
@@ -46,7 +51,7 @@ def display_models(models, page, items_per_page=10):
     start = (page - 1) * items_per_page
     end = start + items_per_page
     for index, model in enumerate(models[start:end], start=start):
-        print(f"{RED}{index}{RESET}: {BOLD}{CYAN}{model.id}{RESET}\t")
+        print(f"{RED}{index}{RESET}: {BOLD}{CYAN}{model['id']}{RESET}\t")
     print(
         "\n{}Page{} {}{}/{}{}".format(
             YELLOW, RESET, BLUE, page, math.ceil(len(models) / items_per_page), RESET
@@ -84,8 +89,10 @@ def select_model():
     if choice == "1":
         clear_screen()
         print(f"{BOLD}{YELLOW}Available routers points: {RESET}\n")
-        print(f"{RED}1{RESET}: {BOLD}{CYAN}Openrouter{RESET}")
-        print(f"{RED}2{RESET}: {BOLD}{CYAN}Groq{RESET}")
+        for i, router in enumerate(picked_routers):
+            print(f"{RED}{i+1}{RESET}: {BOLD}{CYAN}{router['name']}{RESET}")
+        # print(f"{RED}1{RESET}: {BOLD}{CYAN}Openrouter{RESET}")
+        # print(f"{RED}2{RESET}: {BOLD}{CYAN}Groq{RESET}")
         selected_index = input("Enter the number of your chosen router: ")
         config_data["using_remoteapi"] = True
         config_data["remoteapi_endpoint"] = "openairouter"
@@ -122,9 +129,16 @@ def select_model():
         openairouter_sync_client.api_key = picked_routers[int(selected_index) - 1].get("api_key")
         openairouter_client.base_url = picked_routers[int(selected_index) - 1].get("url")
         openairouter_client.api_key = picked_routers[int(selected_index) - 1].get("api_key")
-        openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)
+        # openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {openairouter_sync_client.api_key}",
+        }
+        response = requests.get(url=(str(openairouter_sync_client.base_url)+"/models"),headers=headers)
+        openairouter_modellist = response.json()
+        # print(openairouter_modellist)
         # 对模型列表按id进行排序
-        sorted_models = sorted(openairouter_modellist.data, key=lambda x: x.id.lower())
+        sorted_models = sorted(openairouter_modellist, key=lambda x: x['id'].lower())
         openairouter_model: str = ""
         current_page = 1
         items_per_page = 20
@@ -150,7 +164,7 @@ def select_model():
             elif user_input.isdigit():
                 selected_index = int(user_input)
                 if 0 <= selected_index < len(sorted_models):
-                    openairouter_model = sorted_models[selected_index].id
+                    openairouter_model = sorted_models[selected_index]['id']
                     break
                 else:
                     input(

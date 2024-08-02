@@ -13,6 +13,7 @@ load_dotenv()
 
 openai_api_key = os.getenv("xiaoai_api_key")
 unrealspeech_api_key = os.getenv("unrealspeech_api_key")
+playHT_api_key = os.getenv("playHT_api_key")
 
 endpoint_list = [
     {
@@ -51,7 +52,7 @@ endpoint_list = [
         "server_url": "https://api.play.ht/api/v2/tts/stream",
         "headers": {
             "content-type": "application/json",
-            "AUTHORIZATION": "94773d9cd9ff4d75994cc7ab153ca34f",
+            "AUTHORIZATION": f"{playHT_api_key}",
             "X-USER-ID": "tmCm6IqLHePxtaz8BMu9f4BwSfp1",
             "accpet": "audio/mpeg"
         },
