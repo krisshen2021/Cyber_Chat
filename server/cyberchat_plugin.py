@@ -1,4 +1,4 @@
-import httpx, pynvml, sys, asyncio, json, base64, io
+import httpx, pynvml, sys, asyncio, json, base64, io, re, copy
 from tqdm import tqdm
 from pathlib import Path
 
@@ -111,6 +111,7 @@ class XTTSPayload(BaseModel):
     
 class RestAPI_TTSPayload(BaseModel):
     text: Optional[str] = None
+    speaker: Optional[str] = None
     
 class STTPayload(BaseModel):
     audio_data:str #{"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
@@ -216,14 +217,24 @@ async def remotetts_to_audio(payload:RestAPI_TTSPayload):
 async def remotetts_to_audio_stream(payload:RestAPI_TTSPayload):
     server_url = restapi_tts.get("server_url")
     headers = restapi_tts.get("headers")
-    payload_tts = restapi_tts.get("payload_tts")
+    payload_tts = copy.deepcopy(restapi_tts.get("payload_tts"))
     endpoint_name = restapi_tts.get("name")
+    speaker = payload.speaker
+    pattern = r"(_female_)"
+    match = re.search(pattern, speaker)
+    if match:
+        gender = "female"
+    else:
+        gender = "male"
     if endpoint_name == 'Unrealspeech':
         payload_tts["Text"] = payload.text
+        payload_tts["VoiceId"] = payload_tts["VoiceId"][gender]
     elif endpoint_name == 'Openai':
         payload_tts["input"] = payload.text
+        payload_tts["voice"] = payload_tts["voice"][gender]
     elif endpoint_name == 'PlayHT':
         payload_tts["text"] = payload.text
+        payload_tts["voice"] = payload_tts["voice"][gender]
     try:
         async def stream_audio():
             async with httpx.AsyncClient(timeout=300) as client:

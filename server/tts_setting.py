@@ -26,8 +26,8 @@ endpoint_list = [
         "payload_tts": {
             "model": "tts-1",
             "input": "",
-            "voice": "nova",
-            "response_format": "mp3"
+            "voice": {"male": "echo", "female": "nova"},
+            "response_format": "mp3",
         },
     },
     {
@@ -39,12 +39,12 @@ endpoint_list = [
         },
         "payload_tts": {
             "Text": "",
-            "VoiceId": "Liv",
+            "VoiceId": {"male": "Dan", "female": "Liv"},
             "Bitrate": "192k",
             "Speed": "0",
             "Pitch": "1.08",
             "Codec": "libmp3lame",
-            "Temperature": 0.45
+            "Temperature": 0.45,
         },
     },
     {
@@ -54,17 +54,20 @@ endpoint_list = [
             "content-type": "application/json",
             "AUTHORIZATION": f"{playHT_api_key}",
             "X-USER-ID": "tmCm6IqLHePxtaz8BMu9f4BwSfp1",
-            "accpet": "audio/mpeg"
+            "accpet": "audio/mpeg",
         },
         "payload_tts": {
             "text": "",
-            "voice": "s3://voice-cloning-zero-shot/ff414883-0e32-4a92-a688-d7875922120d/original/manifest.json",
+            "voice": {
+                "male": "s3://voice-cloning-zero-shot/d99d35e6-e625-4fa4-925a-d65172d358e1/adriansaad/manifest.json",
+                "female": "s3://voice-cloning-zero-shot/ff414883-0e32-4a92-a688-d7875922120d/original/manifest.json",
+            },
             "output_format": "mp3",
             "voice_engine": "PlayHT2.0-turbo",
             "quality": "medium",
             "sample_rate": 16000,
             "speed": 0.95,
-            "temperature": 0.65
+            "temperature": 0.65,
         },
     },
 ]

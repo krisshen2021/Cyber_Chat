@@ -535,7 +535,7 @@ async def xtts_audio_generate(client_msg, client_id):
         endpoint = "/tts_remote_stream"
         url = config_data["openai_api_chat_base"] + endpoint
         async with httpx.AsyncClient(timeout=300) as client:
-            async with client.stream("POST", url, json={"text": text}) as response:
+            async with client.stream("POST", url, json={"text": text,"speaker": speaker_wav}) as response:
                 logger.info('Transfer audio to clients')
                 async for chunk in response.aiter_bytes():
                     if chunk:

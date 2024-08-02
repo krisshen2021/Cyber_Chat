@@ -1,4 +1,4 @@
-import sys, os, math, yaml, requests, json
+import sys, os, math, yaml, requests, json, re
 from pathlib import Path
 from httpx import Timeout
 from ruamel.yaml import YAML
@@ -51,7 +51,7 @@ def display_models(models, page, items_per_page=10):
     start = (page - 1) * items_per_page
     end = start + items_per_page
     for index, model in enumerate(models[start:end], start=start):
-        print(f"{RED}{index}{RESET}: {BOLD}{CYAN}{model['id']}{RESET}\t")
+        print(f"{RED}{index+1}{RESET}: {BOLD}{CYAN}{model['id']}{RESET}\t")
     print(
         "\n{}Page{} {}{}/{}{}".format(
             YELLOW, RESET, BLUE, page, math.ceil(len(models) / items_per_page), RESET
@@ -136,7 +136,8 @@ def select_model():
         }
         response = requests.get(url=(str(openairouter_sync_client.base_url)+"/models"),headers=headers)
         openairouter_modellist = response.json()
-        # print(openairouter_modellist)
+        if "data" in openairouter_modellist:
+            openairouter_modellist = openairouter_modellist["data"]
         # 对模型列表按id进行排序
         sorted_models = sorted(openairouter_modellist, key=lambda x: x['id'].lower())
         openairouter_model: str = ""
@@ -164,7 +165,7 @@ def select_model():
             elif user_input.isdigit():
                 selected_index = int(user_input)
                 if 0 <= selected_index < len(sorted_models):
-                    openairouter_model = sorted_models[selected_index]['id']
+                    openairouter_model = sorted_models[selected_index-1]['id']
                     break
                 else:
                     input(
