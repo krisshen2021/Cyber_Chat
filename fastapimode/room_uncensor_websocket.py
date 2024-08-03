@@ -204,7 +204,7 @@ class chatRoom_unsensor:
             char_outfit=self.state["char_outfit"],
             task_flag="generate_background-ai",
         )
-        self.bkImg = "data:image/png;base64," + bgimg_base64
+        self.bkImg = "data:image/webp;base64," + bgimg_base64
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Preparing Your Role"},
             self.conversation_id,
@@ -218,7 +218,7 @@ class chatRoom_unsensor:
             is_user=True,
             task_flag="generate_background-user",
         )
-        self.user_bkImg = "data:image/png;base64," + bgimg_base64
+        self.user_bkImg = "data:image/webp;base64," + bgimg_base64
 
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Generate A.I Avatar"},
@@ -233,7 +233,7 @@ class chatRoom_unsensor:
             is_save=True,
             task_flag="generate_avatar-ai",
         )
-        self.G_avatar_url = "data:image/png;base64," + avatarimg_base64
+        self.G_avatar_url = "data:image/webp;base64," + avatarimg_base64
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Generate Your Avatar"},
             self.conversation_id,
@@ -247,7 +247,7 @@ class chatRoom_unsensor:
             is_save=False,
             task_flag="generate_avatar-user",
         )
-        self.G_userlooks_url = "data:image/png;base64," + avatarimg_base64
+        self.G_userlooks_url = "data:image/webp;base64," + avatarimg_base64
         return True
 
     # assistant functions
@@ -356,7 +356,7 @@ class chatRoom_unsensor:
             )
             await self.save_image_async(bkImg, img_path)
 
-        return bkImg
+        return await self.convert_to_webpbase64(bkImg)
 
     async def gen_avatar(
         self, tabbyGen, char_avatar, emotion:str="", char_outfit:dict={}, task_flag=None, is_save=True
@@ -397,7 +397,26 @@ class chatRoom_unsensor:
             )
             await self.save_image_async(avatarImg, img_path)
 
-        return avatarImg
+        return await self.convert_to_webpbase64(avatarImg)
+    
+    async def convert_to_webpbase64(self, png_base64):
+        
+        # 使用io.BytesIO将字节数据转换为图像
+        png_image = Image.open(io.BytesIO(base64.b64decode(png_base64)))
+        
+        # 创建一个内存中的文件对象
+        webp_bytes_io = io.BytesIO()
+        
+        # 将图像保存为WebP格式
+        png_image.save(webp_bytes_io, format='WEBP', quality=75)
+        
+        # 获取WebP图像的字节数据
+        webp_data = webp_bytes_io.getvalue()
+        
+        # 将WebP图像编码为Base64
+        webp_base64 = base64.b64encode(webp_data).decode('utf-8')
+        
+        return webp_base64
 
     # Main Server Reply Blocks
     async def server_reply(self, usermsg):
@@ -444,7 +463,8 @@ class chatRoom_unsensor:
         logger.info(f"Raw Reply Content:\n {result_text}")
 
         if picture:
-            self.dynamic_picture = "data:image/png;base64," + picture
+            picture = await self.convert_to_webpbase64(picture)
+            self.dynamic_picture = "data:image/webp;base64," + picture
         elif not picture:
             self.dynamic_picture = False
 
@@ -484,7 +504,7 @@ class chatRoom_unsensor:
             is_save=True,
             task_flag="generate_live-CharacterAvatar"
         )
-        avatar_url = "data:image/png;base64," + avatarimg_base64
+        avatar_url = "data:image/webp;base64," + avatarimg_base64
 
         self.ai_lastword = result_text
         self.chathistory.append(f"{self.ainame}: {result_text}")
