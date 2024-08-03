@@ -13,6 +13,8 @@ sentence_transformers
 pymdown-extensions
 pygments
 pydantic
+pydantic[email]
+python-multipart
 multipart
 aiofiles
 fastapi
