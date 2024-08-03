@@ -285,7 +285,7 @@ class chatRoom_unsensor:
     @staticmethod
     def save_image_sync(image_data, file_path):
         image_save = Image.open(io.BytesIO(base64.b64decode(image_data)))
-        image_save.save(file_path)
+        image_save.save(file_path, format='WEBP', quality=75)
 
     async def save_image_async(self, image_data, file_path):
         loop = asyncio.get_event_loop()
@@ -352,7 +352,7 @@ class chatRoom_unsensor:
                 "images",
                 "avatar",
                 self.ai_role_name,
-                "background.png",
+                "background.webp",
             )
             await self.save_image_async(bkImg, img_path)
 
@@ -393,7 +393,7 @@ class chatRoom_unsensor:
                 "images",
                 "avatar",
                 self.ai_role_name,
-                "none.png",
+                "none.webp",
             )
             await self.save_image_async(avatarImg, img_path)
 

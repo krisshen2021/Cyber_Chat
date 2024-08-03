@@ -48,7 +48,7 @@
     var bkimg_path =
       '/static/images/avatar/' +
       ai_role_name +
-      '/background.png?nocache=' +
+      '/background.webp?nocache=' +
       timestamp;
     var currentIndex = 0;
     var userLastMsg = '';
@@ -1550,7 +1550,8 @@
       const maxRetryDelay = 60000;
 
       function connectWebSocket() {
-        ws = new WebSocket(`ws://${window.location.host}/ws/${clientID}`);
+        const wsUrl = `//${window.location.host}/ws/${clientID}`
+        ws = new WebSocket(wsUrl.replace(/^\/\//, window.location.protocol === 'https:' ? 'wss://' : 'ws://'));
         ws.onopen = (e) => {
           retryCount = 0;
           retryDelay = 1000;

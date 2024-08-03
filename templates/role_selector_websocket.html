@@ -812,7 +812,7 @@
       //role list constructor
       $.each(aiRoleList, function (index, item) {
         let roleContent = $("#roleholder_template").find(".roleholder").clone(true);
-        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.png?nocache=' + timestamp + ')')
+        roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.webp?nocache=' + timestamp + ')')
           .on('mouseover', function () {
             gsap.to($(this), { duration: 0.3, backgroundSize: "130%", ease: "back", });
           })
@@ -849,7 +849,7 @@
           roleContent.find(".roleRadios").trigger('change');
           $("#role_intro_form").find('.role_intro_story_name').html(`<span class="storyname_in_introblock">" ${item.Data.json_Story_intro.story_name} "</span>`);
           $("#role_intro_form").find('.role_intro_intro_text').html((item.Data.json_Story_intro.intro_text).replaceAll('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${item.Data.ai_name}</span>`));
-          $("#role_intro_form").find('.role_intro_img').css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.png?nocache=' + timestamp + ')');
+          $("#role_intro_form").find('.role_intro_img').css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.webp?nocache=' + timestamp + ')');
           $("#role_intro_form").find('.role_intro_button').on('click', function () {
             start_chat();
           });
@@ -1075,8 +1075,8 @@
       const maxRetryDelay = 60000;
 
       function connectWebSocket() {
-
-        ws = new WebSocket(`ws://${window.location.host}/ws/${clientID}`);
+        const wsUrl = `//${window.location.host}/ws/${clientID}`
+        ws = new WebSocket(wsUrl.replace(/^\/\//, window.location.protocol === 'https:' ? 'wss://' : 'ws://'));
         ws.onopen = (e) => {
           retryCount = 0;
           retryDelay = 1000;
