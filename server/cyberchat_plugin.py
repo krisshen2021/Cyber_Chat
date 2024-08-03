@@ -243,6 +243,7 @@ async def remotetts_to_audio_stream(payload:RestAPI_TTSPayload):
                     async for chunk in response.aiter_bytes():
                         if chunk:
                             yield chunk
+                            await asyncio.sleep(0.01)
             logger.info('Streaming ends')
         return StreamingResponse(stream_audio(), media_type="audio/mpeg")
 

@@ -258,8 +258,6 @@
       }
     }
 
-
-
     function base64ToArrayBuffer(base64) {
       const binaryString = atob(base64);
       const len = binaryString.length;
@@ -283,14 +281,61 @@
 
     let mediaSourceList = {};
     let sourceBufferList = {};
-    let sourceBufferReady = false;
+    let isBuffering = false;
+    let audio_buffer = [];
+    let isLastChunkReceived = {};
+
+    function addAudioEndedListener(voicePlayerid) {
+      const audio = $('#' + voicePlayerid)[0];
+      audio.addEventListener('ended', () => {
+        console.log('Audio playback ended for', voicePlayerid);
+        checkStreamEnd(voicePlayerid);
+      });
+    }
+
+    function checkStreamEnd(voicePlayerid) {
+      if (isLastChunkReceived[voicePlayerid] && audio_buffer.length === 0 && !sourceBufferList[voicePlayerid].updating) {
+        mediaSourceList[voicePlayerid].endOfStream();
+        console.log('Stream ended for', voicePlayerid);
+      }
+    }
+
+    function sourceOpen(voicePlayerid) {
+      if (!sourceBufferList[voicePlayerid]) {
+        sourceBufferList[voicePlayerid] = mediaSourceList[voicePlayerid].addSourceBuffer('audio/mpeg');
+        sourceBufferList[voicePlayerid].addEventListener('updateend', () => {
+          appendNextBuffer(voicePlayerid);
+        });
+      }
+    }
+
+    function appendNextBuffer(voicePlayerid) {
+      if (audio_buffer.length > 0 && !sourceBufferList[voicePlayerid].updating && mediaSourceList[voicePlayerid].readyState === 'open') {
+        isBuffering = true;
+        console.log('Appending data to SourceBuffer');
+        try {
+          let audioDataArray = new Uint8Array(base64ToArrayBuffer(audio_buffer.shift()));
+          sourceBufferList[voicePlayerid].appendBuffer(audioDataArray);
+          let audio = $('#' + voicePlayerid)[0];
+          audio.play();
+
+        } catch (e) {
+          console.log(e);
+          isBuffering = false;
+        }
+
+      } else {
+        isBuffering = false;
+        checkStreamEnd(voicePlayerid); 
+      }
+
+    }
 
     function xtts_audio_data(msg) {
       const audioData = msg.data['audio_data'];
       let voicePlayerid = msg.data['voice_uid'];
       let audiomode = msg.data['mode'];
       let audiostatus = msg.data['status'];
-      let recordedChunks = [];
       if (audiomode == 'normal') {
         if (audioData) {
           const audioBlob = base64ToBlob(audioData, 'audio/wav');
@@ -309,43 +354,31 @@
       } else if (audiomode == 'stream') {
         if (!mediaSourceList[voicePlayerid]) {
           mediaSourceList[voicePlayerid] = new MediaSource();
-          mediaSourceList[voicePlayerid].addEventListener('sourceopen', sourceOpen);
-          function sourceOpen() {
-            if (!sourceBufferList[voicePlayerid]) { // 检查是否已经存在 SourceBuffer
-              sourceBufferList[voicePlayerid] = mediaSourceList[voicePlayerid].addSourceBuffer('audio/mpeg');
-              sourceBufferReady = true;
-              sourceBufferList[voicePlayerid].addEventListener('updateend', () => {
-                if (!sourceBufferList[voicePlayerid].updating && mediaSourceList[voicePlayerid].readyState === 'open') {
-                  if (mediaSourceList[voicePlayerid].readyState === 'open' && sourceBufferReady) {
-                    let audio = $('#' + voicePlayerid)[0];
-                    audio.play()
-                  }
-                }
-              });
-            }
-          }
+          mediaSourceList[voicePlayerid].addEventListener('sourceopen', () => {
+            sourceOpen(voicePlayerid);
+          });
+
           $('#controller' + voicePlayerid).fadeIn(200);
           $('#controller' + voicePlayerid).css('display', 'flex');
           $('#voiceController_comic').css('display', 'flex');
           $('#' + voicePlayerid).attr('src', URL.createObjectURL(mediaSourceList[voicePlayerid]));
           updateScroll();
+          isLastChunkReceived[voicePlayerid] = false;
+          // addAudioEndedListener(voicePlayerid);
         }
 
 
-        if (audioData && sourceBufferReady) {
-          let sourceBuffer = sourceBufferList[voicePlayerid]; // 获取对应的 SourceBuffer
-          if (sourceBuffer) {
-            console.log('Appending data to SourceBuffer');
-            let audioDataArray = new Uint8Array(base64ToArrayBuffer(audioData));
-            sourceBuffer.appendBuffer(audioDataArray);
-            sourceBufferReady = true;
+        if (audioData) {
+          audio_buffer.push(audioData);
+          if (sourceBufferList[voicePlayerid] && !isBuffering) {
+            appendNextBuffer(voicePlayerid);
           } else {
-            console.warn('SourceBuffer is not ready, skipping append');
+            console.log('skipping append');
           }
-        } else if (!audioData && mediaSourceList[voicePlayerid].readyState === 'open') {
-          console.log('audio streaming ends');
-          mediaSourceList[voicePlayerid].endOfStream();
-          sourceBufferReady = false;
+        } else {
+          console.log('Last audio chunk received');
+          isLastChunkReceived[voicePlayerid] = true;
+          checkStreamEnd(voicePlayerid);
         }
       }
     }
