@@ -294,7 +294,7 @@
     }
 
     function checkStreamEnd(voicePlayerid) {
-      if (isLastChunkReceived[voicePlayerid] && audio_buffer.length === 0 && !sourceBufferList[voicePlayerid].updating) {
+      if (isLastChunkReceived[voicePlayerid] && audio_buffer.length === 0 && !sourceBufferList[voicePlayerid].updating && mediaSourceList[voicePlayerid].readyState ==='open') {
         mediaSourceList[voicePlayerid].endOfStream();
         console.log('Stream ended for', voicePlayerid);
       }
@@ -364,7 +364,7 @@
           $('#' + voicePlayerid).attr('src', URL.createObjectURL(mediaSourceList[voicePlayerid]));
           updateScroll();
           isLastChunkReceived[voicePlayerid] = false;
-          // addAudioEndedListener(voicePlayerid);
+          addAudioEndedListener(voicePlayerid);
         }
 
 

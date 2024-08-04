@@ -3,6 +3,7 @@ from fastapimode.sys_path import create_syspath, project_root
 create_syspath()
 from modules.global_sets_async import (
     getGlobalConfig,
+    convert_to_webpbase64,
     database,
     conn_ws_mgr,
     logger,
@@ -11,6 +12,7 @@ from modules.global_sets_async import (
 )
 import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio
 from datetime import datetime
+
 # from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import Response
@@ -88,11 +90,14 @@ def non_cache_response(template_name: str, context: dict) -> Response:
     }
     return templates.TemplateResponse(template_name, context=context, headers=headers)
 
-#Develop test page
+
+# Develop test page
 @app.get("/test")
 async def test(request: Request):
     context = {"request": request}
     return non_cache_response("develop_test.html", context)
+
+
 # Role selection page
 @app.get("/")
 async def initpage(request: Request):
@@ -138,7 +143,7 @@ async def enter_room(
 
 
 async def client_connect(client_info, client_id):
-    print("{}".format(ansiColor.color_text(client_id,ansiColor.BG_BRIGHT_BLUE)))
+    print("{}".format(ansiColor.color_text(client_id, ansiColor.BG_BRIGHT_BLUE)))
     send_data = {
         "name": "connect_status",
         "msg": {"status": "Success", "data": "Welcome to CyberChat Server"},
@@ -261,7 +266,7 @@ async def client_edit_profile(client_info, client_id):
 
         else:
             userdata = database.get_user(username=username, needpassword=False)
-            userdata.pop("unique_id", None)
+            # userdata.pop("unique_id", None)
             userdata.pop("password", None)
             userdata["facelooks"] = json.loads(userdata["facelooks"])
             send_data = {
@@ -503,50 +508,39 @@ async def exit_room(client_msg, client_id):
 
 
 # Xtts audio
-# async def xtts_audio_generate(client_msg, client_id):
-#     text = client_msg["data"]["text"]
-#     speaker_wav = client_msg["data"]["speaker_wav"]
-#     language = client_msg["data"]["language"]
-#     voice_uid = client_msg["data"]["voice_uid"]
-#     remote_api = await getGlobalConfig('config_data')
-#     if remote_api.get("using_remoteapi"):
-#         endpoint = "/tts_remote"
-#     else:
-#         endpoint = "/xtts"
-#     url = config_data["openai_api_chat_base"] + endpoint
-#     server_url = config_data["xtts_api_base"]
-#     audio_data = await tabby_fastapi.xtts_audio(
-#         url, text, speaker_wav, language, server_url
-#     )
-#     data_to_send = {"audio_data": audio_data, "voice_uid": voice_uid}
-#     if audio_data:
-#         await send_datapackage("xtts_result", data_to_send, client_id)
-#     else:
-#         logger.info("Failed to get audio data")
-
-#TODO  test audio streaming model.        
 async def xtts_audio_generate(client_msg, client_id):
     text = client_msg["data"]["text"]
     speaker_wav = client_msg["data"]["speaker_wav"]
     language = client_msg["data"]["language"]
     voice_uid = client_msg["data"]["voice_uid"]
-    remote_api = await getGlobalConfig('config_data')
+    remote_api = await getGlobalConfig("config_data")
     if remote_api.get("using_remoteapi"):
         endpoint = "/tts_remote_stream"
         url = config_data["openai_api_chat_base"] + endpoint
         async with httpx.AsyncClient(timeout=300) as client:
-            async with client.stream("POST", url, json={"text": text,"speaker": speaker_wav}) as response:
-                logger.info('Transfer audio to clients')
+            async with client.stream(
+                "POST", url, json={"text": text, "speaker": speaker_wav}
+            ) as response:
+                logger.info("Transfer audio to clients")
                 async for chunk in response.aiter_bytes():
                     if chunk:
                         audio_data_base64 = base64.b64encode(chunk).decode("utf-8")
-                        data_to_send = {"audio_data": audio_data_base64, "voice_uid": voice_uid, "mode":"stream", "status":"transfer"}
+                        data_to_send = {
+                            "audio_data": audio_data_base64,
+                            "voice_uid": voice_uid,
+                            "mode": "stream",
+                            "status": "transfer",
+                        }
                         await send_datapackage("xtts_result", data_to_send, client_id)
-                        await asyncio.sleep(0.01)              
+                        await asyncio.sleep(0.01)
                     else:
                         logger.info("Failed to get audio data")
         logger.info("Transfer ends")
-        await send_datapackage("xtts_result", {"voice_uid": voice_uid, "mode":"stream", "status":"end"}, client_id)        
+        await send_datapackage(
+            "xtts_result",
+            {"voice_uid": voice_uid, "mode": "stream", "status": "end"},
+            client_id,
+        )
     else:
         endpoint = "/xtts"
         url = config_data["openai_api_chat_base"] + endpoint
@@ -554,7 +548,11 @@ async def xtts_audio_generate(client_msg, client_id):
         audio_data = await tabby_fastapi.xtts_audio(
             url, text, speaker_wav, language, server_url
         )
-        data_to_send = {"audio_data": audio_data, "voice_uid": voice_uid, "mode":"normal"}
+        data_to_send = {
+            "audio_data": audio_data,
+            "voice_uid": voice_uid,
+            "mode": "normal",
+        }
         if audio_data:
             await send_datapackage("xtts_result", data_to_send, client_id)
         else:
@@ -589,9 +587,15 @@ async def preview_avatar(client_info, client_id):
     sd_payload["width"] = 512
     sd_payload["height"] = 512
     # logger.info(sd_payload)
-    avatar_data = await tabby_fastapi.SD_image(payload=sd_payload, task_flag="preview_avatar", send_msg_websocket=send_status, client_id=client_id)
+    avatar_data = await tabby_fastapi.SD_image(
+        payload=sd_payload,
+        task_flag="preview_avatar",
+        send_msg_websocket=send_status,
+        client_id=client_id,
+    )
     if avatar_data:
-        avatar_data_url = "data:image/png;base64," + avatar_data
+        avatar_data = await convert_to_webpbase64(avatar_data)
+        avatar_data_url = "data:image/webp;base64," + avatar_data
         data_to_send = {"avatar_img": avatar_data_url, "avatar_for": avatar_for}
         await send_datapackage("preview_avatar_result", data_to_send, client_id)
     else:
@@ -621,7 +625,8 @@ async def preview_createchar(client_info, client_id):
     sd_payload["height"] = 768
     picture_data = await tabby_fastapi.SD_image(payload=sd_payload)
     if picture_data:
-        picture_data_url = "data:image/png;base64," + picture_data
+        picture_data = await convert_to_webpbase64(picture_data)
+        picture_data_url = "data:image/webp;base64," + picture_data
         data_to_send = {"result": picture_data_url, "task": task}
         await send_datapackage("preview_char_result", data_to_send, client_id)
     else:
@@ -794,15 +799,17 @@ async def client_save_character(client_info, client_id):
     data_to_send = {"result": msg_to_send, "task": "after_char_saved"}
     await send_datapackage("save_character_result", data_to_send, client_id)
 
+
 async def transcribe_audio(client_info, client_id):
     audio_data = client_info["data"]["audio_data"]
     if "," in audio_data:
         audio_data = audio_data.split(",")[1]
     # audio_data = base64.b64decode(audio_data)
     transcripted_text = await tabby_fastapi.transcribe_audio(audio_data=audio_data)
-    logger.info("Transripted Text: "+transcripted_text)
+    logger.info("Transripted Text: " + transcripted_text)
     data_to_send = {"transcripted_text": transcripted_text, "task": "transcript_audio"}
     await send_datapackage("transcript_audio_result", data_to_send, client_id)
+
 
 # ws event handler
 ws_events_dict = {
@@ -847,7 +854,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 ws_event_client = client_info["wsevent_client"]
                 await execute_function(ws_event_client, client_info, client_id)
         except WebSocketDisconnect:
-            print("{}".format(ansiColor.color_text(client_id,ansiColor.BG_BRIGHT_RED)))
+            print("{}".format(ansiColor.color_text(client_id, ansiColor.BG_BRIGHT_RED)))
 
 
 if __name__ == "__main__":
@@ -855,7 +862,9 @@ if __name__ == "__main__":
     port = config_data["server_port"]
     try:
         clear_screen()
-        ansiColor.color_print("Cyber Chat Ver 1.0 by muffin",ansiColor.BG_BRIGHT_MAGENTA, ansiColor.BOLD)
-        uvicorn.run(app, host=host, port=port, access_log=False)   
+        ansiColor.color_print(
+            "Cyber Chat Ver 1.0 by muffin", ansiColor.BG_BRIGHT_MAGENTA, ansiColor.BOLD
+        )
+        uvicorn.run(app, host=host, port=port, access_log=False)
     except KeyboardInterrupt:
         logger.info("Server has been shut down.")

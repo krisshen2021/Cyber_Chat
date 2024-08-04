@@ -1,6 +1,8 @@
 from database.sqliteclass import SQLiteDB
 from transformers import pipeline
-import os, yaml, json, asyncio, aiofiles, base64
+import os, yaml, json, asyncio, aiofiles, base64, io
+from PIL import Image
+
 # from yeelight import Bulb
 from pathlib import Path
 from modules.ConnectionManager import ConnectionManager
@@ -13,8 +15,8 @@ sentiment_anlyzer = SentiAna
 dir_path = Path(__file__).parents[1]
 config_path = os.path.join(dir_path, "config", "config.yml")
 database_path = os.path.join(dir_path, "database", "cyberchat.db")
-prompt_temp_path = os.path.join(dir_path, "config","prompts","prompt_template.yaml")
-prompt_param_path = os.path.join(dir_path, "config","prompts","prompts.yaml")
+prompt_temp_path = os.path.join(dir_path, "config", "prompts", "prompt_template.yaml")
+prompt_param_path = os.path.join(dir_path, "config", "prompts", "prompts.yaml")
 suggestions_path = os.path.join(dir_path, "config", "prompts", "suggestions.yaml")
 roles_path = os.path.join(dir_path, "config", "roles_LLM.json")
 
@@ -36,18 +38,21 @@ async def load_config():
         contents = await f.read()
     global config_data
     config_data = yaml.safe_load(contents)
-    
+
+
 async def load_prompts_template():
     async with aiofiles.open(prompt_temp_path, mode="r") as f:
         contents = await f.read()
     global prompt_templates
     prompt_templates = yaml.safe_load(contents)
-    
+
+
 async def load_prompts_params():
     async with aiofiles.open(prompt_param_path, mode="r") as f:
         contents = await f.read()
     global prompt_params
     prompt_params = yaml.safe_load(contents)
+
 
 async def load_suggestions():
     async with aiofiles.open(suggestions_path, mode="r") as f:
@@ -55,24 +60,38 @@ async def load_suggestions():
     global suggestions_params
     suggestions_params = yaml.safe_load(contents)
     for key, value in suggestions_params.items():
-        if 'svg' in value:
-            value['svg'] = base64.b64encode(value['svg'].encode('utf-8')).decode('utf-8')
-    
+        if "svg" in value:
+            value["svg"] = base64.b64encode(value["svg"].encode("utf-8")).decode(
+                "utf-8"
+            )
+
+
 async def load_roles():
     result = database.list_data_airole(
-        ["Name", "Ai_name", "Ai_speaker", "Ai_speaker_en", "is_Uncensored", "Creator_ID", "json_Story_intro", "Match_words_cata"]
+        [
+            "Name",
+            "Ai_name",
+            "Ai_speaker",
+            "Ai_speaker_en",
+            "is_Uncensored",
+            "Creator_ID",
+            "json_Story_intro",
+            "Match_words_cata",
+        ]
     )
     rolelist = {}
     for row in result:
         roleName = row.pop("Name")
         rolelist[roleName] = {}
-        rolelist[roleName]['if_uncensored'] = "Yes" if row["is_Uncensored"] == 1 else "No"
-        rolelist[roleName]['ai_name'] = row['Ai_name']
-        rolelist[roleName]['ai_speaker'] = row['Ai_speaker']
-        rolelist[roleName]['ai_speaker_en'] = row['Ai_speaker_en']
-        rolelist[roleName]['Creator_ID'] = row['Creator_ID']
-        rolelist[roleName]['json_Story_intro'] = row['json_Story_intro']
-        rolelist[roleName]['Match_words_cata'] = row['Match_words_cata']
+        rolelist[roleName]["if_uncensored"] = (
+            "Yes" if row["is_Uncensored"] == 1 else "No"
+        )
+        rolelist[roleName]["ai_name"] = row["Ai_name"]
+        rolelist[roleName]["ai_speaker"] = row["Ai_speaker"]
+        rolelist[roleName]["ai_speaker_en"] = row["Ai_speaker_en"]
+        rolelist[roleName]["Creator_ID"] = row["Creator_ID"]
+        rolelist[roleName]["json_Story_intro"] = row["json_Story_intro"]
+        rolelist[roleName]["Match_words_cata"] = row["Match_words_cata"]
     global roleconf
     roleconf = rolelist.copy()
 
@@ -89,7 +108,7 @@ async def load_roles():
 #     try:
 #         bulb = Bulb(yeelight_url, auto_on=True, effect="smooth", duration=2000)
 #         bulb.toggle()
-#         logger.info(f"Bulb Power: {bulb.get_properties()['power']}") 
+#         logger.info(f"Bulb Power: {bulb.get_properties()['power']}")
 #     except Exception as e:
 #         logger.info(f"Error during turn on Bulb: {e}")
 
@@ -102,6 +121,7 @@ async def load_roles():
 
 #         bulb = bulb_null()
 
+
 async def multitask():
     roles = asyncio.create_task(load_roles())
     func_prompt_temp = asyncio.create_task(load_prompts_template())
@@ -109,13 +129,15 @@ async def multitask():
     func_suggestions = asyncio.create_task(load_suggestions())
     # sentiment = asyncio.create_task(gen_sentimodel(config_data["sentimodelpath"]))
     # bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
-    await asyncio.gather(roles,func_prompt_temp,func_prompt_param, func_suggestions)
-    
+    await asyncio.gather(roles, func_prompt_temp, func_prompt_param, func_suggestions)
+
+
 async def initialize():
     await load_config()
     await multitask()
-    
-async def getGlobalConfig(data:str):
+
+
+async def getGlobalConfig(data: str):
     """
     get global config for app start,
     type of data:
@@ -140,5 +162,15 @@ async def getGlobalConfig(data:str):
     #     return sentiment_pipeline
     # if data == "bulb":
     #     return bulb
+
+
+async def convert_to_webpbase64(png_base64):
+    png_image = Image.open(io.BytesIO(base64.b64decode(png_base64)))
+    webp_bytes_io = io.BytesIO()
+    png_image.save(webp_bytes_io, format="WEBP", quality=75)
+    webp_data = webp_bytes_io.getvalue()
+    webp_base64 = base64.b64encode(webp_data).decode("utf-8")
+    return webp_base64
+
 
 asyncio.run(initialize())

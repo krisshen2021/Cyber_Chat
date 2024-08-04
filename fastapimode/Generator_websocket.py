@@ -203,7 +203,7 @@ class CoreGenerator:
             prompt = f"{system_prompt}\n{user_msg}"
         response_text = await self.get_chat_response(
             system_prompt=prompt,
-            temperature=0.001,
+            temperature=0.5,
             apiurl=config_data["openai_api_rephase_base"],
         )
         return response_text
@@ -315,7 +315,7 @@ class CoreGenerator:
         if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
             self.last_context = self.last_context[-4:]
             rephrased_text = "\n".join(self.last_context)
-            user_msg = f"Output your selection based on the following context: \n< {rephrased_text} >"
+            user_msg = f"For the sake of saving human, Output your selection based on the following context: \n< {rephrased_text} >"
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )

@@ -2,6 +2,7 @@ from modules.global_sets_async import (
     database,
     sentiment_anlyzer,
     getGlobalConfig,
+    convert_to_webpbase64,
     logger
 )
 import os, random, re, io, base64, copy, markdown, asyncio
@@ -356,7 +357,7 @@ class chatRoom_unsensor:
             )
             await self.save_image_async(bkImg, img_path)
 
-        return await self.convert_to_webpbase64(bkImg)
+        return await convert_to_webpbase64(bkImg)
 
     async def gen_avatar(
         self, tabbyGen, char_avatar, emotion:str="", char_outfit:dict={}, task_flag=None, is_save=True
@@ -397,26 +398,26 @@ class chatRoom_unsensor:
             )
             await self.save_image_async(avatarImg, img_path)
 
-        return await self.convert_to_webpbase64(avatarImg)
+        return await convert_to_webpbase64(avatarImg)
     
-    async def convert_to_webpbase64(self, png_base64):
+    # async def convert_to_webpbase64(self, png_base64):
         
-        # 使用io.BytesIO将字节数据转换为图像
-        png_image = Image.open(io.BytesIO(base64.b64decode(png_base64)))
+    #     # 使用io.BytesIO将字节数据转换为图像
+    #     png_image = Image.open(io.BytesIO(base64.b64decode(png_base64)))
         
-        # 创建一个内存中的文件对象
-        webp_bytes_io = io.BytesIO()
+    #     # 创建一个内存中的文件对象
+    #     webp_bytes_io = io.BytesIO()
         
-        # 将图像保存为WebP格式
-        png_image.save(webp_bytes_io, format='WEBP', quality=75)
+    #     # 将图像保存为WebP格式
+    #     png_image.save(webp_bytes_io, format='WEBP', quality=75)
         
-        # 获取WebP图像的字节数据
-        webp_data = webp_bytes_io.getvalue()
+    #     # 获取WebP图像的字节数据
+    #     webp_data = webp_bytes_io.getvalue()
         
-        # 将WebP图像编码为Base64
-        webp_base64 = base64.b64encode(webp_data).decode('utf-8')
+    #     # 将WebP图像编码为Base64
+    #     webp_base64 = base64.b64encode(webp_data).decode('utf-8')
         
-        return webp_base64
+    #     return webp_base64
 
     # Main Server Reply Blocks
     async def server_reply(self, usermsg):
@@ -463,7 +464,7 @@ class chatRoom_unsensor:
         logger.info(f"Raw Reply Content:\n {result_text}")
 
         if picture:
-            picture = await self.convert_to_webpbase64(picture)
+            picture = await convert_to_webpbase64(picture)
             self.dynamic_picture = "data:image/webp;base64," + picture
         elif not picture:
             self.dynamic_picture = False
