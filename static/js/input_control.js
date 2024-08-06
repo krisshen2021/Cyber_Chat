@@ -1,7 +1,8 @@
 //input_control.js
 
 export class CommandInputHandler {
-    constructor(suggestions, defaultText, $msg_inputer, $cmd_dropdownMenu, $ai_icon, prompt_variable_str, cssClasses) {
+    constructor(suggestions, defaultText, $msg_inputer, $cmd_dropdownMenu, $ai_icon, prompt_variable_str, cssClasses, sentenceCompletionFunc) {
+        this.sentenceCompletionFunc = sentenceCompletionFunc;
         this.icon_default_svg = `<svg width="30px" height="30px" viewBox="0 0 24 24" data-name="025_SCIENCE" id="_025_SCIENCE" xmlns="http://www.w3.org/2000/svg">
         <defs>
         <style>
@@ -41,14 +42,14 @@ export class CommandInputHandler {
         //     </li>`
         // ).join('');
         this.filteredSuggestions = [];
-        $.each(this.suggestions, (key,value) => {
-                let prompt = this.suggestions[key].prompt.replace('[contents]', this.prompt_variable_str)
-                let sugDesc = this.suggestions[key].descript.replace('[contents]', this.prompt_variable_str)
-                let li_html = `<li class='${this.cssClasses.cmdItems}' data-desc='${this.suggestions[key].cmd}' data-svg='' data-prompt='${prompt}'>
+        $.each(this.suggestions, (key, value) => {
+            let prompt = this.suggestions[key].prompt.replace('[contents]', this.prompt_variable_str)
+            let sugDesc = this.suggestions[key].descript.replace('[contents]', this.prompt_variable_str)
+            let li_html = `<li class='${this.cssClasses.cmdItems}' data-desc='${this.suggestions[key].cmd}' data-svg='' data-prompt='${prompt}'>
                         <span class='${this.cssClasses.itemName}'><div>${this.suggestions[key].svg}</div><div>${this.suggestions[key].name}</div></span>
                         <span class='${this.cssClasses.sugDesc}'>${sugDesc}</span>
                     </li>`
-                this.filteredSuggestions.push(li_html);
+            this.filteredSuggestions.push(li_html);
         });
         this.filteredSuggestions.reverse();
         this.filteredSuggestions = this.filteredSuggestions.join('');
@@ -56,6 +57,7 @@ export class CommandInputHandler {
         this.selectedItemIndex = -1;
         this.command_flag = "cmd_normal";
         this.prompt_flag = null;
+        this.sentenceTimer = null;
         this.initializeEventBindings();
     }
 
@@ -130,6 +132,33 @@ export class CommandInputHandler {
                     this.resetAll();
                 }
             }
+            if (e.key === "Tab") {
+                e.preventDefault();
+                if (this.sentenceTimer) {
+                    clearTimeout(this.sentenceTimer);
+                    this.sentenceTimer = null;
+                }
+                this.sentenceCompletionFunc();
+            }
+
+        });
+        this.$msg_inputer.on('keyup', (e) => {
+            if (e.key === " ") {
+                let value = this.$msg_inputer.val();
+                if (/ $/.test(value)) {
+                    // If the sentence ends with a space, start the timer for sentence completion
+                    if (this.sentenceTimer) {
+                        clearTimeout(this.sentenceTimer);
+                    }
+                    this.sentenceTimer = setTimeout(() => {
+                        this.sentenceCompletionFunc();
+                    }, 8000);
+                }
+            } else if (this.sentenceTimer) {
+                clearTimeout(this.sentenceTimer);
+                this.sentenceTimer = null;
+            }
+
         });
 
         this.$cmd_dropdownMenu.on('click', `li.${this.cssClasses.cmdItems}`, () => {

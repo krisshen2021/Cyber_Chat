@@ -10,10 +10,8 @@ from modules.global_sets_async import (
     config_data,
     prompt_params,
 )
-import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio
+import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy
 from datetime import datetime
-
-# from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
@@ -66,16 +64,6 @@ def markdownText(text):
         extensions=["pymdownx.superfences", "pymdownx.highlight", "pymdownx.magiclink"],
     )
     return Mtext
-
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # Startup code
-#     print("Starting up...")
-#     # Your startup logic here
-#     yield
-#     # Shutdown code
-#     print("Shutting down...")
 
 
 app = FastAPI(title="cyberchat")
@@ -507,6 +495,41 @@ async def exit_room(client_msg, client_id):
     await send_datapackage("exit_room_success", data_to_send, client_id)
 
 
+# Sentence completion
+async def sentence_completion(client_msg, client_id):
+    userCurrentRoom = conn_ws_mgr.get_room(client_id)
+    chat_history = copy.deepcopy(userCurrentRoom.chathistory)
+    system_intro = chat_history.pop(0) # Remove the first message which is the system prompt
+    if len(chat_history) > 5:
+        chat_history = chat_history[-5:] # Only keep the last 5 messages
+    chat_history = "\n".join(chat_history)
+    message = client_msg["data"]["message"]
+    user_name = userCurrentRoom.username
+    infer_msg = f"<CONTEXT>{system_intro}\n{chat_history}\n</CONTEXT>\n{user_name}: {message}"
+    logger.info(f"sentence completion input: {infer_msg}")
+    endpoint = "/sentenceCompletion"
+    url = config_data["openai_api_chat_base"] + endpoint
+    try:
+        async with httpx.AsyncClient(timeout=300) as client:
+            response = await client.post(url, json={"messages": infer_msg})
+            if response.status_code == 200:
+                logger.info(f'sentence completion result: {response.text}')
+                await send_datapackage(
+                    "sentence_completion_result",
+                    {"sentence": response.text.rstrip()},
+                    client_id,
+                )
+            else:
+                logger.error(f"Request failed with status code: {response.status_code}")
+    except Exception as e:
+        logger.error(f"Error in sentence_completion: {e}")
+        await send_datapackage(
+            "sentence_completion_result",
+            {"sentence": None},
+            client_id,
+        )
+
+
 # Xtts audio
 async def xtts_audio_generate(client_msg, client_id):
     text = client_msg["data"]["text"]
@@ -833,6 +856,7 @@ ws_events_dict = {
     "preview_createchar": preview_createchar,
     "client_save_character": client_save_character,
     "transcribe_audio": transcribe_audio,
+    "sentence_completion": sentence_completion,
 }
 
 

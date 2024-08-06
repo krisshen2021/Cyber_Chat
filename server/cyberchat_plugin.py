@@ -1,4 +1,4 @@
-import httpx, pynvml, sys, asyncio, json, base64, io, re, copy
+import httpx, pynvml, sys, asyncio, json, base64, io, re, copy, os, aiofiles, yaml
 from tqdm import tqdm
 from pathlib import Path
 
@@ -18,6 +18,7 @@ from stt_setting import stt_select_endpoint
 from modules.colorlogger import logger
 from modules.ANSI_tool import ansiColor
 from modules.tqdm_barformat import Pbar
+
 from remote_api_hub import (
     ChatMessage,
     cohere_stream,
@@ -47,6 +48,8 @@ from remote_api_hub import (
     openairouter_stream,
     openairouter_invoke,
     OAIParam,
+    sentenceCompletionParam,
+    sentenceCompletion_invoke,
 )
 
 
@@ -60,8 +63,15 @@ restapi_tts = tts_select_endpoint()
 
 restapi_stt = stt_select_endpoint()
 
-ansiColor.color_print("Remote Server Started\nWaiting for connection...", ansiColor.BG_BRIGHT_MAGENTA+ansiColor.WHITE, ansiColor.BOLD)
-COLORBAR = Pbar.setBar(Pbar.BarColorer.GREEN,Pbar.BarColorer.YELLOW,Pbar.BarColorer.GREEN)
+ansiColor.color_print(
+    "Remote Server Started\nWaiting for connection...",
+    ansiColor.BG_BRIGHT_MAGENTA + ansiColor.WHITE,
+    ansiColor.BOLD,
+)
+COLORBAR = Pbar.setBar(
+    Pbar.BarColorer.GREEN, Pbar.BarColorer.YELLOW, Pbar.BarColorer.GREEN
+)
+
 
 class OverrideSettings(BaseModel):
     sd_vae: Optional[str] = "Automatic"
@@ -108,18 +118,32 @@ class XTTSPayload(BaseModel):
     speaker_wav: Optional[str] = "en_female_01"
     language: Optional[str] = "en"
     server_url: Optional[str] = "http://127.0.0.1:8020/tts_to_audio/"
-    
+
+
 class RestAPI_TTSPayload(BaseModel):
     text: Optional[str] = None
     speaker: Optional[str] = None
-    
+
+
 class STTPayload(BaseModel):
-    audio_data:str #{"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
-    
+    audio_data: str  # {"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
+
 
 sd_api_url = "http://127.0.0.1:7860"
 api_txt2img_path = "/sdapi/v1/txt2img"
 api_progress_path = "/internal/progress"
+
+prompt_param_path = os.path.join(project_root, "config", "prompts", "prompts.yaml")
+
+
+async def load_prompts_params():
+    async with aiofiles.open(prompt_param_path, mode="r") as f:
+        contents = await f.read()
+    prompt_params = yaml.safe_load(contents)
+    return prompt_params["sentenceCompletion_prompt"]
+
+
+sentence_completion_prompt = asyncio.run(load_prompts_params())
 
 
 class StableDiffusionAPI:
@@ -152,7 +176,9 @@ class StableDiffusionAPI:
         progress_payload=None,
     ):
         async with httpx.AsyncClient() as client:
-            logger.info(f"Generate Image from {sd_api_url}, task_id: {progress_payload.get('id_task','Empty')}")
+            logger.info(
+                f"Generate Image from {sd_api_url}, task_id: {progress_payload.get('id_task','Empty')}"
+            )
             self.pbar = tqdm(range(100), desc="Generating Image", bar_format=COLORBAR)
             while True:
                 try:
@@ -183,18 +209,19 @@ class StableDiffusionAPI:
 
 router = APIRouter(tags=["cyberchat"])
 
+
 # Openai like tts to audio
 @router.post("/v1/tts_remote")
-async def remotetts_to_audio(payload:RestAPI_TTSPayload):
+async def remotetts_to_audio(payload: RestAPI_TTSPayload):
     server_url = restapi_tts.get("server_url")
     headers = restapi_tts.get("headers")
     payload_tts = restapi_tts.get("payload_tts")
     endpoint_name = restapi_tts.get("name")
-    if endpoint_name == 'Unrealspeech':
+    if endpoint_name == "Unrealspeech":
         payload_tts["Text"] = payload.text
-    elif endpoint_name == 'Openai':
+    elif endpoint_name == "Openai":
         payload_tts["input"] = payload.text
-    elif endpoint_name == 'PlayHT':
+    elif endpoint_name == "PlayHT":
         payload_tts["text"] = payload.text
     try:
         async with httpx.AsyncClient() as client:
@@ -213,8 +240,9 @@ async def remotetts_to_audio(payload:RestAPI_TTSPayload):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/v1/tts_remote_stream")
-async def remotetts_to_audio_stream(payload:RestAPI_TTSPayload):
+async def remotetts_to_audio_stream(payload: RestAPI_TTSPayload):
     server_url = restapi_tts.get("server_url")
     headers = restapi_tts.get("headers")
     payload_tts = copy.deepcopy(restapi_tts.get("payload_tts"))
@@ -226,30 +254,35 @@ async def remotetts_to_audio_stream(payload:RestAPI_TTSPayload):
         gender = "female"
     else:
         gender = "male"
-    if endpoint_name == 'Unrealspeech':
+    if endpoint_name == "Unrealspeech":
         payload_tts["Text"] = payload.text
         payload_tts["VoiceId"] = payload_tts["VoiceId"][gender]
-    elif endpoint_name == 'Openai':
+    elif endpoint_name == "Openai":
         payload_tts["input"] = payload.text
         payload_tts["voice"] = payload_tts["voice"][gender]
-    elif endpoint_name == 'PlayHT':
+    elif endpoint_name == "PlayHT":
         payload_tts["text"] = payload.text
         payload_tts["voice"] = payload_tts["voice"][gender]
     try:
+
         async def stream_audio():
             async with httpx.AsyncClient(timeout=300) as client:
-                async with client.stream("POST", server_url, json=payload_tts, headers=headers) as response:
-                    logger.info('Start to streaming audio')
+                async with client.stream(
+                    "POST", server_url, json=payload_tts, headers=headers
+                ) as response:
+                    logger.info("Start to streaming audio")
                     async for chunk in response.aiter_bytes():
                         if chunk:
                             yield chunk
                             await asyncio.sleep(0.01)
-            logger.info('Streaming ends')
+            logger.info("Streaming ends")
+
         return StreamingResponse(stream_audio(), media_type="audio/mpeg")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 # XTTS tts to audio
 @router.post("/v1/xtts")
 async def xtts_to_audio(payload: XTTSPayload):
@@ -275,7 +308,8 @@ async def xtts_to_audio(payload: XTTSPayload):
                 )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 # STT speak to text
 @router.post("/v1/stt_remote")
 async def stt_to_text(payload: STTPayload):
@@ -285,16 +319,16 @@ async def stt_to_text(payload: STTPayload):
     # print(payload.audio_data)
     # print(server_url,headers,data)
     audio_data = base64.b64decode(str(payload.audio_data))
-    files = {
-    "file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")
-    }    
+    files = {"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
     try:
         async with httpx.AsyncClient() as client:
-            transcript = await client.post(url=server_url, headers=headers, files=files, data=data, timeout=60)
+            transcript = await client.post(
+                url=server_url, headers=headers, files=files, data=data, timeout=60
+            )
             if transcript.status_code == 200:
                 return transcript.json()
             else:
-                return {"text":"Error on transcribe audio"}
+                return {"text": "Error on transcribe audio"}
     except Exception as e:
         print(f"Error on transcribe audio: {e}")
 
@@ -310,13 +344,18 @@ async def generate_image(payload: SDPayload, SD_URL: str = Header(None)):
     )
     return txt2img_result
 
+
 @router.post("/v1/check-progress")
-async def check_progress(payload: SDProcessPayload, SD_URL:str = Header(None)):
+async def check_progress(payload: SDProcessPayload, SD_URL: str = Header(None)):
     payload_dict = payload.model_dump()
     api_instance = StableDiffusionAPI()
+
     async def progress_generator():
-        async for progress_info in api_instance.check_progress(progress_payload=payload_dict, sd_api_url=SD_URL):
+        async for progress_info in api_instance.check_progress(
+            progress_payload=payload_dict, sd_api_url=SD_URL
+        ):
             yield json.dumps(progress_info) + "\n"
+
     return StreamingResponse(progress_generator(), media_type="application/x-ndjson")
 
 
@@ -351,6 +390,46 @@ async def get_gpu_info():
 
     pynvml.nvmlShutdown()
     return {"GPU Count": device_count, "GPU Info": gpu_info}
+
+
+# sentence completion api endpoint
+@router.post("/v1/sentenceCompletion")
+async def sentence_completion(params_json:dict):
+    keys_to_keep = [
+        "system_prompt",
+        "messages",
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "model",
+        "presence_penalty",
+    ]
+    sentenceCompletion_dict = {
+        key: params_json[key] for key in keys_to_keep if key in params_json
+    }
+    sentenceCompletion_dict["messages"] = [
+        ChatMessage(role="user", content=sentenceCompletion_dict["messages"]),
+    ]
+    if (
+        "system_prompt" in sentenceCompletion_dict
+        and sentenceCompletion_dict["system_prompt"] is not None
+    ):
+        sentenceCompletion_dict["messages"].insert(
+            0,
+            ChatMessage(
+                role="system", content=sentenceCompletion_dict["system_prompt"]
+            ),
+        )
+    else:
+        system_prompt = sentence_completion_prompt
+        sentenceCompletion_dict["messages"].insert(
+            0,
+            ChatMessage(role="system", content=system_prompt),
+        )
+    params = sentenceCompletionParam(**sentenceCompletion_dict)
+    return Response(
+        content=await sentenceCompletion_invoke(params), media_type="text/plain"
+    )
 
 
 # remote api endpoint

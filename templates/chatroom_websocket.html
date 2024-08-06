@@ -294,7 +294,7 @@
     }
 
     function checkStreamEnd(voicePlayerid) {
-      if (isLastChunkReceived[voicePlayerid] && audio_buffer.length === 0 && !sourceBufferList[voicePlayerid].updating && mediaSourceList[voicePlayerid].readyState ==='open') {
+      if (isLastChunkReceived[voicePlayerid] && audio_buffer.length === 0 && !sourceBufferList[voicePlayerid].updating && mediaSourceList[voicePlayerid].readyState === 'open') {
         mediaSourceList[voicePlayerid].endOfStream();
         console.log('Stream ended for', voicePlayerid);
       }
@@ -326,7 +326,7 @@
 
       } else {
         isBuffering = false;
-        checkStreamEnd(voicePlayerid); 
+        checkStreamEnd(voicePlayerid);
       }
 
     }
@@ -393,6 +393,21 @@
       let svgicon_normal = `<svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff" stroke-width="1.5"><rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-width="1.5"></rect><path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
       $("#recordButton").html(svgicon_normal);
 
+    }
+    function sentence_completion_result(msg) {
+      const sentence_completion_text = msg.data['sentence'];
+      console.log(sentence_completion_text);
+      toggleInputs(true);
+      const textBeforeCursor = $("#messageToSend").val().substring(0, $("#messageToSend").prop("selectionStart"));
+      const textAfterCursor = $("#messageToSend").val().substring($("#messageToSend").prop("selectionEnd"));
+      const cursorStart = textBeforeCursor.length;
+      const cursorEnd = textBeforeCursor.length + sentence_completion_text.length;
+      $("#messageToSend").val(textBeforeCursor + sentence_completion_text + textAfterCursor).focus();
+      setTimeout(() => {
+        $("#messageToSend")[0].setSelectionRange(cursorStart, cursorEnd);
+      }, 0);
+      autoExpand($('#messageToSend')[0]);
+      // $("#submit").trigger("click");
     }
 
     function genUID(prefix) {
@@ -849,6 +864,14 @@
         conid: conid,
       };
       ws.send(wsData('save_chat_history', querydata));
+      toggleInputs(false);
+    }
+    function sentenceCompletion() {
+      var querydata = {
+        conid: conid,
+        message: $('#messageToSend').val()
+      };
+      ws.send(wsData('sentence_completion', querydata));
       toggleInputs(false);
     }
 
@@ -1311,6 +1334,7 @@
         $ai_icon,
         prompt_variable_str,
         cssClasses,
+        sentenceCompletion
       );
       // TODO:create a process for audio data, send the data to server and get the response
 
@@ -1419,6 +1443,7 @@
       });
       $('#load-chat-history').click(loadChatHistory);
       $('#save-chat-history').click(saveChatHistory);
+      $('#sentence-completion').click(sentenceCompletion);
       $('#restart').click(resetChat);
       $('#regenerate').click(regenReply);
       $('#exitchat').click(exitChat);
@@ -1630,6 +1655,9 @@
           if (serverData.wsevent_server == 'transcript_audio_result') {
             transcript_audio_result(serverData);
           }
+          if (serverData.wsevent_server == 'sentence_completion_result') {
+            sentence_completion_result(serverData);
+          }
         };
         ws.onerror = (e) => {
           console.log('Websocket error observed: ' + e);
@@ -1765,6 +1793,7 @@
         <div id="chat-history-buttons">
           <button id="load-chat-history">Load chat history</button>
           <button id="save-chat-history">Save chat history</button>
+          <button id="sentence-completion" style="display: none;">Sentence completion</button>
         </div>
         <div class="messageInputBox">
           <div class="input_area">

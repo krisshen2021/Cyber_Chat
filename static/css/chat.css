@@ -590,8 +590,8 @@ body {
 }
 
 #messageToSend::selection {
-  background-color: orange;
-  color: white;
+  /* background-color: rgb(16, 16, 16); */
+  color: rgb(82, 82, 82);
 }
 
 .messageOptions {
@@ -653,7 +653,8 @@ body {
 }
 
 #load-chat-history,
-#save-chat-history {
+#save-chat-history,
+#sentence-completion {
   border-radius: 15px;
   border: 0px;
   padding: 0 20px;
@@ -672,7 +673,8 @@ body {
 #restart:hover,
 #exitchat:hover,
 #load-chat-history:hover,
-#save-chat-history:hover {
+#save-chat-history:hover,
+#sentence-completion:hover {
   background: rgba(255, 127, 36, 0.7);
   cursor: pointer;
 }

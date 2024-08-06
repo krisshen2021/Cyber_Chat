@@ -3,7 +3,7 @@ from modules.global_sets_async import (
     sentiment_anlyzer,
     getGlobalConfig,
     convert_to_webpbase64,
-    logger
+    logger,
 )
 import os, random, re, io, base64, copy, markdown, asyncio
 from fastapimode.airole_creator_uncensor_websocket import airole
@@ -198,12 +198,15 @@ class chatRoom_unsensor:
             self.conversation_id,
         )
         logger.info("Generate Character Background")
+        emotion = await self.emotion_detector(self.first_message)
+        logger.info(f'the character\'s initial emotion is {emotion}')
         bgimg_base64 = await self.gen_bgImg(
-            self.my_generate,
-            self.state["char_looks"],
-            self.state["env_setting"],
+            tabbyGen=self.my_generate,
+            char_looks=self.state["char_looks"],
+            bgImgstr=self.state["env_setting"],
             char_outfit=self.state["char_outfit"],
             task_flag="generate_background-ai",
+            emotion=emotion,
         )
         self.bkImg = "data:image/webp;base64," + bgimg_base64
         await self.send_msg_websocket(
@@ -229,7 +232,7 @@ class chatRoom_unsensor:
         avatarimg_base64 = await self.gen_avatar(
             tabbyGen=self.my_generate,
             char_avatar=self.state["char_avatar"],
-            emotion="smile",
+            emotion=emotion,
             char_outfit=self.state["char_outfit"],
             is_save=True,
             task_flag="generate_avatar-ai",
@@ -286,7 +289,7 @@ class chatRoom_unsensor:
     @staticmethod
     def save_image_sync(image_data, file_path):
         image_save = Image.open(io.BytesIO(base64.b64decode(image_data)))
-        image_save.save(file_path, format='WEBP', quality=75)
+        image_save.save(file_path, format="WEBP", quality=75)
 
     async def save_image_async(self, image_data, file_path):
         loop = asyncio.get_event_loop()
@@ -306,6 +309,7 @@ class chatRoom_unsensor:
         is_user=False,
         char_outfit=None,
         task_flag=None,
+        emotion="",
     ):
         # logger.info(f">>>The window ratio[w/h]: {self.windowRatio}")
         tabbyGen.image_payload["enable_hr"] = True
@@ -337,14 +341,15 @@ class chatRoom_unsensor:
             # logger.info(
             #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             # )
-            
 
+        if emotion != "":
+            emotion = f"({emotion} expression:1.24), "
         bkImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
-            char_looks=char_looks + ", " + portraitprefix,
+            char_looks=char_looks + ", " + emotion + portraitprefix,
             env_setting=bgImgstr,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
-            task_flag = task_flag
+            task_flag=task_flag,
         )
         if is_save:
             img_path = os.path.join(
@@ -360,14 +365,20 @@ class chatRoom_unsensor:
         return await convert_to_webpbase64(bkImg)
 
     async def gen_avatar(
-        self, tabbyGen, char_avatar, emotion:str="", char_outfit:dict={}, task_flag=None, is_save=True
+        self,
+        tabbyGen,
+        char_avatar,
+        emotion: str = "",
+        char_outfit: dict = {},
+        task_flag=None,
+        is_save=True,
     ):
         env_setting = ",".join(
             (self.state.get("env_setting", "").split(",") + ["", ""])[:2]
         )
         if not env_setting.strip(","):
             env_setting = "plain background"
-        char_outfit_setting =  ",".join(
+        char_outfit_setting = ",".join(
             (char_outfit.get("normal", "").split(",") + ["", ""])[:2]
         )
         if not char_outfit_setting.strip(","):
@@ -381,10 +392,10 @@ class chatRoom_unsensor:
         char_avatar = char_avatar.replace("<|emotion|>", emotion)
         avatarImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
-            char_looks=char_avatar+", "+char_outfit_setting,
+            char_looks=char_avatar + ", " + char_outfit_setting,
             env_setting=env_setting,
             prompt_suffix=tabbyGen.prmopt_fixed_suffix,
-            task_flag = task_flag
+            task_flag=task_flag,
         )
 
         if is_save:
@@ -399,25 +410,17 @@ class chatRoom_unsensor:
             await self.save_image_async(avatarImg, img_path)
 
         return await convert_to_webpbase64(avatarImg)
-    
-    # async def convert_to_webpbase64(self, png_base64):
-        
-    #     # 使用io.BytesIO将字节数据转换为图像
-    #     png_image = Image.open(io.BytesIO(base64.b64decode(png_base64)))
-        
-    #     # 创建一个内存中的文件对象
-    #     webp_bytes_io = io.BytesIO()
-        
-    #     # 将图像保存为WebP格式
-    #     png_image.save(webp_bytes_io, format='WEBP', quality=75)
-        
-    #     # 获取WebP图像的字节数据
-    #     webp_data = webp_bytes_io.getvalue()
-        
-    #     # 将WebP图像编码为Base64
-    #     webp_base64 = base64.b64encode(webp_data).decode('utf-8')
-        
-    #     return webp_base64
+
+    async def emotion_detector(self, input_msg):
+        emotion_des = await self.sentiment_anlyzer.get_sentiment(input_msg)
+        positive_emotions = ["joy", "surprise", "love", "fun"]
+        negative_emotions = ["sadness", "anger", "fear", "disgust"]
+        emotion_des = (
+            str(emotion_des)
+            .replace("POSITIVE", random.choice(positive_emotions))
+            .replace("NEGATIVE", random.choice(negative_emotions))
+        )
+        return emotion_des
 
     # Main Server Reply Blocks
     async def server_reply(self, usermsg):
@@ -477,19 +480,14 @@ class chatRoom_unsensor:
             else result_text
         )
 
-        tts_text_extracted = self.extract_text(result_text_cn).replace(r"\\n"," ").strip()
+        tts_text_extracted = (
+            self.extract_text(result_text_cn).replace(r"\\n", " ").strip()
+        )
         logger.info(f"Extracted TTS:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:
             if result_text != "*Silent*":
-                emotion_des = await self.sentiment_anlyzer.get_sentiment(result_text)
-                positive_emotions = ["joy", "surprise", "love", "fun"]
-                negative_emotions = ["sadness", "anger", "fear", "disgust"]
-                emotion_des = (
-                    str(emotion_des)
-                    .replace("POSITIVE", random.choice(positive_emotions))
-                    .replace("NEGATIVE", random.choice(negative_emotions))
-                )
+                emotion_des = await self.emotion_detector(result_text)
                 logger.info(f"{self.ainame}'s Emotion: {emotion_des}")
             else:
                 emotion_des = "none"
@@ -503,7 +501,7 @@ class chatRoom_unsensor:
             emotion=emotion_des,
             char_outfit=self.state["char_outfit"],
             is_save=True,
-            task_flag="generate_live-CharacterAvatar"
+            task_flag="generate_live-CharacterAvatar",
         )
         avatar_url = "data:image/webp;base64," + avatarimg_base64
 

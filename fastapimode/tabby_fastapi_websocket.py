@@ -4,7 +4,10 @@ from modules.tqdm_barformat import Pbar
 from modules.global_sets_async import config_data, timeout, logger, getGlobalConfig
 from modules.payload_state import completions_data, model_load_data, sd_payload
 
-COLORBAR = Pbar.setBar(Pbar.BarColorer.CYAN, Pbar.BarColorer.MAGENTA, Pbar.BarColorer.CYAN)
+COLORBAR = Pbar.setBar(
+    Pbar.BarColorer.CYAN, Pbar.BarColorer.MAGENTA, Pbar.BarColorer.CYAN
+)
+
 
 class tabby_fastapi:
     """
@@ -374,7 +377,7 @@ class tabby_fastapi:
                     task_flag=task_flag,
                     timeout=timeout,
                     send_msg_websocket=send_msg_websocket,
-                    client_id=client_id
+                    client_id=client_id,
                 ),
             )
         else:
@@ -407,7 +410,7 @@ class tabby_fastapi:
     async def SD_process(
         cls,
         url: str = None,
-        headers:dict = None,
+        headers: dict = None,
         payload: dict = None,
         task_flag: str = None,
         timeout=timeout,
@@ -419,8 +422,12 @@ class tabby_fastapi:
         preview_img_base64 = None
         async with httpx.AsyncClient(timeout=timeout) as client:
             try:
-                async with client.stream("POST", url=url, json=payload, headers=headers) as response:
-                    pbar = tqdm(range(100), desc=f"Generating Image", bar_format=COLORBAR)
+                async with client.stream(
+                    "POST", url=url, json=payload, headers=headers
+                ) as response:
+                    pbar = tqdm(
+                        range(100), desc=f"Generating Image", bar_format=COLORBAR
+                    )
                     try:
                         async for line in response.aiter_lines():
                             if line is not None:
@@ -455,7 +462,8 @@ class tabby_fastapi:
                                             "event": "SD_Process_status",
                                             "percentage": percentage,
                                             "task_flag": task_flag,
-                                            "preview_img_base64": preview_img_base64 or "empty",
+                                            "preview_img_base64": preview_img_base64
+                                            or "empty",
                                         }
                                         await send_msg_websocket(
                                             {"name": "SD_generation", "msg": msgpack},
@@ -486,6 +494,7 @@ class tabby_fastapi:
                 "！",
                 "？",
                 "”",
+                "`",
             ]
             if text[-1] not in end_punctuation:
                 for i in range(len(text) - 1, -1, -1):
@@ -542,19 +551,17 @@ class tabby_fastapi:
                         print(await response.aread())
             except Exception as e:
                 logger.info("Error on inference: ", e)
-    
+
     @staticmethod
     async def transcribe_audio(audio_data) -> str:
         url = config_data["openai_api_chat_base"] + "/stt_remote"
-        headers ={
-            "accept": "application/json"
-        }
-        payload = {
-            "audio_data":audio_data
-        }
+        headers = {"accept": "application/json"}
+        payload = {"audio_data": audio_data}
         try:
             async with httpx.AsyncClient() as client:
-                transcripted_text = await client.post(url, json=payload, headers=headers, timeout=60)
-                return transcripted_text.json().get("text","Slients....")
+                transcripted_text = await client.post(
+                    url, json=payload, headers=headers, timeout=60
+                )
+                return transcripted_text.json().get("text", "Slients....")
         except Exception as e:
             print(f"Error on transcribe audio: {e}")
