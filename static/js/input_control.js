@@ -152,7 +152,7 @@ export class CommandInputHandler {
                     }
                     this.sentenceTimer = setTimeout(() => {
                         this.sentenceCompletionFunc();
-                    }, 8000);
+                    }, 4000);
                 }
             } else if (this.sentenceTimer) {
                 clearTimeout(this.sentenceTimer);
