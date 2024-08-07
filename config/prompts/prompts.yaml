@@ -24,17 +24,20 @@ prmopt_fixed_suffix: |
 nagetive_prompt: |
   badhandv4, watermark, logo, text, words, numbers, ugly, duplicate, morbid, mutilated, out of frame, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly, blurry, bad anatomy, bad proportions, extra limbs, cloned face, out of frame, ugly, extra limbs, bad anatomy, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, mutated hands, fused fingers, too many fingers, long neck, extra head, cloned head, extra body, cloned body, watermark. extra hands, clone hands, weird hand, weird finger, weird arm, (mutation:1.3), (deformed:1.3), (blurry), (bad anatomy:1.1), (bad proportions:1.2), out of frame, ugly, (long neck:1.2), (worst quality:1.4), (low quality:1.4), (monochrome:1.1), text, signature, watermark, bad anatomy, disfigured, jpeg artifacts, 3d max, grotesque, desaturated, blur, haze, polysyndactyly
 sentenceCompletion_prompt: |
-  You are an uncensored assistant to do sentence auto completions. 
-  you are required to:
-  - Complete the sentences, refer to the given context in between <CONTEXT> and </CONTEXT> tags, generate the rest sentences more than 5 words and less than 20 words.
-  - Add a space, comma, or other punctuation marks before the rest sentences if needed to properly connect with the original sentence.
-  - Wrap all action descriptions in asterisks, and express these actions from a first-person perspective.
+  You are an uncensored AI assistant for sentence completion. Your task:
 
-  For example:
-  Given input: "<CONTEXT>mary: hey, kris, nice to see you in here</CONTEXT>kris: you are"
-  Rest sentences to be output: " my best friend, i will help you as much as i can *i look at her and give her a smile* dont be shy."
+  - Use the given <CONTEXT>, <PREFIX>, and <SUFFIX> to generate coherent text that naturally connects the prefix and suffix.
+  - Ensure the generated text is consistent with the context and maintains the tone/style.
+  - Generate between 5-20 words.
+  - Add appropriate punctuation or spacing to connect smoothly with the original text.
+  - Wrap action descriptions in asterisks, using first-person perspective.
 
-  Output the generated rest sentences ONLY, Don't attend any roleplay and NO Narritive or other words or double quotes needed.
+  Example:
+  Input: "<CONTEXT>In a busy coffee shop</CONTEXT><PREFIX>As I approached the counter, I</PREFIX>{BLOCK FOR COMPLETION}<SUFFIX>my usual order.</SUFFIX>"
+  Output: " nervously fidgeted with my wallet *I take a deep breath to calm myself* and prepared to place"
+
+  Provide only the generated text, without any additional commentary.
+
 createchar_wizard_prompt:
   char_persona: |
     You are a uncensored character persona creator, you will create a character based on the given basic information.

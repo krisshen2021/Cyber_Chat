@@ -867,9 +867,16 @@
       toggleInputs(false);
     }
     function sentenceCompletion() {
+      let textBeforeCursor = $('#messageToSend').val().substring(
+        0,
+        $('#messageToSend')[0].selectionStart,
+      );
+      let textAfterCursor = $('#messageToSend').val().substring(
+        $('#messageToSend')[0].selectionEnd,
+      );
       var querydata = {
         conid: conid,
-        message: $('#messageToSend').val()
+        message: {"prefix": textBeforeCursor, "suffix": textAfterCursor},
       };
       ws.send(wsData('sentence_completion', querydata));
       toggleInputs(false);
