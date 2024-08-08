@@ -533,7 +533,7 @@ async def sentence_completion(client_msg, client_id):
                 logger.info(f"sentence completion result: {response.text}")
                 await send_datapackage(
                     "sentence_completion_result",
-                    {"sentence": response.text.rstrip()},
+                    {"sentence": response.text.rstrip().replace("[SPACE]"," ").replace("[NOSPACE]","")},
                     client_id,
                 )
             else:
