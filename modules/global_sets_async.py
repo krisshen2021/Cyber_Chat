@@ -164,10 +164,10 @@ async def getGlobalConfig(data: str):
     #     return bulb
 
 
-async def convert_to_webpbase64(png_base64):
+async def convert_to_webpbase64(png_base64, quality=75):
     png_image = Image.open(io.BytesIO(base64.b64decode(png_base64)))
     webp_bytes_io = io.BytesIO()
-    png_image.save(webp_bytes_io, format="WEBP", quality=75)
+    png_image.save(webp_bytes_io, format="WEBP", quality=quality)
     webp_data = webp_bytes_io.getvalue()
     webp_base64 = base64.b64encode(webp_data).decode("utf-8")
     return webp_base64

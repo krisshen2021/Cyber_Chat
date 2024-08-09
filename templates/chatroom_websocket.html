@@ -876,7 +876,7 @@
       );
       var querydata = {
         conid: conid,
-        message: {"prefix": textBeforeCursor, "suffix": textAfterCursor},
+        message: { "prefix": textBeforeCursor, "suffix": textAfterCursor },
       };
       ws.send(wsData('sentence_completion', querydata));
       toggleInputs(false);
@@ -1169,6 +1169,23 @@
             });
           }
         }
+      }
+      if (msg['name'] == 'live-ChatBackgroud') {
+        let imgBase64URI = msg['imgBase64URI'];
+        // $("#char-bgpic").css("background-image", "url('" + imgBase64URI + "')");
+        let char_bg_holder = $("#char-bgpic");
+        gsap.to(char_bg_holder, {
+          duration: 0.3,
+          opacity: 0,
+          onComplete: function () {
+            char_bg_holder.css("background-image", "url('" + imgBase64URI + "')");
+            gsap.to(char_bg_holder, {
+              duration: 0.5,
+              opacity: 1,
+            });
+          },
+        });
+        
       }
     }
 

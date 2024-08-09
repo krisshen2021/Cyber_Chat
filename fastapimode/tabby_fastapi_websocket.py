@@ -489,12 +489,13 @@ class tabby_fastapi:
                 "…",
                 "*",
                 '"',
-                "```",
+                ">",
                 "。",
                 "！",
                 "？",
                 "”",
                 "`",
+                ")",
             ]
             if text[-1] not in end_punctuation:
                 for i in range(len(text) - 1, -1, -1):

@@ -215,9 +215,9 @@ class chatRoom_unsensor:
         )
         logger.info("Generate User Background")
         bgimg_base64 = await self.gen_bgImg(
-            self.my_generate,
-            self.user_facelooks["prompt"],
-            self.state["env_setting"],
+            tabbyGen=self.my_generate,
+            char_looks=self.user_facelooks["prompt"],
+            bgImgstr=self.state["env_setting"],
             is_save=False,
             is_user=True,
             task_flag="generate_background-user",
@@ -362,7 +362,7 @@ class chatRoom_unsensor:
             )
             await self.save_image_async(bkImg, img_path)
 
-        return await convert_to_webpbase64(bkImg)
+        return await convert_to_webpbase64(bkImg, quality=85)
 
     async def gen_avatar(
         self,
@@ -430,7 +430,7 @@ class chatRoom_unsensor:
             else usermsg
         )
         self.chathistory.append(f"{self.username}: {input_text}")
-        logger.info(f"Reply base on input text:\n{self.username}:{input_text}")
+        # logger.info(f"Reply base on input text:\n{self.username}:{input_text}")
         instruct_template = self.create_instruct_template(self.ainame, self.username)
         prompt = "\n".join(self.chathistory)
         prompt = instruct_template.replace(r"<|prompt|>", prompt)
@@ -464,7 +464,7 @@ class chatRoom_unsensor:
         if result_text is None:
             result_text = "*Silent*"
 
-        logger.info(f"Raw Reply Content:\n {result_text}")
+        # logger.info(f"Raw Reply Content:\n {result_text}")
 
         if picture:
             picture = await convert_to_webpbase64(picture)
@@ -483,7 +483,7 @@ class chatRoom_unsensor:
         tts_text_extracted = (
             self.extract_text(result_text_cn).replace(r"\\n", " ").strip()
         )
-        logger.info(f"Extracted TTS:\n {tts_text_extracted}")
+        # logger.info(f"Extracted TTS:\n {tts_text_extracted}")
         # get tts text and process the emotion and code format
         try:
             if result_text != "*Silent*":
@@ -528,13 +528,8 @@ class chatRoom_unsensor:
             self.G_avatar_url,
             self.dynamic_picture,
         )
-
+        
     # Assistant functions for server reply function
-    # async def async_sentiment_analysis(self, text):
-    #     loop = asyncio.get_event_loop()
-    #     result = await loop.run_in_executor(None, lambda: self.sentiment_anlyzer.get_sentiment(text))
-    #     return result
-
     @staticmethod
     def is_chinese(text):
         clean_text = re.sub(r"[^\u4e00-\u9fa5]", "", text)

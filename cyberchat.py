@@ -511,7 +511,7 @@ async def sentence_completion(client_msg, client_id):
     infer_msg = (
         f"<CONTEXT>{system_intro}\n{chat_history}\n</CONTEXT>\n{user_name}: <PREFIX>{message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
     )
-    logger.info(f"sentence completion input: {infer_msg}") 
+    # logger.info(f"sentence completion input: {infer_msg}") 
     if config_data["using_remoteapi"]:
         endpoint = "/remoteapi/" + config_data["remoteapi_endpoint"]
     else:
@@ -530,7 +530,7 @@ async def sentence_completion(client_msg, client_id):
                 },
             )
             if response.status_code == 200:
-                logger.info(f"sentence completion result: {response.text}")
+                # logger.info(f"sentence completion result: {response.text}")
                 await send_datapackage(
                     "sentence_completion_result",
                     {"sentence": response.text.rstrip().replace("[SPACE]"," ").replace("[NOSPACE]","")},

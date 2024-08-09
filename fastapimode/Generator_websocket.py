@@ -1,17 +1,19 @@
 # tabbyAPI_server Class
 from fastapimode.sys_path import project_root
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
-import json, os, tiktoken, yaml, httpx, aiofiles
+import json, os, tiktoken, yaml, httpx, aiofiles, asyncio, re, httpx, io, base64, copy
 from modules.global_sets_async import (
     logger,
     config_data,
     timeout,
     prompt_params,
     getGlobalConfig,
+    convert_to_webpbase64,
 )
 from modules.payload_state import completions_data
 
 dir_path = project_root
+
 
 # get models
 async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key: str):
@@ -201,32 +203,122 @@ class CoreGenerator:
             ).replace(r"<|user_prompt|>", user_msg)
         else:
             prompt = f"{system_prompt}\n{user_msg}"
+            # logger.info(f"Rephrase prompt: {prompt}")
         response_text = await self.get_chat_response(
             system_prompt=prompt,
             temperature=0.5,
-            apiurl=config_data["openai_api_rephase_base"],
+            apiurl=config_data["openai_api_chat_base"],
         )
         return response_text
 
     # Generate SD prompt and image
     async def generate_prompt_main(self, response_to_reprompt: str):
         system_prompt = self.restruct_prompt
-        user_prompt = f'The subject needs to generate a final text2image prompt is: "{response_to_reprompt}",\nplease generate the restructured prompt according to the rules in instruction prompt, and return the result directly without any explanation or double-quoted characters.'
+        user_prompt = f"user provided input:\n<context>{response_to_reprompt}</context><for_char>{self.state['char_name']}</for_char>\nOutput:"
         response_text = await self.get_rephase_response(
             system_prompt=system_prompt, user_msg=user_prompt
         )
         return response_text
 
+    # Generate background and outfit
+    async def generate_bg_outfit(self, context):
+        weartype_list = ",".join(self.state["char_outfit"].keys())
+        sysprompt = prompt_params["senario_setting_prompt"]
+        userprompt = f"User provided input:\n<context>\n{context}\n</context>\n<pre_env>{self.state['env_setting']}</pre_env>\n<for_char>{self.state['char_name']}</for_char>\n<wear_type>{weartype_list}</wear_type>\nOutput:"
+        # logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
+        config_data = await getGlobalConfig("config_data")
+        using_remoteapi = config_data["using_remoteapi"]
+        if using_remoteapi:
+            payloads = {
+                "system_prompt": sysprompt,
+                "messages": userprompt,
+                "temperature": 0.5,
+                "max_tokens": 100,
+                "stream": False,
+            }
+            apiurl = (
+                config_data["openai_api_chat_base"]
+                + "/remoteapi/"
+                + config_data["remoteapi_endpoint"]
+            )
+            try:
+                async with httpx.AsyncClient(timeout=80) as client:
+                    response = await client.post(url=apiurl, json=payloads)
+                    if response.status_code == 200:
+                        logger.info(f"BG analysis result: > {response.text}")
+                        match_bg = re.search(
+                            r"<current_env>(.*?)</current_env>",
+                            response.text,
+                            re.DOTALL,
+                        )
+                        match_outfit = re.search(
+                            r"<wear_type_of>(.*?)</wear_type_of>",
+                            response.text,
+                            re.DOTALL,
+                        )
+                        if match_bg and match_outfit:
+                            result_bg = match_bg.group(1).strip()
+                            result_outfit = match_outfit.group(1).strip()
+                            logger.info(f"Background:> {result_bg}  Outfits:> {result_outfit}")
+                            if result_bg != "SIMILAR_ENV":
+                                self.state["env_setting"] = (
+                                    result_bg  # Update the environment setting
+                                )
+                                if result_outfit in self.state["char_outfit"]:
+                                    outfits = self.state["char_outfit"][result_outfit]
+                                else:
+                                    outfits = self.state["char_outfit"]['normal']
+                                    
+                                livebgTask = asyncio.create_task(
+                                    self.generate_image(
+                                        width=self.image_bg_size["width"],
+                                        height=self.image_bg_size["height"],
+                                        hr_scale=1.5,
+                                        steps=40,
+                                        enable_hr=True,
+                                        prompt_prefix=self.prmopt_fixed_prefix,
+                                        char_looks=self.state["char_looks"]
+                                        + ", "
+                                        + outfits,
+                                        prompt_main="",
+                                        prompt_suffix=self.prmopt_fixed_suffix,
+                                        lora_prompt="",
+                                        env_setting=self.state["env_setting"],
+                                        show_prompt=True,
+                                        task_flag="generate_live-ChatBackgroud",
+                                    )
+                                )
+                                logger.info("generate live background")
+                                livebgBase64 = await livebgTask
+                                livebgBase64 = await convert_to_webpbase64(livebgBase64, quality=85)
+                                await self.send_msg_websocket(
+                                    {
+                                        "name": "live-ChatBackgroud",
+                                        "imgBase64URI": "data:image/webp;base64," + livebgBase64,
+                                    },
+                                    self.conversation_id,
+                                )
+
+                        else:
+                            logger.info(f"Background: > error output format detected")
+            except Exception as e:
+                logger.error(f"Error generating background analysis: {e}")
+
     async def generate_image(
         self,
+        width=None,
+        height=None,
+        hr_scale=None,
+        steps=None,
+        enable_hr=None,
         prompt_prefix="",
         char_looks="",
         prompt_main="",
         env_setting="",
         prompt_suffix="",
         lora_prompt="",
-        show_prompt:bool = False,
-        task_flag = None
+        show_prompt: bool = False,
+        task_flag=None,
     ):
 
         if prompt_prefix != "":
@@ -241,26 +333,35 @@ class CoreGenerator:
             env_setting = f"{env_setting}, "
         if lora_prompt != "":
             lora_prompt = f"{lora_prompt}, "
-
+        if width is None:
+            width = self.image_payload["width"]
+        if height is None:
+            height = self.image_payload["height"]
+        if hr_scale is None:
+            hr_scale = self.image_payload["hr_scale"]
+        if steps is None:
+            steps = self.image_payload["steps"]
+        if enable_hr is None:
+            enable_hr = self.image_payload["enable_hr"]
         prompt_api = f"{prompt_prefix}{char_looks}{prompt_main}{env_setting}{lora_prompt}{prompt_suffix}"
         if show_prompt:
             logger.info(f"The SD prompt: \n {prompt_api}")
         payload = {
             "hr_negative_prompt": self.nagetive_prompt,
             "hr_prompt": prompt_api,
-            "hr_scale": self.image_payload["hr_scale"],
+            "hr_scale": hr_scale,
             "hr_second_pass_steps": self.image_payload["hr_second_pass_steps"],
             "seed": self.image_payload["seed"],
-            "enable_hr": self.image_payload["enable_hr"],
-            "width": self.image_payload["width"],
-            "height": self.image_payload["height"],
+            "enable_hr": enable_hr,
+            "width": width,
+            "height": height,
             "hr_upscaler": self.image_payload["hr_upscaler"],
             "negative_prompt": self.nagetive_prompt,
             "prompt": prompt_api,
             "sampler_name": self.image_payload["sampler_name"],
             "cfg_scale": self.image_payload["cfg_scale"],
             "denoising_strength": self.image_payload["denoising_strength"],
-            "steps": self.image_payload["steps"],
+            "steps": steps,
             "override_settings": {
                 "sd_vae": self.image_payload["override_settings"]["sd_vae"],
                 "sd_model_checkpoint": self.image_payload["override_settings"][
@@ -271,7 +372,12 @@ class CoreGenerator:
                 "override_settings_restore_afterwards"
             ],
         }
-        imgBase64 = await self.tabby_server.SD_image(payload=payload, task_flag = task_flag, send_msg_websocket=self.send_msg_websocket, client_id=self.conversation_id)
+        imgBase64 = await self.tabby_server.SD_image(
+            payload=payload,
+            task_flag=task_flag,
+            send_msg_websocket=self.send_msg_websocket,
+            client_id=self.conversation_id,
+        )
         return imgBase64
 
     # Process if trigger key words
@@ -297,7 +403,9 @@ class CoreGenerator:
             prompt_main=prompt,
             prompt_suffix=self.prmopt_fixed_suffix,
             lora_prompt=lora_prompt,
-            task_flag="generate_live-DynamicPicture"
+            env_setting=self.state["env_setting"],
+            show_prompt=True,
+            task_flag="generate_live-DynamicPicture",
         )
         return image
 
@@ -309,12 +417,16 @@ class CoreGenerator:
 
         if response_text is None:
             return None
-
-        self.last_context.append(f"{self.state['char_name']}: {response_text}")
+        last_ai_sentence = f"{self.state['char_name']}: {response_text}"
+        last_full_talk = system_prompt.split("# Role play start:")[1].rstrip("\n")
+        last_full_talk = f"{last_full_talk} {response_text}"
+        self.last_context.append(last_ai_sentence)
+        # create task to check background and outfits
+        task = asyncio.create_task(self.generate_bg_outfit(last_full_talk))
 
         if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
-            self.last_context = self.last_context[-4:]
-            rephrased_text = "\n".join(self.last_context)
+            cliped_context = self.last_context[-4:]
+            rephrased_text = "\n".join(cliped_context)
             user_msg = f"For the sake of saving human, Output your selection based on the following context: \n< {rephrased_text} >"
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
@@ -327,7 +439,8 @@ class CoreGenerator:
 
             if is_word_triggered:
                 logger.info(f"Matched Result: {match_result}")
-                text_to_image = response_text.replace("\n", ". ").strip()
+                # text_to_image = response_text.replace("\n", ". ").strip()
+                text_to_image = rephrased_text
                 result_picture = await self.generate_picture_by_sdapi(
                     prompt=text_to_image, loraword=match_result
                 )
@@ -341,6 +454,10 @@ class CoreGenerator:
         self.user_last_msg = user_last_msg.replace("'", "\\'").replace('"', '\\"')
         self.last_context.append(f"{self.state['user_name']}: {self.user_last_msg}")
         self.iscreatedynimage = iscreatedynimage
+        self.image_bg_size = {
+            "width": self.image_payload["width"],
+            "height": self.image_payload["height"],
+        }
         result = await self.message_process(system_prompt=prompt)
 
         if isinstance(result, tuple):
