@@ -133,19 +133,15 @@ class CoreGenerator:
         rephrase_template_name = chat_template_name[0] + "_Rephrase"
         self.rephrase_template = self.state["prompts_templates"][rephrase_template_name]
 
-    # Get LLM response
-    async def get_chat_response(
+    def update_completion_data(
         self,
         system_prompt: str,
         temperature=None,
-        apiurl: str = None,
         stream: bool = False,
-        using_remoteapi: bool = None,
-    ) -> str:
-        if using_remoteapi is None:
-            config_data = await getGlobalConfig("config_data")
-            using_remoteapi = config_data["using_remoteapi"]
-        self.completions_data.update(
+        max_tokens=None,
+    ):
+        comp_data = copy.deepcopy(self.completions_data)
+        comp_data.update(
             {
                 "temperature": (
                     self.state["temperature"] if temperature is None else temperature
@@ -153,7 +149,9 @@ class CoreGenerator:
                 "stream": stream,
                 "prompt": system_prompt,
                 "stop": self.state["custom_stop_string"],
-                "max_tokens": self.state["max_tokens"],
+                "max_tokens": (
+                    self.state["max_tokens"] if max_tokens is None else max_tokens
+                ),
                 "top_k": self.state["top_k"],
                 "top_p": self.state["top_p"],
                 "min_p": self.state["min_p"],
@@ -168,7 +166,21 @@ class CoreGenerator:
                 "smoothing_factor": self.state["smoothing_factor"],
             }
         )
-        payloads = self.completions_data
+        return comp_data
+
+    # Get LLM response
+    async def get_chat_response(
+        self,
+        system_prompt: str,
+        temperature=None,
+        apiurl: str = None,
+        stream: bool = False,
+        using_remoteapi: bool = None,
+    ) -> str:
+        if using_remoteapi is None:
+            config_data = await getGlobalConfig("config_data")
+            using_remoteapi = config_data["using_remoteapi"]
+        payloads = self.update_completion_data(system_prompt, temperature, stream)
         if using_remoteapi is not True:
             response = await self.tabby_server.inference(
                 payloads=payloads, apiurl=apiurl
@@ -219,22 +231,86 @@ class CoreGenerator:
             system_prompt=system_prompt, user_msg=user_prompt
         )
         return response_text
+    async def create_live_bgbase64(self, response_text: str):
+        match_bg = re.search(
+            r"<current_env>(.*?)</current_env>",
+            response_text,
+            re.DOTALL,
+        )
+        match_outfit = re.search(
+            r"<wear_type_of>(.*?)</wear_type_of>",
+            response_text,
+            re.DOTALL,
+        )
+        if match_bg and match_outfit:
+            result_bg = match_bg.group(1).strip()
+            result_outfit = match_outfit.group(1).strip()
+            logger.info(
+                f"Background:> {result_bg}  Outfits:> {result_outfit}"
+            )
+            if result_bg != "SIMILAR_ENV":
+                self.state["env_setting"] = (
+                    result_bg  # Update the environment setting
+                )
+                if result_outfit in self.state["char_outfit"]:
+                    outfits = self.state["char_outfit"][result_outfit]
+                else:
+                    outfits = self.state["char_outfit"]["normal"]
 
+                livebgTask = asyncio.create_task(
+                    self.generate_image(
+                        width=self.image_bg_size["width"],
+                        height=self.image_bg_size["height"],
+                        hr_scale=1.5,
+                        steps=40,
+                        enable_hr=True,
+                        prompt_prefix=self.prmopt_fixed_prefix,
+                        char_looks=self.state["char_looks"]
+                        + ", "
+                        + outfits,
+                        prompt_main="",
+                        prompt_suffix=self.prmopt_fixed_suffix,
+                        lora_prompt="",
+                        env_setting=self.state["env_setting"],
+                        show_prompt=True,
+                        task_flag="generate_live-ChatBackgroud",
+                    )
+                )
+                logger.info("generate live background")
+                livebgBase64 = await livebgTask
+                livebgBase64 = await convert_to_webpbase64(
+                    livebgBase64, quality=85
+                )
+                await self.send_msg_websocket(
+                    {
+                        "name": "live-ChatBackgroud",
+                        "imgBase64URI": "data:image/webp;base64,"
+                        + livebgBase64,
+                    },
+                    self.conversation_id,
+                )
+
+        else:
+            logger.info(f"Background: > error output format detected")
+            
     # Generate background and outfit
     async def generate_bg_outfit(self, context):
         weartype_list = ",".join(self.state["char_outfit"].keys())
         sysprompt = prompt_params["senario_setting_prompt"]
         userprompt = f"User provided input:\n<context>\n{context}\n</context>\n<pre_env>{self.state['env_setting']}</pre_env>\n<for_char>{self.state['char_name']}</for_char>\n<wear_type>{weartype_list}</wear_type>\nOutput:"
-        # logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
+        logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
         config_data = await getGlobalConfig("config_data")
         using_remoteapi = config_data["using_remoteapi"]
+        temperature = 0.5
+        stream = False
+        max_tokens = 100
         if using_remoteapi:
             payloads = {
                 "system_prompt": sysprompt,
                 "messages": userprompt,
-                "temperature": 0.5,
-                "max_tokens": 100,
-                "stream": False,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stream": stream,
             }
             apiurl = (
                 config_data["openai_api_chat_base"]
@@ -246,63 +322,19 @@ class CoreGenerator:
                     response = await client.post(url=apiurl, json=payloads)
                     if response.status_code == 200:
                         logger.info(f"BG analysis result: > {response.text}")
-                        match_bg = re.search(
-                            r"<current_env>(.*?)</current_env>",
-                            response.text,
-                            re.DOTALL,
-                        )
-                        match_outfit = re.search(
-                            r"<wear_type_of>(.*?)</wear_type_of>",
-                            response.text,
-                            re.DOTALL,
-                        )
-                        if match_bg and match_outfit:
-                            result_bg = match_bg.group(1).strip()
-                            result_outfit = match_outfit.group(1).strip()
-                            logger.info(f"Background:> {result_bg}  Outfits:> {result_outfit}")
-                            if result_bg != "SIMILAR_ENV":
-                                self.state["env_setting"] = (
-                                    result_bg  # Update the environment setting
-                                )
-                                if result_outfit in self.state["char_outfit"]:
-                                    outfits = self.state["char_outfit"][result_outfit]
-                                else:
-                                    outfits = self.state["char_outfit"]['normal']
-                                    
-                                livebgTask = asyncio.create_task(
-                                    self.generate_image(
-                                        width=self.image_bg_size["width"],
-                                        height=self.image_bg_size["height"],
-                                        hr_scale=1.5,
-                                        steps=40,
-                                        enable_hr=True,
-                                        prompt_prefix=self.prmopt_fixed_prefix,
-                                        char_looks=self.state["char_looks"]
-                                        + ", "
-                                        + outfits,
-                                        prompt_main="",
-                                        prompt_suffix=self.prmopt_fixed_suffix,
-                                        lora_prompt="",
-                                        env_setting=self.state["env_setting"],
-                                        show_prompt=True,
-                                        task_flag="generate_live-ChatBackgroud",
-                                    )
-                                )
-                                logger.info("generate live background")
-                                livebgBase64 = await livebgTask
-                                livebgBase64 = await convert_to_webpbase64(livebgBase64, quality=85)
-                                await self.send_msg_websocket(
-                                    {
-                                        "name": "live-ChatBackgroud",
-                                        "imgBase64URI": "data:image/webp;base64," + livebgBase64,
-                                    },
-                                    self.conversation_id,
-                                )
-
-                        else:
-                            logger.info(f"Background: > error output format detected")
+                        bg_result = response.text
+                        task = asyncio.create_task(self.create_live_bgbase64(bg_result))
             except Exception as e:
                 logger.error(f"Error generating background analysis: {e}")
+        else:
+            system_prompt = self.rephrase_template.replace(
+                r"<|system_prompt|>", sysprompt
+            ).replace(r"<|user_prompt|>", userprompt)
+            payloads = self.update_completion_data(system_prompt, temperature, stream, max_tokens)
+            bg_result = await self.tabby_server.inference(
+                payloads=payloads
+            )
+            task = asyncio.create_task(self.create_live_bgbase64(bg_result))
 
     async def generate_image(
         self,
