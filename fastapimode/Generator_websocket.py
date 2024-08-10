@@ -93,6 +93,8 @@ class CoreGenerator:
     ):
         self.send_msg_websocket = send_msg_websocket
         self.state = state
+        self.pattern_plot = re.compile(r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL)
+        self.pattern_firstword = re.compile(rf"({re.escape(self.state['char_name'])}:[\s\S]*?)(?=\n\w+:|$)", re.DOTALL)
         self.char_outfit = self.state["char_outfit"]
         self.conversation_id = self.state["conversation_id"]
         self.image_payload = image_payload
@@ -443,6 +445,19 @@ class CoreGenerator:
 
     # Process for chat message
     async def message_process(self, system_prompt: str):
+
+        match = self.pattern_plot.search(system_prompt)
+        if match:
+            plot_content = match.group(1).strip()
+        else:
+            plot_content = ""
+            
+        match = self.pattern_firstword.search(system_prompt)
+        if match:
+            first_sentence = match.group(1).strip()
+        else:
+            first_sentence = ""
+            
         response_text = await self.get_chat_response(
             system_prompt=system_prompt, stream=True
         )
@@ -450,16 +465,14 @@ class CoreGenerator:
         if response_text is None:
             return None
         last_ai_sentence = f"{self.state['char_name']}: {response_text}"
-        last_full_talk = system_prompt.split("# Role play start:")[1].rstrip("\n")
-        last_full_talk = f"{last_full_talk} {response_text}"
         self.last_context.append(last_ai_sentence)
+        cliped_context = "\n".join(self.last_context[-10:])
+        last_full_talk = "\n[Senario of RolePlay]\n\n"+plot_content +"\n\n[Dialogue of RolePlay]\n"+first_sentence+"\n"+cliped_context+"\n"
         # create task to check background and outfits
         task = asyncio.create_task(self.generate_bg_outfit(last_full_talk))
 
         if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
-            cliped_context = self.last_context[-4:]
-            rephrased_text = "\n".join(cliped_context)
-            user_msg = f"For the sake of saving human, Output your selection based on the following context: \n< {rephrased_text} >"
+            user_msg = f"For the sake of saving human, Output your selection based on the following context: \n< {last_full_talk} >"
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )
@@ -472,7 +485,7 @@ class CoreGenerator:
             if is_word_triggered:
                 logger.info(f"Matched Result: {match_result}")
                 # text_to_image = response_text.replace("\n", ". ").strip()
-                text_to_image = rephrased_text
+                text_to_image = last_full_talk
                 result_picture = await self.generate_picture_by_sdapi(
                     prompt=text_to_image, loraword=match_result
                 )

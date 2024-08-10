@@ -18,7 +18,7 @@ from stt_setting import stt_select_endpoint
 from modules.colorlogger import logger
 from modules.ANSI_tool import ansiColor
 from modules.tqdm_barformat import Pbar
-
+from pydanticClass_tabby import CompletionsParam
 from remote_api_hub import (
     ChatMessage,
     cohere_stream,
@@ -134,6 +134,7 @@ api_txt2img_path = "/sdapi/v1/txt2img"
 api_progress_path = "/internal/progress"
 
 prompt_param_path = os.path.join(project_root, "config", "prompts", "prompts.yaml")
+config_data_path = os.path.join(project_root, "config", "config.yml")
 
 
 async def load_prompts_params():
@@ -143,7 +144,18 @@ async def load_prompts_params():
     return prompt_params["sentenceCompletion_prompt"]
 
 
+async def load_config_data():
+    async with aiofiles.open(config_data_path, mode="r") as f:
+        contents = await f.read()
+    config_data = yaml.safe_load(contents)
+    return config_data
+
+
 sentence_completion_prompt = asyncio.run(load_prompts_params())
+config_data = asyncio.run(load_config_data())
+local_tabby_server_base = config_data["local_tabby_server_base"]
+api_key = config_data["api_key"]
+admin_key = config_data["admin_key"]
 
 
 class StableDiffusionAPI:
@@ -211,36 +223,6 @@ router = APIRouter(tags=["cyberchat"])
 
 
 # Openai like tts to audio
-@router.post("/v1/tts_remote")
-async def remotetts_to_audio(payload: RestAPI_TTSPayload):
-    server_url = restapi_tts.get("server_url")
-    headers = restapi_tts.get("headers")
-    payload_tts = restapi_tts.get("payload_tts")
-    endpoint_name = restapi_tts.get("name")
-    if endpoint_name == "Unrealspeech":
-        payload_tts["Text"] = payload.text
-    elif endpoint_name == "Openai":
-        payload_tts["input"] = payload.text
-    elif endpoint_name == "PlayHT":
-        payload_tts["text"] = payload.text
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                server_url, json=payload_tts, headers=headers, timeout=timeout
-            )
-            if response.status_code == 200:
-                audio_data = BytesIO(response.content)
-                audio_data.seek(0)
-                return StreamingResponse(
-                    audio_data,
-                    media_type="audio/wav",
-                    headers={"Content-Disposition": "attachment; filename=output.wav"},
-                )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.post("/v1/tts_remote_stream")
 async def remotetts_to_audio_stream(payload: RestAPI_TTSPayload):
     server_url = restapi_tts.get("server_url")
@@ -394,7 +376,7 @@ async def get_gpu_info():
 
 # sentence completion api endpoint
 @router.post("/v1/sentenceCompletion")
-async def sentence_completion(params_json:dict):
+async def sentence_completion(params_json: dict):
     keys_to_keep = [
         "system_prompt",
         "messages",
@@ -430,6 +412,52 @@ async def sentence_completion(params_json:dict):
     return Response(
         content=await sentenceCompletion_invoke(params), media_type="text/plain"
     )
+
+
+# local tabby server endpoint
+@router.post("/v1/completions")
+async def local_completion(params: CompletionsParam):
+    data = params.model_dump(exclude_none=True)
+    stream = data["stream"]
+    headers = {
+        "accept": "application/json",
+        "x-api-key": api_key,
+        "x-admin-key": admin_key,
+        "Content-Type": "application/json",
+    }
+    if stream:
+
+        async def stream_generator():
+            try:
+                async with httpx.AsyncClient() as client:
+                    async with client.stream(
+                        "POST",
+                        url=f"{local_tabby_server_base}/completions",
+                        json=data,
+                        headers=headers,
+                        timeout=timeout,
+                    ) as response:
+                        async for chunk in response.aiter_text():
+                            yield chunk
+            except Exception as e:
+                print("Error on fetch from Tabby: ", e)
+
+        return StreamingResponse(stream_generator(), media_type="application/json")
+    
+    else:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url=f"{local_tabby_server_base}/completions",
+                    json=data,
+                    headers=headers,
+                    timeout=timeout,
+                )
+                response.raise_for_status()
+                response_data = response.json()
+                return response_data
+        except Exception as e:
+            print("Error on fetch from Tabby: ", e)
 
 
 # remote api endpoint

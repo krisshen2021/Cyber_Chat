@@ -28,23 +28,24 @@ class airole:
         self.story_intro = roleconf[f"{self.roleselector}"]["json_Story_intro"]
         role_result = await ARO.fetch_airole(ai_Name=self.roleselector)
         # logger.info(role_result)
-        role_desc = f"""
-# Plot of the RolePlay
-        
+        role_desc = f"""<Plot_of_the_RolePlay>
 {role_result['Prologue']}
-        
-# Characters Persona
+</Plot_of_the_RolePlay>
 
-{{{{char}}}}'s Persona:       
+<Characters_Persona>
+
+<Persona_of_{{{{char}}}}>      
 {role_result['Char_Persona']}
+</Persona_of_{{{{char}}}}>
 
-{{{{user}}}}'s Persona:       
+<Persona_of_{{{{user}}}}>    
 {role_result['User_Persona']}
+</Persona_of_{{{{user}}}}>
+
+</Characters_Persona>
 
 # Role play start:
-
 <|Current Chapter|>
-
 
 """
         self.ai_system_role = role_desc

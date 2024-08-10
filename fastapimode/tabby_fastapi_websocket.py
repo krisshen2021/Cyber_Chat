@@ -87,7 +87,6 @@ class tabby_fastapi:
             apiurl = self.url + "/completions"
         else:
             apiurl = apiurl + "/completions"
-
         stream = payloads["stream"]
         headers = self.headers
         if stream is True:

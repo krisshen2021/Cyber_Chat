@@ -21,7 +21,7 @@ class ColorFormatter(logging.Formatter):
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 httpx_logger = logging.getLogger("httpx")
-httpx_logger.setLevel(logging.WARNING)
+httpx_logger.setLevel(logging.INFO)
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 formatter = ColorFormatter()
