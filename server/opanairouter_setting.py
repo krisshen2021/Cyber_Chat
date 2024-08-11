@@ -32,6 +32,16 @@ picked_routers = [
         "url": "https://api.together.xyz/v1",
         "api_key": os.environ.get("togetherai_api_key"),
     },
+    {
+        "name": "ollama",
+        "url": "http://localhost:11434/v1",
+        "api_key": "ollama",
+    },
+    {
+        "name": "tabby oai chat_completion",
+        "url": "http://localhost:5555/v1",
+        "api_key": "0764ee6f39280e8b485e9a18668f6a62",
+    }
 ]
 
 ### Model selector
@@ -70,9 +80,21 @@ def update_config(endpoint):
     yaml.preserve_comments = True  # 保留注释
     with open(config_path, "r") as file:
         config = yaml.load(file)
-
-    config["remoteapi_endpoint"] = endpoint
-
+    if endpoint != "tabby":
+        config["remoteapi_endpoint"] = endpoint
+        config["using_remoteapi"] = True
+    else:
+        local_tabby_server_port = input("enter tabby server port(default-5555):")
+        if local_tabby_server_port == "":
+            print("use default port 5555")
+            local_tabby_server_base = f"http://localhost:5555/v1"
+        elif local_tabby_server_port.isdigit():
+            local_tabby_server_base = f"http://localhost:{local_tabby_server_port}/v1"
+        else:
+            print("invalid port, use default port 5555")
+            local_tabby_server_base = f"http://localhost:5555/v1"
+        config["local_tabby_server_base"] = local_tabby_server_base
+        config["using_remoteapi"] = False
     with open(config_path, "w") as file:
         yaml.dump(config, file)
 
@@ -82,7 +104,8 @@ def select_model():
     print(f"{BOLD}{YELLOW}Select an option for the endpoint:{RESET}")
     print(f"{RED}1{RESET}: Use 'Editor Picked openai liked router' endpoint")
     print(f"{RED}2{RESET}: Keep settings in config.yml file")
-    print(f"{RED}3{RESET}: Input another name of endpoint")
+    print(f"{RED}3{RESET}: Use Other api endpoint")
+    print(f"{RED}4{RESET}: Use local Tabby server(not recommanded)")
 
     choice = input("Enter your choice (1/2/3): ")
 
@@ -91,11 +114,9 @@ def select_model():
         print(f"{BOLD}{YELLOW}Available routers points: {RESET}\n")
         for i, router in enumerate(picked_routers):
             print(f"{RED}{i+1}{RESET}: {BOLD}{CYAN}{router['name']}{RESET}")
-        # print(f"{RED}1{RESET}: {BOLD}{CYAN}Openrouter{RESET}")
-        # print(f"{RED}2{RESET}: {BOLD}{CYAN}Groq{RESET}")
         selected_index = input("Enter the number of your chosen router: ")
-        config_data["using_remoteapi"] = True
-        config_data["remoteapi_endpoint"] = "openairouter"
+        # config_data["using_remoteapi"] = True
+        # config_data["remoteapi_endpoint"] = "openairouter"
         update_config("openairouter")
         clear_screen()
     elif choice == "2":
@@ -117,6 +138,10 @@ def select_model():
             print(f"{RED}Invalid choice. Using default settings.{RESET}")
             clear_screen()
             return "openai/gpt-3.5-turbo"
+    elif choice == "4":
+        update_config("tabby")
+        clear_screen()
+        return "openai/gpt-3.5-turbo"
     else:
         print(f"{RED}Invalid choice. Using default settings.{RESET}")
         return "openai/gpt-3.5-turbo"
@@ -134,7 +159,10 @@ def select_model():
             "accept": "application/json",
             "Authorization": f"Bearer {openairouter_sync_client.api_key}",
         }
-        response = requests.get(url=(str(openairouter_sync_client.base_url)+"/models"),headers=headers)
+        url = picked_routers[int(selected_index) - 1].get("url")+"/models"
+        print(url)
+        response = requests.get(url=url,headers=headers)
+        response.raise_for_status()
         openairouter_modellist = response.json()
         if "data" in openairouter_modellist:
             openairouter_modellist = openairouter_modellist["data"]
@@ -164,7 +192,7 @@ def select_model():
                     input("Already on the first page. Press Enter to continue...")
             elif user_input.isdigit():
                 selected_index = int(user_input)
-                if 0 <= selected_index < len(sorted_models):
+                if 0 <= selected_index <= len(sorted_models):
                     openairouter_model = sorted_models[selected_index-1]['id']
                     break
                 else:
