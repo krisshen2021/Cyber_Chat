@@ -99,6 +99,10 @@ export class CommandInputHandler {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 if (!this.$cmd_dropdownMenu.is(":visible") && this.$msg_inputer.val() !== '' && this.$msg_inputer.val() !== this.defaultText && this.$msg_inputer.val() !== this.prompt_variable_str) {
+                    if (this.sentenceTimer) {
+                        clearTimeout(this.sentenceTimer);
+                        this.sentenceTimer = null;
+                    }
                     this.triggerSendMsgEvent();
                     //reset after trigger sendmsg event
                     this.resetAll();
