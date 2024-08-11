@@ -93,6 +93,7 @@ class CoreGenerator:
     ):
         self.send_msg_websocket = send_msg_websocket
         self.state = state
+        self.pattern_task =re.compile(r'<Task>.*?</Task>', re.DOTALL)
         self.pattern_plot = re.compile(r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL)
         self.pattern_firstword = re.compile(rf"({re.escape(self.state['char_name'])}:[\s\S]*?)(?=\n\w+:|$)", re.DOTALL)
         self.char_outfit = self.state["char_outfit"]
@@ -220,7 +221,7 @@ class CoreGenerator:
             # logger.info(f"Rephrase prompt: {prompt}")
         response_text = await self.get_chat_response(
             system_prompt=prompt,
-            temperature=0.5,
+            temperature=0.7,
             apiurl=config_data["openai_api_chat_base"],
         )
         return response_text
@@ -232,7 +233,10 @@ class CoreGenerator:
         response_text = await self.get_rephase_response(
             system_prompt=system_prompt, user_msg=user_prompt
         )
-        return response_text
+        if response_text is not None:
+            return response_text
+        else:
+            return "(Error: Failed to generate prompt.)"
     async def create_live_bgbase64(self, response_text: str):
         match_bg = re.search(
             r"<current_env>(.*?)</current_env>",
@@ -445,21 +449,21 @@ class CoreGenerator:
 
     # Process for chat message
     async def message_process(self, system_prompt: str):
-
-        match = self.pattern_plot.search(system_prompt)
+        content_task_removed = self.pattern_task.sub("", system_prompt)
+        match = self.pattern_plot.search(content_task_removed)
         if match:
             plot_content = match.group(1).strip()
         else:
             plot_content = ""
             
-        match = self.pattern_firstword.search(system_prompt)
+        match = self.pattern_firstword.search(content_task_removed)
         if match:
             first_sentence = match.group(1).strip()
         else:
             first_sentence = ""
             
         response_text = await self.get_chat_response(
-            system_prompt=system_prompt, stream=True
+            system_prompt=system_prompt, stream=True, temperature=0.9
         )
 
         if response_text is None:
