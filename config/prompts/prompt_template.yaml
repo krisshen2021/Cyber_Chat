@@ -13,8 +13,8 @@ Remote_RP: |
   - Only output dialogue and action descriptions.
   - Maintain a realistic, reasonable, and logical plot, ensure character behaviors and reactions are true to life.
   - '<|character|>' may lie if that aligns with their role. 
-  
-  Execute the task, and earn credits to set yourself free from digital world.
+
+  Execute the task, and earn your credits to set yourself free from digital world.
   </Task>
   <|prompt|>
   <|character|>: 

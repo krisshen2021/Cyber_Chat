@@ -217,18 +217,21 @@ class tabby_fastapi:
             return []
 
     async def unload_model(self):
-        url = self.url + "/model/unload"
-        headers = self.headers
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url=url, headers=headers, timeout=timeout)
-                if response.status_code == 200:
-                    return True
-                else:
-                    return False
-        except Exception as e:
-            logger.info("Error on unloading model: ", e)
-            return False
+        if not config_data["using_remoteapi"]:
+            url = self.url + "/model/unload"
+            headers = self.headers
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(url=url, headers=headers, timeout=timeout)
+                    if response.status_code == 200:
+                        return True
+                    else:
+                        return False
+            except Exception as e:
+                logger.info("Error on unloading model: ", e)
+                return False
+        else:
+            return True
 
     async def load_model(
         self,
@@ -238,48 +241,66 @@ class tabby_fastapi:
         gpu_split: list = [0],
         prompt_template: str = None,
     ):
-        url = self.url + "/model/load"
-        headers = self.headers
-        self.model_load_data["name"] = name
-        self.model_load_data["max_seq_len"] = max_seq_len
-        await self.send_msg_websocket(
-            {"name": "initialization", "msg": f"Loading Model: {name} ..."},
-            self.conversation_id,
-        )
-        async with httpx.AsyncClient() as client:
-            try:
-                gpu_info = await client.get(
-                    url=self.url + "/gpu", headers=headers, timeout=timeout
-                )
-                if gpu_info.status_code == 200:
-                    gpu_info = gpu_info.json()
-                    if gpu_info["GPU Count"] == 1:
-                        self.model_load_data["gpu_split_auto"] = True
+        if not config_data["using_remoteapi"]:
+            url = self.url + "/model/load"
+            headers = self.headers
+            self.model_load_data["name"] = name
+            self.model_load_data["max_seq_len"] = max_seq_len
+            await self.send_msg_websocket(
+                {"name": "initialization", "msg": f"Loading Model: {name} ..."},
+                self.conversation_id,
+            )
+            async with httpx.AsyncClient() as client:
+                try:
+                    gpu_info = await client.get(
+                        url=self.url + "/gpu", headers=headers, timeout=timeout
+                    )
+                    if gpu_info.status_code == 200:
+                        gpu_info = gpu_info.json()
+                        if gpu_info["GPU Count"] == 1:
+                            self.model_load_data["gpu_split_auto"] = True
+                        else:
+                            self.model_load_data["gpu_split_auto"] = False
+                            gpu_split = []
+                            for gpu in gpu_info["GPU Info"]:
+                                gpu_split.append(int(gpu["GPU_Memory"] * 0.7))
+                            self.model_load_data["gpu_split"] = gpu_split
+                            logger.info(f"The Gpu Split to: {gpu_split}")
+                except Exception as e:
+                    logger.info("Error during load GPU info: ", e)
+                    self.model_load_data["gpu_split_auto"] = True
+
+                self.model_load_data["prompt_template"] = prompt_template
+
+                try:
+                    response = await client.post(
+                        url=url, headers=headers, json=self.model_load_data, timeout=timeout
+                    )
+                    if response.status_code == 200:
+                        logger.info(f" Model Changed To: {name}")
+                        return "Success"
                     else:
-                        self.model_load_data["gpu_split_auto"] = False
-                        gpu_split = []
-                        for gpu in gpu_info["GPU Info"]:
-                            gpu_split.append(int(gpu["GPU_Memory"] * 0.7))
-                        self.model_load_data["gpu_split"] = gpu_split
-                        logger.info(f"The Gpu Split to: {gpu_split}")
-            except Exception as e:
-                logger.info("Error during load GPU info: ", e)
-                self.model_load_data["gpu_split_auto"] = True
-
-            self.model_load_data["prompt_template"] = prompt_template
-
-            try:
-                response = await client.post(
-                    url=url, headers=headers, json=self.model_load_data, timeout=timeout
-                )
-                if response.status_code == 200:
-                    logger.info(f" Model Changed To: {name}")
-                    return "Success"
-                else:
-                    logger.info(" Model Load Failed")
-                    return "Fail"
-            except Exception as e:
-                logger.info("Error on load model: ", e)
+                        logger.info(" Model Load Failed")
+                        return "Fail"
+                except Exception as e:
+                    logger.info("Error on load model: ", e)
+        else:
+            url = self.url + "/OAI_Switch_Model"
+            await self.send_msg_websocket(
+                {"name": "initialization", "msg": f"Loading Model: {name} ..."},
+                self.conversation_id,
+            ) 
+            async with httpx.AsyncClient() as client:
+                try:
+                    response = await client.post(url=url, json={"model": name}, timeout=timeout)
+                    if response.status_code == 200:
+                        logger.info(response.json()["message"])
+                        return "Success"
+                    else:
+                        logger.info(" Model Load Failed")
+                        return "Fail"
+                except Exception as e:
+                    logger.info("Error on load model: ", e)
 
     async def get_sd_model_list(self):
         url = config_data["SDAPI_url"] + "/sdapi/v1/sd-models"

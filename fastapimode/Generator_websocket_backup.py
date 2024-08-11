@@ -1,6 +1,7 @@
+# tabbyAPI_server Class
 from fastapimode.sys_path import project_root
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
-import os, tiktoken, yaml, httpx, aiofiles, asyncio, re, httpx, copy
+import json, os, tiktoken, yaml, httpx, aiofiles, asyncio, re, httpx, io, base64, copy
 from modules.global_sets_async import (
     logger,
     config_data,
@@ -37,6 +38,9 @@ async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key
                 logger.info(f"请求失败，状态码：{response.status_code}")
     except Exception as e:
         pass
+        # logger.info(
+        #     f"Error to get model from {api_base}, \nPlease set up the {model_type} model address in config.yml before chatting"
+        # )
     finally:
         return model_name
 
@@ -104,6 +108,15 @@ class CoreGenerator:
             conversation_id=self.conversation_id,
             send_msg_websocket=self.send_msg_websocket,
         )
+        # self.chat_model = await get_model_name(
+        #     self.state["openai_api_chat_base"], "Chat", self.api_key, self.admin_key
+        # )
+        # self.rephase_model = await get_model_name(
+        #     self.state["openai_api_rephase_base"],
+        #     "Rephase",
+        #     self.api_key,
+        #     self.admin_key,
+        # )
         self.vocabulary, self.resultslist, self.lora, self.summary_prompt = (
             await load_vocabulary(self.state["match_words_cata"])
         )
@@ -114,6 +127,9 @@ class CoreGenerator:
         self.restruct_prompt = self.restruct_prompt.replace(
             "<|default_bg|>", self.state["env_setting"]
         )
+        # logger.info(
+        #     f"Chat model: {self.chat_model} | Rephase model: {self.rephase_model}"
+        # )
 
     def get_rephrase_template(self):
         chat_template_name = self.state["prompt_template"].split("_")
@@ -472,8 +488,10 @@ class CoreGenerator:
 
             if is_word_triggered:
                 logger.info(f"Matched Result: {match_result}")
+                # text_to_image = response_text.replace("\n", ". ").strip()
+                text_to_image = last_full_talk
                 result_picture = await self.generate_picture_by_sdapi(
-                    prompt=last_full_talk, loraword=match_result
+                    prompt=text_to_image, loraword=match_result
                 )
                 return response_text, result_picture
 

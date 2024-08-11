@@ -14,8 +14,7 @@ from modules.payload_state import sd_payload, room_state
 from fastapimode.sys_path import project_root
 
 dir_path = project_root
-image_payload = sd_payload
-state = room_state
+# image_payload = sd_payload
 
 
 # Read prompt template
@@ -84,7 +83,7 @@ class chatRoom_unsensor:
         self.ttskey = os.environ.get("SPEECH_KEY")
         self.sentiment_anlyzer = sentiment_anlyzer
         self.dynamic_picture = ""
-        self.state = copy.deepcopy(state)
+        self.state = copy.deepcopy(room_state)
         self.ai_role = airole(
             roleselector=self.ai_role_name,
             username=self.username,
@@ -144,12 +143,12 @@ class chatRoom_unsensor:
         self.speaker_tone = "affectionate"
 
     async def create_custom_comp_data(self):
-        self.state["custom_stop_string"] = state["custom_stop_string"] + [
+        self.state["custom_stop_string"] = self.state["custom_stop_string"] + [
             f"{self.username}:",
             f"{self.ainame}:",
-            "###",
         ]
         if self.ai_role.custom_comp_data is not False:
+            self.state["temperature"] = self.ai_role.custom_comp_data["temperature"] if "temperaure" in self.ai_role.custom_comp_data.keys() else self.state["temperature"]
             self.state["max_tokens"] = self.ai_role.custom_comp_data["max_tokens"]
             self.state["top_k"] = self.ai_role.custom_comp_data["top_k"]
             self.state["top_p"] = self.ai_role.custom_comp_data["top_p"]
@@ -177,12 +176,12 @@ class chatRoom_unsensor:
     async def create_chat_generator(self):
         await self.my_generate.async_init(
             state=self.state,
-            image_payload=image_payload,
+            image_payload=sd_payload,
             send_msg_websocket=self.send_msg_websocket,
         )
         self.model_list = await self.my_generate.tabby_server.get_model_list()
         self.SD_model_list = await self.my_generate.tabby_server.get_sd_model_list()
-        self.current_model = await self.my_generate.tabby_server.get_model()
+        # self.current_model = await self.my_generate.tabby_server.get_model()
         if self.ai_role.model_to_load is not False:
             await self.my_generate.tabby_server.unload_model()
             await self.my_generate.tabby_server.load_model(
@@ -454,7 +453,7 @@ class chatRoom_unsensor:
         self.my_generate.image_payload["enable_hr"] = True
         self.my_generate.image_payload["steps"] = 20
         self.my_generate.image_payload["hr_scale"] = 1.5
-        self.my_generate.state["temperature"] = random.choice([0.75, 0.82, 0.93])
+        # self.my_generate.state["temperature"] = random.choice([0.75, 0.82, 0.93])
         await self.send_msg_websocket(
             {"name": "chatreply", "msg": "Generate Response"}, self.conversation_id
         )

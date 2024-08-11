@@ -1,4 +1,4 @@
-import sys, os, math, yaml, requests, json, re
+import sys, os, math, yaml, requests
 from pathlib import Path
 from httpx import Timeout
 from ruamel.yaml import YAML
@@ -8,7 +8,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 from modules.ANSI_tool import ansiColor
 from clear_screen import clear_screen
-from remote_api_hub import openairouter_sync_client, openairouter_client
+from remote_api_hub import openairouter_sync_client, openairouter_client, remote_OAI_config
 
 config_path = os.path.join(project_root, "config", "config.yml")
 with open(config_path, "r") as file:
@@ -16,33 +16,7 @@ with open(config_path, "r") as file:
 from dotenv import load_dotenv
 
 load_dotenv()
-picked_routers = [
-    {
-        "name": "openairouter",
-        "url": "https://openrouter.ai/api/v1",
-        "api_key": os.environ.get("openairouter_api_key"),
-    },
-    {
-        "name": "groq",
-        "url": "https://api.groq.com/openai/v1",
-        "api_key": os.environ.get("groq_api_key"),
-    },
-    {
-        "name": "togetherAI",
-        "url": "https://api.together.xyz/v1",
-        "api_key": os.environ.get("togetherai_api_key"),
-    },
-    {
-        "name": "ollama",
-        "url": "http://localhost:11434/v1",
-        "api_key": "ollama",
-    },
-    {
-        "name": "tabby oai chat_completion",
-        "url": "http://localhost:5555/v1",
-        "api_key": "0764ee6f39280e8b485e9a18668f6a62",
-    }
-]
+picked_routers = remote_OAI_config
 
 ### Model selector
 BLUE = ansiColor.BLUE
@@ -53,6 +27,7 @@ BOLD = ansiColor.BOLD
 YELLOW = ansiColor.YELLOW
 
 timeout = Timeout(180.0)
+
 
 
 def display_models(models, page, items_per_page=10):
@@ -68,7 +43,7 @@ def display_models(models, page, items_per_page=10):
         )
     )
     print(
-        f"{BOLD}{BLUE}Enter a number to select a model, 'n' for next page, 'p' for previous page, or 'q' to quit.{RESET}"
+        f"{BOLD}{BLUE}Enter a number to select a model, 'n' for next page, 'p' for previous page, 'b' to go back.{RESET}"
     )
 
 
@@ -97,125 +72,147 @@ def update_config(endpoint):
         config["using_remoteapi"] = False
     with open(config_path, "w") as file:
         yaml.dump(config, file)
+        
+        
+
+
+def sub_select_options():
+    clear_screen()
+    print(f"{BOLD}{YELLOW}Select an option:{RESET}")
+    print(f"{RED}1{RESET}: Use OAI endpoint")
+    print(f"{RED}2{RESET}: Use None OAI endpoint")
+    print(f"{RED}3{RESET}: Use local Tabby server(not recommanded)")
+    choice = input("Enter your choice (1/2/3): ")
+    return choice
+def sub_select_openai_routers():
+    clear_screen()
+    print(f"{BOLD}{YELLOW}Available routers points: {RESET}\n")
+    for i, router in enumerate(picked_routers):
+        print(f"{RED}{i+1}{RESET}: {BOLD}{CYAN}{router}{RESET}")
+    selected_index = input("Enter the number of your chosen router, enter 'b' to back: ")
+    return selected_index
 
 
 def select_model():
-    clear_screen()
-    print(f"{BOLD}{YELLOW}Select an option for the endpoint:{RESET}")
-    print(f"{RED}1{RESET}: Use 'Editor Picked openai liked router' endpoint")
-    print(f"{RED}2{RESET}: Keep settings in config.yml file")
-    print(f"{RED}3{RESET}: Use Other api endpoint")
-    print(f"{RED}4{RESET}: Use local Tabby server(not recommanded)")
+    choice = None
+    OAI_model_list = None
+    while True:
+        if choice is None:
+            choice = sub_select_options()
+        if choice == "1": 
+            selected_index = sub_select_openai_routers()
+            # config_data["using_remoteapi"] = True
+            # config_data["remoteapi_endpoint"] = "openairouter"
+            if selected_index =='b':
+                choice = None
+                continue
+            elif selected_index.isdigit() and 1 <= int(selected_index) <= len(list(picked_routers.keys())):
+                submenu = True
+                while True:
+                    if submenu:
+                        index = int(selected_index) - 1
+                        router_names = list(picked_routers.keys())
+                        if 0 <= index < len(router_names):
+                            selected_router = router_names[index]
+                            router_details = picked_routers[selected_router]
+                            api_key = router_details["api_key"]
+                            base_url = router_details["url"]
+                        openairouter_sync_client.base_url = base_url
+                        openairouter_sync_client.api_key = api_key
+                        openairouter_client.base_url = base_url
+                        openairouter_client.api_key = api_key
+                        # openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)
+                        headers = {
+                            "accept": "application/json",
+                            "Authorization": f"Bearer {openairouter_sync_client.api_key}",
+                        }
+                        url = base_url+"/models"
+                        print(url)
+                        response = requests.get(url=url,headers=headers,timeout=300)
+                        response.raise_for_status()
+                        openairouter_modellist = response.json()
+                        OAI_model_list = openairouter_modellist
+                        if "data" in openairouter_modellist:
+                            openairouter_modellist = openairouter_modellist["data"]
+                        # 对模型列表按id进行排序
+                        sorted_models = sorted(openairouter_modellist, key=lambda x: x['id'].lower())
+                        OAI_model_list['data'] = sorted_models
+                        openairouter_model: str = ""
+                        current_page = 1
+                        items_per_page = 20
+                        total_pages = math.ceil(len(sorted_models) / items_per_page)
+                        while True:
+                            display_models(sorted_models, current_page, items_per_page)
+                            user_input = input(">>> ").lower()
+                            if user_input == "b":
+                                submenu = False
+                                choice = "1"
+                                break
+                            elif user_input == "n":
+                                if current_page < total_pages:
+                                    current_page += 1
+                                else:
+                                    input("Already on the last page. Press Enter to continue...")
+                            elif user_input == "p":
+                                if current_page > 1:
+                                    current_page -= 1
+                                else:
+                                    input("Already on the first page. Press Enter to continue...")                 
+                            elif user_input.isdigit():
+                                selected_index = int(user_input)
+                                if 0 <= selected_index <= len(sorted_models):
+                                    openairouter_model = sorted_models[selected_index-1]['id']
+                                    confirm=input("You have selected the model: "+f"{BOLD}{YELLOW}{openairouter_model}{RESET}"+". confirm? (y/n)")
+                                    if confirm == "y":
+                                        update_config("openairouter")
+                                        return openairouter_model, OAI_model_list
+                                    else:
+                                        continue
+                                else:
+                                    input(
+                                        "Invalid input. Please enter a valid index number. Press Enter to continue..."
+                                    )
+                            else:
+                                input(
+                                    "Invalid input. Please enter a valid command. Press Enter to continue..."
+                                )              
+                    else:
+                        break
+            else:
+                input("Invalid input. Please enter a valid index number. Press Enter to continue...")
+                continue
+        elif choice == "2":
+            while True:
+                clear_screen()
+                endpoints = ["claude", "cohere"]
+                print(f"\n{BOLD}{YELLOW}Available endpoints:{RESET}")
+                for i, endpoint in enumerate(endpoints, 1):
+                    print(f"{RED}{i}{RESET}: {CYAN}{endpoint}{RESET}")
 
-    choice = input("Enter your choice (1/2/3): ")
-
-    if choice == "1":
-        clear_screen()
-        print(f"{BOLD}{YELLOW}Available routers points: {RESET}\n")
-        for i, router in enumerate(picked_routers):
-            print(f"{RED}{i+1}{RESET}: {BOLD}{CYAN}{router['name']}{RESET}")
-        selected_index = input("Enter the number of your chosen router: ")
-        # config_data["using_remoteapi"] = True
-        # config_data["remoteapi_endpoint"] = "openairouter"
-        update_config("openairouter")
-        clear_screen()
-    elif choice == "2":
-        clear_screen()
-        return "openai/gpt-3.5-turbo"
-    elif choice == "3":
-        endpoints = ["deepseek", "xiaoai", "cohere", "nvidia", "mistral", "togetherai"]
-        print(f"\n{BOLD}{YELLOW}Available endpoints:{RESET}")
-        for i, endpoint in enumerate(endpoints, 1):
-            print(f"{RED}{i}{RESET}: {CYAN}{endpoint}{RESET}")
-
-        endpoint_choice = int(input("Enter the number of your chosen endpoint: "))
-        if 1 <= endpoint_choice <= len(endpoints):
-            chosen_endpoint = endpoints[endpoint_choice - 1]
-            update_config(chosen_endpoint)
-            clear_screen()
-            return "openai/gpt-3.5-turbo"
-        else:
-            print(f"{RED}Invalid choice. Using default settings.{RESET}")
-            clear_screen()
-            return "openai/gpt-3.5-turbo"
-    elif choice == "4":
-        update_config("tabby")
-        clear_screen()
-        return "openai/gpt-3.5-turbo"
-    else:
-        print(f"{RED}Invalid choice. Using default settings.{RESET}")
-        return "openai/gpt-3.5-turbo"
-
-    if (
-        config_data["using_remoteapi"]
-        and config_data["remoteapi_endpoint"] == "openairouter"
-    ):
-        openairouter_sync_client.base_url = picked_routers[int(selected_index) - 1].get("url")
-        openairouter_sync_client.api_key = picked_routers[int(selected_index) - 1].get("api_key")
-        openairouter_client.base_url = picked_routers[int(selected_index) - 1].get("url")
-        openairouter_client.api_key = picked_routers[int(selected_index) - 1].get("api_key")
-        # openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)
-        headers = {
-            "accept": "application/json",
-            "Authorization": f"Bearer {openairouter_sync_client.api_key}",
-        }
-        url = picked_routers[int(selected_index) - 1].get("url")+"/models"
-        print(url)
-        response = requests.get(url=url,headers=headers)
-        response.raise_for_status()
-        openairouter_modellist = response.json()
-        if "data" in openairouter_modellist:
-            openairouter_modellist = openairouter_modellist["data"]
-        # 对模型列表按id进行排序
-        sorted_models = sorted(openairouter_modellist, key=lambda x: x['id'].lower())
-        openairouter_model: str = ""
-        current_page = 1
-        items_per_page = 20
-        total_pages = math.ceil(len(sorted_models) / items_per_page)
-
-        while True:
-            display_models(sorted_models, current_page, items_per_page)
-            user_input = input(">>> ").lower()
-
-            if user_input == "q":
-                print("Exiting...")
-                break
-            elif user_input == "n":
-                if current_page < total_pages:
-                    current_page += 1
-                else:
-                    input("Already on the last page. Press Enter to continue...")
-            elif user_input == "p":
-                if current_page > 1:
-                    current_page -= 1
-                else:
-                    input("Already on the first page. Press Enter to continue...")
-            elif user_input.isdigit():
-                selected_index = int(user_input)
-                if 0 <= selected_index <= len(sorted_models):
-                    openairouter_model = sorted_models[selected_index-1]['id']
+                endpoint_choice = input("Enter the number of your chosen endpoint, 'b' to back: ").lower()
+                if endpoint_choice.isdigit():
+                    if 1 <= int(endpoint_choice) <= len(endpoints):
+                        chosen_endpoint = endpoints[int(endpoint_choice) - 1]
+                        update_config(chosen_endpoint)
+                        clear_screen()
+                        return "openai/gpt-3.5-turbo", None
+                    else:
+                        input(f"{RED}Invalid choice. Enter to retry{RESET}")
+                        clear_screen()
+                        continue
+                elif endpoint_choice == "b":
+                    choice = None
                     break
                 else:
-                    input(
-                        "Invalid input. Please enter a valid index number. Press Enter to continue..."
-                    )
-            else:
-                input(
-                    "Invalid input. Please enter a valid command. Press Enter to continue..."
-                )
-
-        clear_screen()  # 最后清屏
-        if openairouter_model:
-            print(
-                f"{BLUE}Selected model:{RESET} {BOLD}{RED}{openairouter_model}{RESET}"
-            )
-            return openairouter_model
+                    input(f"{RED}Invalid choice. Enter to retry{RESET}")
+                    clear_screen()
+                    continue
+        elif choice == "3":
+            update_config("tabby")
+            clear_screen()
+            return "openai/gpt-3.5-turbo", None
         else:
-            openairouter_model = "openai/gpt-3.5-turbo"
-            print(
-                f"{BLUE}No model selected. set the model to default:{RESET} {BOLD}{RED}{openairouter_model}{RESET}"
-            )
-            return openairouter_model
-    else:
-        clear_screen()
-        return "openai/gpt-3.5-turbo"
+            input(f"{RED}Invalid choice. Enter to retry{RESET}")
+            choice = None
+            continue
+        

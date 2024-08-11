@@ -19,14 +19,29 @@ boto3_aws_access_key_id = os.getenv("boto3_aws_access_key_id", default="None")
 boto3_aws_secret_access_key = os.getenv("boto3_aws_secret_access_key", default="None")
 boto3_aws_region_name = os.getenv("boto3_aws_region_name", default="global")
 xiaoai_api_key = os.getenv("xiaoai_api_key", default="None")
-openairouter_api_key = os.getenv("openairouter_api_key", default="None")
-openairouter_url = os.getenv("openairouter_url", default="None")
-
+openrouter_api_key = os.getenv("openrouter_api_key", default="None")
+groq_api_key = os.getenv("groq_api_key", default="None")
+tabby_api_key = os.getenv("tabby_api_key", default="None")
 aws_bedrock_config = {
     "region_name": boto3_aws_region_name,
     "aws_access_key_id": boto3_aws_access_key_id,
     "aws_secret_access_key": boto3_aws_secret_access_key,
 }
+
+# create config json for all remote api
+remote_OAI_config = {
+    "mistral": {"api_key": mistral_api_key, "url":"https://api.mistral.ai/v1"},
+    "deepseek": {"api_key": deepseek_api_key, "url":"https://api.deepseek.com/v1"},
+    "togetherai": {"api_key": togetherai_api_key, "url":"https://api.together.xyz/v1"},
+    "yi": {"api_key": yi_api_key, "url":"https://api.01.ai/v1"},
+    "nvidia": {"api_key": nvidia_api_key, "url":"https://integrate.api.nvidia.com/v1"},
+    "xiaoai": {"api_key": xiaoai_api_key, "url":"https://api.xiaoai.plus/v1"},
+    "openrouter": {"api_key": openrouter_api_key, "url": "https://openrouter.ai/api/v1"},
+    "groq": {"api_key": groq_api_key, "url": "https://api.groq.com/openai/v1"},
+    "ollama": {"api_key":"ollama","url": "http://localhost:11434/v1"},
+    "tabby": {"api_key":tabby_api_key,"url": "http://localhost:5555/v1"},
+}
+
 
 # api clients for different remote api
 cohere_client = cohere.AsyncClient(api_key=cohere_api_key, timeout=120)
@@ -51,10 +66,10 @@ xiaoai_client = AsyncOpenAI(
     api_key=xiaoai_api_key, base_url="https://api.xiaoai.plus/v1", timeout=120
 )
 openairouter_client = AsyncOpenAI(
-    api_key=openairouter_api_key, base_url=openairouter_url, timeout=600
+    api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1", timeout=600
 )
 openairouter_sync_client = OpenAI(
-    api_key=openairouter_api_key, base_url=openairouter_url, timeout=600
+    api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1", timeout=600
 )
 sentenceCompletion_client = AsyncOpenAI(base_url="http://localhost:11434/v1", timeout=120, api_key="ollama")
 # Pydantic models for different remote api params

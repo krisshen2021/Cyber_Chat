@@ -6,7 +6,7 @@ openai_api_funcall_base: http://127.0.0.1:5002/v1
 # openai_api_rephase_base: http://127.0.0.1:5010/v1
 local_tabby_server_base: http://localhost:5555/v1
 using_remoteapi: true
-remoteapi_endpoint: deepseek     #openairouter,cohere, mistral, claude, xiaoai
+remoteapi_endpoint: openairouter #openairouter,cohere, mistral, claude, xiaoai
 
 ### SD settings
 SDAPI_url: http://127.0.0.1:7860

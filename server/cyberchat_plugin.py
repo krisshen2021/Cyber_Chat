@@ -8,7 +8,7 @@ if project_root not in sys.path:
 from httpx import Timeout
 from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Header
-from fastapi.responses import StreamingResponse, Response
+from fastapi.responses import StreamingResponse, Response, JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from sd_setting import update_SDAPI_config
@@ -57,12 +57,12 @@ timeout = Timeout(180.0)
 ### SD selector
 update_SDAPI_config()
 ### Openairouter selector
-openairouter_model = select_model()
+openairouter_model, OAI_model_list = select_model()
 
 restapi_tts = tts_select_endpoint()
 
 restapi_stt = stt_select_endpoint()
-
+logger.info(f"OAI model:{openairouter_model}")
 ansiColor.color_print(
     "Remote Server Started\nWaiting for connection...",
     ansiColor.BG_BRIGHT_MAGENTA + ansiColor.WHITE,
@@ -412,6 +412,21 @@ async def sentence_completion(params_json: dict):
     return Response(
         content=await sentenceCompletion_invoke(params), media_type="text/plain"
     )
+# OAI model list endpoint
+@router.get("/v1/models")
+async def get_models():
+    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
+        return JSONResponse(content=OAI_model_list)
+    else:
+        raise HTTPException(status_code=404, detail="Models not found")
+    
+# OAI model switch  
+@router.post("/v1/OAI_Switch_Model")
+async def switch_model(model: dict):
+    global openairouter_model
+    openairouter_model = model["model"]
+    logger.info(f"Switching to model: {openairouter_model}")
+    return JSONResponse(content={"message": f"Switched to model: {openairouter_model}"})
 
 
 # local tabby server endpoint
@@ -724,6 +739,7 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
                 content=await xiaoai_invoke(params), media_type="text/plain"
             )
     elif ai_type == "openairouter":
+        global openairouter_model
         keys_to_keep = [
             "system_prompt",
             "messages",
@@ -732,7 +748,6 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
             "top_p",
             "stop",
             "model",
-            "presence_penalty",
             "stream",
         ]
         openairouter_dict = {

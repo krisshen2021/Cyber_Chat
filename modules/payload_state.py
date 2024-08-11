@@ -27,10 +27,7 @@ sd_payload = {
 }
 
 room_state = {
-    # "openai_api_chat_base": "https://glorious-alpaca-genuinely.ngrok-free.app/v1",
     "openai_api_chat_base": config_data["openai_api_chat_base"],
-    # "openai_api_funcall_base": config_data["openai_api_funcall_base"],
-    # "openai_api_rephase_base": config_data["openai_api_rephase_base"],
     "tappyapi_api_key": config_data["api_key"],
     "tappyapi_admin_key": config_data["admin_key"],
     "SDAPI_url": config_data["SDAPI_url"],
@@ -52,7 +49,7 @@ room_state = {
     "mirostat_eta": 0.1,
     "temperature_last": True,
     "ban_eos_token": False,
-    "custom_stop_string": ["\nInput:", "\n[", "\n(", "\n### Input:", "</s>", "<|eot_id|>"],
+    "custom_stop_string": ["###","</s>", "<|eot_id|>"],
     "temperature": 1,
     # other settings
     "translate": True,
