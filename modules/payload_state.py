@@ -93,7 +93,7 @@ completions_data = {
     "ban_eos_token": False,
     # "repetition_range": -1,
     # "smoothing_factor":0.95,
-    "prompt": "Once upon a time,",
+    "prompt": "Output: 'No input'",
 }
 model_load_data = {
     "name": "",

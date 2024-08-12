@@ -1,5 +1,6 @@
 from modules.global_sets_async import (
     database,
+    prompt_params,
     sentiment_anlyzer,
     getGlobalConfig,
     convert_to_webpbase64,
@@ -50,7 +51,7 @@ def create_userfaceprompt(facelooks: dict):
 
 
 # the main room class
-class chatRoom_unsensor:
+class ChatRoom_Uncensored:
     def __init__(
         self,
         user_sys_name: str = None,
@@ -198,7 +199,7 @@ class chatRoom_unsensor:
         )
         logger.info("Generate Character Background")
         emotion = await self.emotion_detector(self.first_message)
-        logger.info(f'the character\'s initial emotion is {emotion}')
+        logger.info(f'{self.ainame}\'s Initial emotion: [{emotion}]')
         bgimg_base64 = await self.gen_bgImg(
             tabbyGen=self.my_generate,
             char_looks=self.state["char_looks"],
@@ -410,15 +411,33 @@ class chatRoom_unsensor:
 
         return await convert_to_webpbase64(avatarImg)
 
-    async def emotion_detector(self, input_msg):
-        emotion_des = await self.sentiment_anlyzer.get_sentiment(input_msg)
-        positive_emotions = ["joy", "surprise", "love", "fun"]
-        negative_emotions = ["sadness", "anger", "fear", "disgust"]
-        emotion_des = (
-            str(emotion_des)
-            .replace("POSITIVE", random.choice(positive_emotions))
-            .replace("NEGATIVE", random.choice(negative_emotions))
-        )
+    async def emotion_detector(self, input_msg:str, fastmode:bool=False):
+        if not fastmode:
+            config_data = await getGlobalConfig('config_data')
+            face_expression_prompt = prompt_params['face_expression_prompt']
+            face_expression_words_list = prompt_params['face_expression_words_list']
+            user_prompt = f"User Provided Context:\n<context>{self.ainame}: {input_msg}</context><for_char>{self.ainame}</for_char><emotion_type>{face_expression_words_list}</emotion_type>\nOutput:"
+            if config_data['using_remoteapi']:
+                prompt = face_expression_prompt +"\n" + user_prompt
+            else:
+                prompt = self.rephrase_template.replace("<|system_prompt|>", face_expression_prompt).replace("<|user_prompt|>",user_prompt)
+            payloads = {
+                "prompt": prompt,
+                "max_tokens": 20,
+                "temperature": 0.5,
+                "stream": False,
+            }
+            # logger.info(f"Emotion Detector Payload: {prompt}")
+            emotion_des = await self.my_generate.tabby_server.pure_inference(payloads=payloads)
+        else:
+            emotion_des = await self.sentiment_anlyzer.get_sentiment(input_msg)
+            positive_emotions = ["joy", "surprise", "love", "fun"]
+            negative_emotions = ["sadness", "anger", "fear", "disgust"]
+            emotion_des = (
+                str(emotion_des)
+                .replace("POSITIVE", random.choice(positive_emotions))
+                .replace("NEGATIVE", random.choice(negative_emotions))
+            )
         return emotion_des
 
     # Main Server Reply Blocks
@@ -486,8 +505,8 @@ class chatRoom_unsensor:
         # get tts text and process the emotion and code format
         try:
             if result_text != "*Silent*":
-                emotion_des = await self.emotion_detector(result_text)
-                logger.info(f"{self.ainame}'s Emotion: {emotion_des}")
+                emotion_des = await self.emotion_detector(result_text, fastmode=False)
+                logger.info(f"{self.ainame}'s current emotion: [{emotion_des}]")
             else:
                 emotion_des = "none"
         except Exception as e:

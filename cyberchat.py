@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from modules.user_validation import Validation
 from modules.PydanticModels import EnterRoom, as_form
-from fastapimode.room_uncensor_websocket import chatRoom_unsensor
+from fastapimode.room_uncensor_websocket import ChatRoom_Uncensored
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 from modules.payload_state import sd_payload, completions_data
 from modules.AiRoleOperator import AiRoleOperator as ARO
@@ -292,7 +292,7 @@ async def initialize_room(client_msg, client_id):
     else:
         conn_ws_mgr.set_room(
             client_id,
-            chatRoom_unsensor(
+            ChatRoom_Uncensored(
                 user_sys_name=user_sys_name,
                 ai_role_name=ai_role_name,
                 username=username,

@@ -92,7 +92,7 @@ class CoreGenerator:
         self.pattern_task =re.compile(r'<Task>.*?</Task>', re.DOTALL)
         self.pattern_plot = re.compile(r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL)
         self.pattern_firstword = re.compile(rf"({re.escape(self.state['char_name'])}:[\s\S]*?)(?=\n\w+:|$)", re.DOTALL)
-        self.express_words = "Happy, Joyful, Excited, Euphoric, Satisfied, Delighted, Angry, Sad, Fearful, Anxious, Disgusted, Depressed, Normal, Surprised, Lewd, Amused, Mischievous, Flirtatious, Cheeky, Bored, Confused, Shocked"
+        self.express_words = prompt_params['face_expression_words_list']
         self.char_outfit = self.state["char_outfit"]
         self.conversation_id = self.state["conversation_id"]
         self.image_payload = image_payload
@@ -297,7 +297,8 @@ class CoreGenerator:
         weartype_list = ",".join(self.state["char_outfit"].keys())
         sysprompt = prompt_params["senario_setting_prompt"]
         userprompt = f"User provided input:\n<context>\n{context}\n</context>\n<pre_env>{self.state['env_setting']}</pre_env>\n<for_char>{self.state['char_name']}</for_char>\n<wear_type>{weartype_list}</wear_type><emotion_type>{self.express_words}</emotion_type>\nOutput:"
-        logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
+        # logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
+        logger.info("Generating Live Background...")
         config_data = await getGlobalConfig("config_data")
         using_remoteapi = config_data["using_remoteapi"]
         temperature = 0.5
