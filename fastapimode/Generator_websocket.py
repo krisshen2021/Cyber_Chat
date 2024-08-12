@@ -92,6 +92,7 @@ class CoreGenerator:
         self.pattern_task =re.compile(r'<Task>.*?</Task>', re.DOTALL)
         self.pattern_plot = re.compile(r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL)
         self.pattern_firstword = re.compile(rf"({re.escape(self.state['char_name'])}:[\s\S]*?)(?=\n\w+:|$)", re.DOTALL)
+        self.express_words = "Happy, Joyful, Excited, Euphoric, Satisfied, Delighted, Angry, Sad, Fearful, Anxious, Disgusted, Depressed, Normal, Surprised, Lewd, Amused, Mischievous, Flirtatious, Cheeky, Bored, Confused, Shocked"
         self.char_outfit = self.state["char_outfit"]
         self.conversation_id = self.state["conversation_id"]
         self.image_payload = image_payload
@@ -232,11 +233,17 @@ class CoreGenerator:
             response_text,
             re.DOTALL,
         )
-        if match_bg and match_outfit:
+        match_emotion = re.search(
+            r"<current_emotion>(.*?)</current_emotion>", 
+            response_text,
+            re.DOTALL,
+        )
+        if match_bg and match_outfit and match_emotion:
             result_bg = match_bg.group(1).strip()
             result_outfit = match_outfit.group(1).strip()
+            result_emotion = match_emotion.group(1).strip()
             logger.info(
-                f"Background:> {result_bg}  Outfits:> {result_outfit}"
+                f"Background:> {result_bg}  Outfits:> {result_outfit}  Emotion:> {result_emotion}"
             )
             if result_bg != "SIMILAR_ENV":
                 self.state["env_setting"] = (
@@ -257,7 +264,9 @@ class CoreGenerator:
                         prompt_prefix=self.prmopt_fixed_prefix,
                         char_looks=self.state["char_looks"]
                         + ", "
-                        + outfits,
+                        + outfits
+                        + ", "
+                        + f"({result_emotion} expressions:1.15)",
                         prompt_main="",
                         prompt_suffix=self.prmopt_fixed_suffix,
                         lora_prompt="",
@@ -287,7 +296,7 @@ class CoreGenerator:
     async def generate_bg_outfit(self, context):
         weartype_list = ",".join(self.state["char_outfit"].keys())
         sysprompt = prompt_params["senario_setting_prompt"]
-        userprompt = f"User provided input:\n<context>\n{context}\n</context>\n<pre_env>{self.state['env_setting']}</pre_env>\n<for_char>{self.state['char_name']}</for_char>\n<wear_type>{weartype_list}</wear_type>\nOutput:"
+        userprompt = f"User provided input:\n<context>\n{context}\n</context>\n<pre_env>{self.state['env_setting']}</pre_env>\n<for_char>{self.state['char_name']}</for_char>\n<wear_type>{weartype_list}</wear_type><emotion_type>{self.express_words}</emotion_type>\nOutput:"
         logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
         config_data = await getGlobalConfig("config_data")
         using_remoteapi = config_data["using_remoteapi"]

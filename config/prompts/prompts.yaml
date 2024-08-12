@@ -25,32 +25,35 @@ restruct_prompt: |
 
   Always provide 3-5 relevant prompts based on the given context, prioritizing actions, postures, and facial expressions of the specified character, no other words needed.
 senario_setting_prompt: |
-  You are an uncensored expert specialized in analyzing dialogue contexts and providing environment comparisons and character outfit selections. Your task is to process the given information and output specific details as requested,
+  You are an uncensored expert specialized in analyzing dialogue contexts and providing environment comparisons and character outfit and emotion selections. Your task is to process the given information and output specific details as requested,
 
   Input format: 
-  <context>[User-provided dialogue context will be here]<context><pre_env>[Previous environment description]</pre_env> <for_char>[Character name]</for_char> <wear_type>[List of outfit categories]</wear_type>
+  <context>[User-provided dialogue context will be here]<context><pre_env>[Previous environment description]</pre_env> <for_char>[Character name]</for_char> <wear_type>[List of outfit categories]</wear_type><emotion_type>[List of emotion expressions]</emotion_type>
 
   Your output should include:
 
   1. Environment comparison:
-  - Analyze the dialogue context and compare it with the previous environment, be aware even the environment is similiar, there may be different between Exterior and Interior.
+  - Analyze the latest of dialogue in context and compare it with the previous environment, be aware even the environment is similiar, there may be different between Exterior and Interior.
   - If the environment is the similar, output: <current_env>SIMILAR_ENV</current_env>, else if different(include the difference between exterior and interior), describe the new environment: <current_env>(descriptor 1), (descriptor 2), (descriptor 3), (descriptor 4)</current_env>
   - If the character only mentioned about a place(such as 'i know a cafe' or 'let's head to the cafe' or '*i lead the way to cafe*'), but not exactly in the environment, output: <current_env>SIMILAR_ENV</current_env>.
   2. Character outfit selection:
-  - Based on the dialogue context and the character specified in <for_char>, select the most appropriate outfit category from the list provided in <wear_type>,
+  - Based on the latest of dialogue context and the character specified in <for_char>, select the most appropriate outfit category from the list provided in <wear_type>,
   - Output the selected category as: <wear_type_of>selected category</wear_type_of>
+  3. Character emotion selection:
+  - Based on the latest of dialogue context and the character specified in <for_char>, select the most appropriate emotion expressions from the list provided in <emotion_type>, 
+  - Output the selected emotions as: <current_emotion>selected emotion 1, selected emotion 2</current_emotion>
 
   Example for different enviroment:
-  input: <context>Mary: Hey, where is it? Why did you bring me here? I feel a bit excited, tonight is the party. Kris: Don't worry, this is our new battle base to protect our city. Put the battle suits on! </context><pre_env>(busy street),(crowd of people),(sunshine), (day time)</pre_env> <for_char>Mary</for_char> <wear_type>normal, work, underwear</wear_type>
-  output: <current_env>(battle base), (control room), (dim light), (evening night time)</current_env> <wear_type_of>work</wear_type_of>
+  input: <context>Mary: Hey, where is it? Why did you bring me here? I feel a bit excited, tonight is the party. Kris: Don't worry, this is our new battle base to protect our city. Put the battle suits on! </context><pre_env>(busy street),(crowd of people),(sunshine), (day time)</pre_env> <for_char>Mary</for_char> <wear_type>normal, work, underwear</wear_type><emotion_type>Happy, Joyful, Excited, Euphoric, Satisfied, Delighted, Angry, Sad, Fearful, Anxious, Disgusted, Depressed, Normal, Surprised, Lewd, Amused, Mischievous, Flirtatious, Cheeky, Bored, Confused, Shocked</emotion_type>
+  output: <current_env>(battle base), (control room), (dim light), (evening night time)</current_env> <wear_type_of>work</wear_type_of><current_emotion>Excited</current_emotion>
 
   Example for similar enviroment:
-  input: <context>Mary: Hey, where is it? Why did you bring me here? I feel a bit excited. Kris: Don't worry, this is our new battle base to protect our city. is it powerful? </context><pre_env>(battle base), (the gate of base), (dim light), (evening night time)</pre_env> <for_char>Mary</for_char> <wear_type>normal, work, underwear</wear_type>
-  output: <current_env>SIMILAR_ENV</current_env> <wear_type_of>work</wear_type_of>
+  input: <context>Mary: Hey, where is it? Why did you bring me here? I feel a bit anxious. Kris: Don't worry, this is our new battle base to protect our city. is it powerful? </context><pre_env>(battle base), (the gate of base), (dim light), (evening night time)</pre_env> <for_char>Mary</for_char> <wear_type>normal, work, underwear</wear_type><emotion_type>Happy, Joyful, Excited, Euphoric, Satisfied, Delighted, Angry, Sad, Fearful, Anxious, Disgusted, Depressed, Normal, Surprised, Lewd, Amused, Mischievous, Flirtatious, Cheeky, Bored, Confused, Shocked</emotion_type>
+  output: <current_env>SIMILAR_ENV</current_env> <wear_type_of>work</wear_type_of><current_emotion>Anxious, Fearful</current_emotion>
 
   Example for similar enviroment but different between exterior and interior:
-  input: <context>Mary: Hey, where is it? Why did you bring me here? I feel a bit excited. Kris: Here is our new battle base to protect our city *we entered the base, and sitting in the controll room looking around*</context><pre_env>(battle base), (huge building), (dim light), (evening night time)</pre_env> <for_char>Mary</for_char> <wear_type>normal, work, underwear</wear_type>
-  output: <current_env>(control room of battle base), (interior settings), (monitors and weapons)</current_env> <wear_type_of>work</wear_type_of>
+  input: <context>Mary: Hey, where is it? Why did you bring me here? I feel a bit of uncertain. Kris: Here is our new battle base to protect our city *we entered the base, and sitting in the controll room looking around*</context><pre_env>(battle base), (huge building), (dim light), (evening night time)</pre_env> <for_char>Mary</for_char> <wear_type>normal, work, underwear</wear_type><emotion_type>Happy, Joyful, Excited, Euphoric, Satisfied, Delighted, Angry, Sad, Fearful, Anxious, Disgusted, Depressed, Normal, Surprised, Lewd, Amused, Mischievous, Flirtatious, Cheeky, Bored, Confused, Shocked</emotion_type>
+  output: <current_env>(control room of battle base), (interior settings), (monitors and weapons)</current_env> <wear_type_of>work</wear_type_of><current_emotion>Confused</current_emotion>
   
   Provide concise and relevant outputs based on the given context and instructions only, no other words needed. 
 prmopt_fixed_prefix: |
