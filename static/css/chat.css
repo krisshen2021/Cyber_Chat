@@ -568,7 +568,7 @@ body {
 #messageToSend {
   width: 100%;
   height: auto;
-  color: rgb(67, 55, 74);
+  color: rgb(109, 73, 132);
   font-size: 0.8rem;
   border: none;
   background: transparent;
@@ -578,11 +578,13 @@ body {
   font-family: 'Barlow';
   flex-grow: 1;
   align-self: center;
+  font-weight: 500;
 }
 
 #messageToSend.input_text {
-  color: #ffffff;
+  color: #ffe6d7;
   font-size: 1rem;
+  font-weight: 400;
 }
 
 #messageToSend:focus {

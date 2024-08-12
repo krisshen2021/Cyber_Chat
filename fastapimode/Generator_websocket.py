@@ -253,7 +253,7 @@ class CoreGenerator:
                     outfits = self.state["char_outfit"][result_outfit]
                 else:
                     outfits = self.state["char_outfit"]["normal"]
-
+                logger.info("Add AsyncTask for Live Background...")
                 livebgTask = asyncio.create_task(
                     self.generate_image(
                         width=self.image_bg_size["width"],
@@ -275,7 +275,6 @@ class CoreGenerator:
                         task_flag="generate_live-ChatBackgroud",
                     )
                 )
-                logger.info("generate live background")
                 livebgBase64 = await livebgTask
                 livebgBase64 = await convert_to_webpbase64(
                     livebgBase64, quality=85
@@ -298,7 +297,6 @@ class CoreGenerator:
         sysprompt = prompt_params["senario_setting_prompt"]
         userprompt = f"User provided input:\n<context>\n{context}\n</context>\n<pre_env>{self.state['env_setting']}</pre_env>\n<for_char>{self.state['char_name']}</for_char>\n<wear_type>{weartype_list}</wear_type><emotion_type>{self.express_words}</emotion_type>\nOutput:"
         # logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
-        logger.info("Generating Live Background...")
         config_data = await getGlobalConfig("config_data")
         using_remoteapi = config_data["using_remoteapi"]
         temperature = 0.5

@@ -386,12 +386,14 @@
 
     function transcript_audio_result(msg) {
       console.log(msg);
+      toggleInputs(true);
       const transcripted_text = msg.data['transcripted_text'];
       console.log(transcripted_text);
       $("#messageToSend").focus().val(transcripted_text);
       $("#submit").trigger("click");
       let svgicon_normal = `<svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ffffff" stroke-width="1.5"><rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-width="1.5"></rect><path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
       $("#recordButton").html(svgicon_normal);
+
 
     }
     function sentence_completion_result(msg) {
@@ -1271,8 +1273,8 @@
         iscreatedynimage: statechk.imageswitcher,
       };
       ws.send(wsData('send_user_msg', querydata));
-      $('#messageToSend').val('');
-      autoExpand($('#messageToSend')[0]);
+      // $('#messageToSend').val('');
+      // autoExpand($('#messageToSend')[0]);
     }
 
     function autoExpand(textarea) {
@@ -1337,7 +1339,7 @@
     $(document).ready(function () {
       //new command function
       const defaultText =
-        "Use '/' for speical commands, 'Tab' for sentence completion";
+        "'/' for commands, 'Tab' for sentence completion, 'Esc' to accept";
       const $msg_inputer = $('#messageToSend');
       const $cmd_dropdownMenu = $('#cmd_dropdownMenu');
       const $ai_icon = $('.ai_icon');

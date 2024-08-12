@@ -96,20 +96,8 @@ export class CommandInputHandler {
 
         this.$msg_inputer.on('keydown', (e) => {
             let $items = this.$cmd_dropdownMenu.find(`li.${this.cssClasses.cmdItems}`);
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (!this.$cmd_dropdownMenu.is(":visible") && this.$msg_inputer.val() !== '' && this.$msg_inputer.val() !== this.defaultText && this.$msg_inputer.val() !== this.prompt_variable_str) {
-                    if (this.sentenceTimer) {
-                        clearTimeout(this.sentenceTimer);
-                        this.sentenceTimer = null;
-                    }
-                    this.triggerSendMsgEvent();
-                    //reset after trigger sendmsg event
-                    this.resetAll();
-                    this.autoExpand(this.$msg_inputer[0]);
-                }
-            }
             if (this.$cmd_dropdownMenu.is(":visible")) {
+                // dropdownMenu key events
                 if (e.key === 'Escape') {
                     this.resetAll();
                 }
@@ -130,22 +118,46 @@ export class CommandInputHandler {
                         this.autoExpand(this.$msg_inputer[0]);
                     }
                 }
-            }
-            if (e.key === "Backspace" || e.key === "Delete") {
-                if (this.$msg_inputer.val().length <= 0) {
-                    this.resetAll();
-                }
-            }
-            if (e.key === "Tab") {
-                e.preventDefault();
-                if (this.sentenceTimer) {
-                    clearTimeout(this.sentenceTimer);
-                    this.sentenceTimer = null;
-                }
-                this.sentenceCompletionFunc();
-            }
+            } else {
+                // inputer key events
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (this.$msg_inputer.val() !== '' && this.$msg_inputer.val() !== this.defaultText && this.$msg_inputer.val() !== this.prompt_variable_str) {
+                        if (this.sentenceTimer) {
+                            clearTimeout(this.sentenceTimer);
+                            this.sentenceTimer = null;
+                        }
+                        if (this.$msg_inputer[0].selectionStart === this.$msg_inputer[0].selectionEnd) {
+                            // 光标没有选中任何文本
+                            this.triggerSendMsgEvent();
+                            //reset after trigger sendmsg event
+                            this.resetAll();
+                            this.autoExpand(this.$msg_inputer[0]);
 
+                        }
+
+                    }
+                }
+                if (e.key === "Backspace" || e.key === "Delete") {
+                    if (this.$msg_inputer.val().length <= 0) {
+                        this.resetAll();
+                    }
+                }
+                if (e.key === "Tab") {
+                    e.preventDefault();
+                    if (this.sentenceTimer) {
+                        clearTimeout(this.sentenceTimer);
+                        this.sentenceTimer = null;
+                    }
+                    this.sentenceCompletionFunc();
+                }
+                if (e.key === "Escape") {
+                    e.preventDefault();
+                    this.$msg_inputer[0].selectionStart = this.$msg_inputer[0].selectionEnd = this.$msg_inputer.val().length;
+                }
+            }
         });
+
         this.$msg_inputer.on('keyup', (e) => {
             if (e.key === " ") {
                 let value = this.$msg_inputer.val();
