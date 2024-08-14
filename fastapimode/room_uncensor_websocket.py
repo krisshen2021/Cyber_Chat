@@ -182,7 +182,7 @@ class ChatRoom_Uncensored:
         )
         self.model_list = await self.my_generate.tabby_server.get_model_list()
         self.SD_model_list = await self.my_generate.tabby_server.get_sd_model_list()
-        # self.current_model = await self.my_generate.tabby_server.get_model()
+        self.model = await self.my_generate.tabby_server.get_model()
         if self.ai_role.model_to_load is not False:
             await self.my_generate.tabby_server.unload_model()
             await self.my_generate.tabby_server.load_model(

@@ -883,20 +883,15 @@
       ws.send(wsData('sentence_completion', querydata));
       toggleInputs(false);
     }
-
-    function changeModel(model_list) {
-      if (model_list !== undefined) {
+    function changeModel(model_list, model) {
         if (model_list.length > 0) {
           console.log(model_list);
           $('#model_selector').empty();
-          $('#model_selector').append(
-            $('<option>').text('Models').val('None'),
-          );
-          $('#model_selector').append(
-            $('<option>').text('----------').val('None'),
-          );
           $.each(model_list, function (index, value) {
             var option = $('<option>').text(value).val(value);
+            if (value === model) {
+              option.attr('selected', 'selected');
+            }
             $('#model_selector').append(option);
           });
           $('#model_selector').change(function () {
@@ -911,7 +906,6 @@
             }
           });
         }
-      }
     }
 
     function changeInstr(instruct_list) {
@@ -1223,7 +1217,10 @@
       let ttskey = msg.data['ttskey'];
       let dynamic_picture = msg.data['dynamic_picture'];
       let model_list = msg.data['model_list'];
-      changeModel(model_list);
+      let model = msg.data['model'];
+      if (model_list != undefined) {
+        changeModel(model_list, model);
+      }     
       let instruct_list = msg.data['instruct_list'];
       changeInstr(instruct_list);
       let SD_model_list = msg.data['SD_model_list'];

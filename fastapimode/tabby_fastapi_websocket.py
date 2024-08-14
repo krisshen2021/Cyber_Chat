@@ -195,10 +195,10 @@ class tabby_fastapi:
                     logger.info(f"Current model: {response['id']}")
                     return response["id"]
                 else:
-                    return "None"
+                    return None
         except Exception as e:
             logger.info("Error on get current model: ", e)
-            return "None"
+            return None
 
     async def get_model_list(self) -> list:
         url = self.url + "/models"

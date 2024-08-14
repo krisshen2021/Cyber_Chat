@@ -419,14 +419,22 @@ async def get_models():
         return JSONResponse(content=OAI_model_list)
     else:
         raise HTTPException(status_code=404, detail="Models not found")
+# OAI model get default model
+@router.get("/v1/model")
+async def get_default_model():
+    global openairouter_model
+    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
+        return JSONResponse(content={"id": openairouter_model})
+    else:
+        raise HTTPException(status_code=404, detail="Current model not found")
     
-# OAI model switch  
+# OAI default model switch  
 @router.post("/v1/OAI_Switch_Model")
 async def switch_model(model: dict):
     global openairouter_model
     openairouter_model = model["model"]
     logger.info(f"Switching to model: {openairouter_model}")
-    return JSONResponse(content={"message": f"Switched to model: {openairouter_model}"})
+    return JSONResponse(content={"model":openairouter_model,"message": f"Switched to model: {openairouter_model}"})
 
 
 # local tabby server endpoint
