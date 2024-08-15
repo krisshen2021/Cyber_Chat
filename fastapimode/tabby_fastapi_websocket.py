@@ -39,6 +39,7 @@ class tabby_fastapi:
         self.send_msg_websocket = send_msg_websocket
         self.conversation_id = conversation_id
         self.url = url
+        self._model = None
         self.headers = {
             "accept": "application/json",
             "x-api-key": api_key,
@@ -47,6 +48,12 @@ class tabby_fastapi:
         }
         self.completions_data = completions_data
         self.model_load_data = model_load_data
+    @property
+    def model(self):
+        return self._model
+    @model.setter
+    def model(self, value):
+        self._model = value
 
     async def inference_stream(self, url: str, headers: dict, payloads: dict):
         try:
@@ -88,6 +95,7 @@ class tabby_fastapi:
         else:
             apiurl = apiurl + "/completions"
         stream = payloads["stream"]
+        payloads.pop("model", None)
         headers = self.headers
         if stream is True:
             logger.info("Get streaming response from api.")
@@ -139,6 +147,7 @@ class tabby_fastapi:
             apiurl = self.url
         url = apiurl + "/remoteapi/" + config_data["remoteapi_endpoint"]
         data["messages"] = data.pop("prompt")
+        data["model"] = self.model
         if data["stream"] is True:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 try:
@@ -192,7 +201,7 @@ class tabby_fastapi:
                 response = await client.get(url=url, headers=headers, timeout=timeout)
                 if response.status_code == 200:
                     response = response.json()
-                    logger.info(f"Current model: {response['id']}")
+                    logger.info(f"Current default model: {response['id']}")
                     return response["id"]
                 else:
                     return None
@@ -285,22 +294,23 @@ class tabby_fastapi:
                 except Exception as e:
                     logger.info("Error on load model: ", e)
         else:
-            url = self.url + "/OAI_Switch_Model"
-            await self.send_msg_websocket(
-                {"name": "initialization", "msg": f"Loading Model: {name} ..."},
-                self.conversation_id,
-            ) 
-            async with httpx.AsyncClient() as client:
-                try:
-                    response = await client.post(url=url, json={"model": name}, timeout=timeout)
-                    if response.status_code == 200:
-                        logger.info(response.json()["message"])
-                        return "Success"
-                    else:
-                        logger.info(" Model Load Failed")
-                        return "Fail"
-                except Exception as e:
-                    logger.info("Error on load model: ", e)
+            # url = self.url + "/OAI_Switch_Model"
+            # await self.send_msg_websocket(
+            #     {"name": "initialization", "msg": f"Loading Model: {name} ..."},
+            #     self.conversation_id,
+            # ) 
+            # async with httpx.AsyncClient() as client:
+            #     try:
+            #         response = await client.post(url=url, json={"model": name}, timeout=timeout)
+            #         if response.status_code == 200:
+            #             logger.info(response.json()["message"])
+            #             return "Success"
+            #         else:
+            #             logger.info(" Model Load Failed")
+            #             return "Fail"
+            #     except Exception as e:
+            #         logger.info("Error on load model: ", e)
+            return "Success"
 
     async def get_sd_model_list(self):
         url = config_data["SDAPI_url"] + "/sdapi/v1/sd-models"
@@ -561,6 +571,7 @@ class tabby_fastapi:
                 "x-admin-key": admin_key,
                 "Content-Type": "application/json",
             }
+            data.pop("model", None)
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     response = await client.post(url=apiurl, headers=headers, json=data)

@@ -258,6 +258,8 @@ export class CommandInputHandler {
         this.$msg_inputer.trigger(event);
     }
     triggerEnterEvent() {
+        this.$msg_inputer.focus();
+        this.$msg_inputer[0].selectionStart = this.$msg_inputer[0].selectionEnd = this.$msg_inputer.val().length;
         this.$msg_inputer.trigger(jQuery.Event('keydown', { key: 'Enter', shiftKey: false }));
     }
 }

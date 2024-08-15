@@ -367,6 +367,7 @@ async def change_model(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     model = client_msg["data"]["model"]
     userCurrentRoom.conversation_id = client_id
+    userCurrentRoom.model = model
     unloadresp = await userCurrentRoom.my_generate.tabby_server.unload_model()
     if unloadresp:
         response = await userCurrentRoom.my_generate.tabby_server.load_model(name=model)
@@ -500,6 +501,7 @@ async def exit_room(client_msg, client_id):
 # Sentence completion
 async def sentence_completion(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
+    model = userCurrentRoom.model
     chat_history = copy.deepcopy(userCurrentRoom.chathistory)
     system_intro = chat_history.pop(
         0
@@ -529,6 +531,7 @@ async def sentence_completion(client_msg, client_id):
                     "stream": False,
                     "temperature": 0.5,
                     "max_tokens": 120,
+                    "model":model
                 },
             )
             if response.status_code == 200:

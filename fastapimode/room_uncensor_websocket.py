@@ -81,6 +81,7 @@ class ChatRoom_Uncensored:
         self.G_voice_text = ""
         self.ai_speakers = ""
         self.speaker_tone = ""
+        self._model = None
         self.ttskey = os.environ.get("SPEECH_KEY")
         self.sentiment_anlyzer = sentiment_anlyzer
         self.dynamic_picture = ""
@@ -92,7 +93,16 @@ class ChatRoom_Uncensored:
         )
         self.my_generate = CoreGenerator()
         self.initialization_start = False
-
+    @property
+    def model(self):
+        return self._model
+    # Set the model property
+    @model.setter
+    def model(self, value):
+        self._model = value
+        if hasattr(self,"my_generate") and isinstance(self.my_generate, CoreGenerator):
+            self.my_generate.model = value
+            
     async def initialize(self):
         self.initialization_start = True
         await self.serialize_data()
@@ -183,6 +193,8 @@ class ChatRoom_Uncensored:
         self.model_list = await self.my_generate.tabby_server.get_model_list()
         self.SD_model_list = await self.my_generate.tabby_server.get_sd_model_list()
         self.model = await self.my_generate.tabby_server.get_model()
+        logger.info(f"Set model in My_Generate: {self.my_generate.model}")
+        logger.info(f"Set model in tabby_server: {self.my_generate.tabby_server.model}")
         if self.ai_role.model_to_load is not False:
             await self.my_generate.tabby_server.unload_model()
             await self.my_generate.tabby_server.load_model(
@@ -426,6 +438,7 @@ class ChatRoom_Uncensored:
                 "max_tokens": 20,
                 "temperature": 0.5,
                 "stream": False,
+                "model":self.model
             }
             # logger.info(f"Emotion Detector Payload: {prompt}")
             emotion_des = await self.my_generate.tabby_server.pure_inference(payloads=payloads)

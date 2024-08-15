@@ -14,33 +14,6 @@ from modules.payload_state import completions_data
 dir_path = project_root
 
 
-# get models
-async def get_model_name(api_base: str, model_type: str, api_key: str, admin_key: str):
-    headers = {
-        "accept": "application/json",
-        "x-api-key": api_key,
-        "x-admin-key": admin_key,
-        "Content-Type": "application/json",
-    }
-    model_name = "NONE"
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                url=api_base + "/model", headers=headers, timeout=timeout
-            )
-            response.raise_for_status()
-            if response.status_code == 200:
-                datas = response.json()
-                model_name = datas["id"]
-                return model_name
-            else:
-                logger.info(f"请求失败，状态码：{response.status_code}")
-    except Exception as e:
-        pass
-    finally:
-        return model_name
-
-
 # Load Words dictionary
 async def load_vocabulary(file_path):
     vocabs_file_path = os.path.join(
@@ -83,7 +56,16 @@ class CoreGenerator:
         self.admin_key = config_data["admin_key"]
         self.completions_data = completions_data
         self.iscreatedynimage = True
-
+        self._model = None
+    
+    @property
+    def model(self):
+        return self._model
+    @model.setter
+    def model(self, value):
+        self._model = value
+        if hasattr(self, "tabby_server") and isinstance(self.tabby_server, tabby_fastapi):
+            self.tabby_server.model = value
     async def async_init(
         self, state: dict, image_payload: dict, send_msg_websocket: callable = None
     ):
