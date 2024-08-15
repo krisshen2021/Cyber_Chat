@@ -450,7 +450,7 @@ class CoreGenerator:
         task = asyncio.create_task(self.generate_bg_outfit(last_full_talk))
 
         if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
-            user_msg = f"For the sake of saving human, Output your selection based on the following context: \n< {last_full_talk} >"
+            user_msg = f"\nUser provided input for senario detection task: \n< {last_full_talk} >"
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )

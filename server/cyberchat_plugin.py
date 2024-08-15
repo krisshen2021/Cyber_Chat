@@ -156,7 +156,12 @@ config_data = asyncio.run(load_config_data())
 local_tabby_server_base = config_data["local_tabby_server_base"]
 api_key = config_data["api_key"]
 admin_key = config_data["admin_key"]
-
+tabbyHeaders = {
+            "accept": "application/json",
+            "x-api-key": api_key,
+            "x-admin-key": admin_key,
+            "Content-Type": "application/json",
+        }
 
 class StableDiffusionAPI:
     def __init__(self):
@@ -222,50 +227,7 @@ class StableDiffusionAPI:
 router = APIRouter(tags=["cyberchat"])
 
 
-# Openai like tts to audio
-@router.post("/v1/tts_remote_stream")
-async def remotetts_to_audio_stream(payload: RestAPI_TTSPayload):
-    server_url = restapi_tts.get("server_url")
-    headers = restapi_tts.get("headers")
-    payload_tts = copy.deepcopy(restapi_tts.get("payload_tts"))
-    endpoint_name = restapi_tts.get("name")
-    speaker = payload.speaker
-    pattern = r"(_female_)"
-    match = re.search(pattern, speaker)
-    if match:
-        gender = "female"
-    else:
-        gender = "male"
-    if endpoint_name == "Unrealspeech":
-        payload_tts["Text"] = payload.text
-        payload_tts["VoiceId"] = payload_tts["VoiceId"][gender]
-    elif endpoint_name == "Openai":
-        payload_tts["input"] = payload.text
-        payload_tts["voice"] = payload_tts["voice"][gender]
-    elif endpoint_name == "PlayHT":
-        payload_tts["text"] = payload.text
-        payload_tts["voice"] = payload_tts["voice"][gender]
-    try:
-
-        async def stream_audio():
-            async with httpx.AsyncClient(timeout=300) as client:
-                async with client.stream(
-                    "POST", server_url, json=payload_tts, headers=headers
-                ) as response:
-                    logger.info("Start to streaming audio")
-                    async for chunk in response.aiter_bytes():
-                        if chunk:
-                            yield chunk
-                            await asyncio.sleep(0.01)
-            logger.info("Streaming ends")
-
-        return StreamingResponse(stream_audio(), media_type="audio/mpeg")
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# XTTS tts to audio
+# XTTS tts to audio (local xtts server)
 @router.post("/v1/xtts")
 async def xtts_to_audio(payload: XTTSPayload):
     server_url = payload.server_url
@@ -290,31 +252,7 @@ async def xtts_to_audio(payload: XTTSPayload):
                 )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# STT speak to text
-@router.post("/v1/stt_remote")
-async def stt_to_text(payload: STTPayload):
-    server_url = restapi_stt.get("server_url")
-    headers = restapi_stt.get("headers")
-    data = restapi_stt.get("data")
-    # print(payload.audio_data)
-    # print(server_url,headers,data)
-    audio_data = base64.b64decode(str(payload.audio_data))
-    files = {"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
-    try:
-        async with httpx.AsyncClient() as client:
-            transcript = await client.post(
-                url=server_url, headers=headers, files=files, data=data, timeout=60
-            )
-            if transcript.status_code == 200:
-                return transcript.json()
-            else:
-                return {"text": "Error on transcribe audio"}
-    except Exception as e:
-        print(f"Error on transcribe audio: {e}")
-
-
+    
 # SD Picture Generator
 @router.post("/v1/SDapi")
 async def generate_image(payload: SDPayload, SD_URL: str = Header(None)):
@@ -374,70 +312,34 @@ async def get_gpu_info():
     return {"GPU Count": device_count, "GPU Info": gpu_info}
 
 
-# sentence completion api endpoint
-@router.post("/v1/sentenceCompletion")
-async def sentence_completion(params_json: dict):
-    keys_to_keep = [
-        "system_prompt",
-        "messages",
-        "temperature",
-        "max_tokens",
-        "top_p",
-        "model",
-        "presence_penalty",
-    ]
-    sentenceCompletion_dict = {
-        key: params_json[key] for key in keys_to_keep if key in params_json
-    }
-    sentenceCompletion_dict["messages"] = [
-        ChatMessage(role="user", content=sentenceCompletion_dict["messages"]),
-    ]
-    if (
-        "system_prompt" in sentenceCompletion_dict
-        and sentenceCompletion_dict["system_prompt"] is not None
-    ):
-        sentenceCompletion_dict["messages"].insert(
-            0,
-            ChatMessage(
-                role="system", content=sentenceCompletion_dict["system_prompt"]
-            ),
+
+# local tabby server ONLY endpoints
+@router.post("/v1/model/unload")
+async def unload_model():
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            url=f"{local_tabby_server_base}/model/unload",
+            headers=tabbyHeaders,
+            timeout=timeout,
         )
-    else:
-        system_prompt = sentence_completion_prompt
-        sentenceCompletion_dict["messages"].insert(
-            0,
-            ChatMessage(role="system", content=system_prompt),
-        )
-    params = sentenceCompletionParam(**sentenceCompletion_dict)
-    return Response(
-        content=await sentenceCompletion_invoke(params), media_type="text/plain"
-    )
-# OAI model list endpoint
-@router.get("/v1/models")
-async def get_models():
-    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
-        return JSONResponse(content=OAI_model_list)
-    else:
-        raise HTTPException(status_code=404, detail="Models not found")
-# OAI model get default model
-@router.get("/v1/model")
-async def get_default_model():
-    global openairouter_model
-    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
-        return JSONResponse(content={"id": openairouter_model})
-    else:
-        raise HTTPException(status_code=404, detail="Current model not found")
+        if response.status_code == 200:
+            return True
+        else:
+            return False
     
-# OAI default model switch  
-@router.post("/v1/OAI_Switch_Model")
-async def switch_model(model: dict):
-    global openairouter_model
-    openairouter_model = model["model"]
-    logger.info(f"Switching to model: {openairouter_model}")
-    return JSONResponse(content={"model":openairouter_model,"message": f"Switched to model: {openairouter_model}"})
-
-
-# local tabby server endpoint
+@router.post("/v1/model/load")
+async def load_model(payload:dict):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            url=f"{local_tabby_server_base}/model/load",
+            headers=tabbyHeaders,
+            json=payload,
+            timeout=timeout,
+        )
+        if response.status_code == 200:
+            return True
+        else:
+            return False
 @router.post("/v1/completions")
 async def local_completion(params: CompletionsParam):
     data = params.model_dump(exclude_none=True)
@@ -483,7 +385,114 @@ async def local_completion(params: CompletionsParam):
             print("Error on fetch from Tabby: ", e)
 
 
-# remote api endpoint
+
+# Endpoints for remote actions
+# OAI tts to audio
+@router.post("/v1/tts_remote_stream")
+async def remotetts_to_audio_stream(payload: RestAPI_TTSPayload):
+    server_url = restapi_tts.get("server_url")
+    headers = restapi_tts.get("headers")
+    payload_tts = copy.deepcopy(restapi_tts.get("payload_tts"))
+    endpoint_name = restapi_tts.get("name")
+    speaker = payload.speaker
+    pattern = r"(_female_)"
+    match = re.search(pattern, speaker)
+    if match:
+        gender = "female"
+    else:
+        gender = "male"
+    if endpoint_name == "Unrealspeech":
+        payload_tts["Text"] = payload.text
+        payload_tts["VoiceId"] = payload_tts["VoiceId"][gender]
+    elif endpoint_name == "Openai":
+        payload_tts["input"] = payload.text
+        payload_tts["voice"] = payload_tts["voice"][gender]
+    elif endpoint_name == "PlayHT":
+        payload_tts["text"] = payload.text
+        payload_tts["voice"] = payload_tts["voice"][gender]
+    try:
+
+        async def stream_audio():
+            async with httpx.AsyncClient(timeout=300) as client:
+                async with client.stream(
+                    "POST", server_url, json=payload_tts, headers=headers
+                ) as response:
+                    logger.info("Start to streaming audio")
+                    async for chunk in response.aiter_bytes():
+                        if chunk:
+                            yield chunk
+                            await asyncio.sleep(0.01)
+            logger.info("Streaming ends")
+
+        return StreamingResponse(stream_audio(), media_type="audio/mpeg")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+# OAI model list endpoint
+@router.get("/v1/models")
+async def get_models():
+    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
+        return JSONResponse(content=OAI_model_list)
+    elif not config_data["using_remoteapi"]:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url=f"{local_tabby_server_base}/models",
+                headers=tabbyHeaders,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            response_data = response.json()
+            return response_data
+    else:
+        raise HTTPException(status_code=404, detail="Model list not found")
+    
+# OAI model get default model
+@router.get("/v1/model")
+async def get_default_model():
+    global openairouter_model
+    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
+        return JSONResponse(content={"id": openairouter_model})
+    elif not config_data["using_remoteapi"]:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url=f"{local_tabby_server_base}/model",
+                headers=tabbyHeaders,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            response_data = response.json()
+            return response_data
+    else:
+        raise HTTPException(status_code=404, detail="Current model not found")
+# OAI default model switch  
+@router.post("/v1/OAI_Switch_Model")
+async def switch_model(model: dict):
+    global openairouter_model
+    openairouter_model = model["model"]
+    logger.info(f"Switching to model: {openairouter_model}")
+    return JSONResponse(content={"model":openairouter_model,"message": f"Switched to model: {openairouter_model}"})
+# OAI STT speak to text
+@router.post("/v1/stt_remote")
+async def stt_to_text(payload: STTPayload):
+    server_url = restapi_stt.get("server_url")
+    headers = restapi_stt.get("headers")
+    data = restapi_stt.get("data")
+    # print(payload.audio_data)
+    # print(server_url,headers,data)
+    audio_data = base64.b64decode(str(payload.audio_data))
+    files = {"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
+    try:
+        async with httpx.AsyncClient() as client:
+            transcript = await client.post(
+                url=server_url, headers=headers, files=files, data=data, timeout=60
+            )
+            if transcript.status_code == 200:
+                return transcript.json()
+            else:
+                return {"text": "Error on transcribe audio"}
+    except Exception as e:
+        print(f"Error on transcribe audio: {e}")
+# OAI remote api endpoint
 @router.post("/v1/remoteapi/{ai_type}")
 async def remote_ai_stream(ai_type: str, params_json: dict):
     if ai_type == "cohere":

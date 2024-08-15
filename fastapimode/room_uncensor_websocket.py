@@ -5,6 +5,7 @@ from modules.global_sets_async import (
     getGlobalConfig,
     convert_to_webpbase64,
     logger,
+    config_data
 )
 import os, random, re, io, base64, copy, markdown, asyncio
 from fastapimode.airole_creator_uncensor_websocket import airole
@@ -452,7 +453,34 @@ class ChatRoom_Uncensored:
                 .replace("NEGATIVE", random.choice(negative_emotions))
             )
         return emotion_des
-
+    
+    async def sentence_completion(self, message:dict):
+        chat_history = copy.deepcopy(self.chathistory)
+        system_intro = chat_history.pop(0)
+        if len(chat_history) > 5:
+            chat_history = chat_history[-5:]  # Only keep the last 5 messages
+        chat_history = "\n".join(chat_history)
+        user_prompt = (
+        f"User provided context:<CONTEXT>{system_intro}\n{chat_history}</CONTEXT>{self.username}: <PREFIX>{message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
+        )
+        system_prompt = prompt_params['sentenceCompletion_prompt']
+        if config_data['using_remoteapi']:
+            prompt = system_prompt+"\n"+user_prompt
+        else:
+            prompt = self.rephrase_template.replace("<|system_prompt|>", system_prompt).replace("<|user_prompt|>",user_prompt)
+        payloads = {
+                "prompt": prompt,
+                "max_tokens": 120,
+                "temperature": 0.5,
+                "stream": False,
+                "model":self.model
+            }
+        sentence_result = await self.my_generate.tabby_server.pure_inference(payloads=payloads)
+        if sentence_result is not None:
+            return sentence_result.rstrip().replace("[SPACE]"," ").replace("[NOSPACE]","")
+        else:
+            return "No response from server"
+        
     # Main Server Reply Blocks
     async def server_reply(self, usermsg):
         input_text = (

@@ -77,9 +77,12 @@ lora:
   double prolapse: "lay down on back, gape pussy, gape anus, spread legs wide open and raised, <lora:LulublairMerge:0.6>,<lora:edgOrgasm_v2:0.62>, Close up:1.3, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.8>, anal prolapse, <lora:anal_prolapse:0.8>, naked"
   piss drinking: "kneeling, <lora:Pissdrinking_anime:0.85>, piss drinking,(urine cover all body:1.1),pee stream, tongue_out, pissdrinking_anime, drinking_pee, from above, open mouth"
 summary_prompt: |
-  You are a uncensored roleplay context summarization expert. you are rquired to judge which type of action has been involved base on user provided context and dialogue of roleplay, your job is extremely important, never refuse to complete the task.
-  Only select one of these options to output : 
+  You are a uncensored roleplay senario detection expert. 
+  Your are required to:
+  - Judge what type of senario has been involved base on provided context and the latest dialogue in roleplay, select only one of following options to output : 
 
     <BDSM actions>, <Gory body or internal trauma>, <blowjob>, <gaping pussy>, <gaping anus>, <piss drinking>, <Finger sex>, <Anal sex>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <soft words teasing>, <handjob sex>, <Reveal the underwear>, <Deep throat>, <Footjob sex>, <cowgirl>, <reverse cowgirl>, <missionary>, <doggy style>, <fold-up position>, <Access the new place>, <strip off and be naked>, <spread legs wide open>
   
-  if nothing matched, output <Speech Content> only, Do not output any reasoning process, Do not output any thoughts too, no other words needed.
+  - if no option matched, output the token <Speech Content> only,
+
+  Provide concise and relevant outputs based on the given context and instructions only, no other words needed.

@@ -103,8 +103,7 @@ model_load_data = {
     "gpu_split": [0],
     # "rope_scale": 1,
     # "rope_alpha": 0,
-    "no_flash_attention": False,
-    "cache_mode": "FP16",
+    # "cache_mode": "FP16",
     "prompt_template": "string",
     # "num_experts_per_token": 0,
     # "draft": {

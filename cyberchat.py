@@ -501,50 +501,16 @@ async def exit_room(client_msg, client_id):
 # Sentence completion
 async def sentence_completion(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
-    model = userCurrentRoom.model
-    chat_history = copy.deepcopy(userCurrentRoom.chathistory)
-    system_intro = chat_history.pop(
-        0
-    )  # Remove the first message which is the system prompt
-    if len(chat_history) > 5:
-        chat_history = chat_history[-5:]  # Only keep the last 5 messages
-    chat_history = "\n".join(chat_history)
-    message = client_msg["data"]["message"]
-    # logger.info(f"message from client: {message}")
-    user_name = userCurrentRoom.username
-    infer_msg = (
-        f"<CONTEXT>{system_intro}\n{chat_history}\n</CONTEXT>\n{user_name}: <PREFIX>{message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
+    sentence_result = await userCurrentRoom.sentence_completion(
+        client_msg["data"]["message"]
     )
-    # logger.info(f"sentence completion input: {infer_msg}") 
-    if config_data["using_remoteapi"]:
-        endpoint = "/remoteapi/" + config_data["remoteapi_endpoint"]
+    if sentence_result:
+        await send_datapackage(
+            "sentence_completion_result",
+            {"sentence": sentence_result},
+            client_id,
+        )
     else:
-        endpoint = "/sentenceCompletion"
-    url = config_data["openai_api_chat_base"] + endpoint
-    try:
-        async with httpx.AsyncClient(timeout=300) as client:
-            response = await client.post(
-                url,
-                json={
-                    "system_prompt": prompt_params['sentenceCompletion_prompt'],
-                    "messages": infer_msg,
-                    "stream": False,
-                    "temperature": 0.5,
-                    "max_tokens": 120,
-                    "model":model
-                },
-            )
-            if response.status_code == 200:
-                # logger.info(f"sentence completion result: {response.text}")
-                await send_datapackage(
-                    "sentence_completion_result",
-                    {"sentence": response.text.rstrip().replace("[SPACE]"," ").replace("[NOSPACE]","")},
-                    client_id,
-                )
-            else:
-                logger.error(f"Request failed with status code: {response.status_code}")
-    except Exception as e:
-        logger.error(f"Error in sentence_completion: {e}")
         await send_datapackage(
             "sentence_completion_result",
             {"sentence": None},

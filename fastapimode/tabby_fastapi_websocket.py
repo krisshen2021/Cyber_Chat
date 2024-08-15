@@ -95,7 +95,7 @@ class tabby_fastapi:
         else:
             apiurl = apiurl + "/completions"
         stream = payloads["stream"]
-        payloads.pop("model", None)
+        # payloads.pop("model", None)
         headers = self.headers
         if stream is True:
             logger.info("Get streaming response from api.")
