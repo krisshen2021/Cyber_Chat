@@ -1211,6 +1211,7 @@
           $('#dynimageSwitcher').next('span').css('display', 'none');
         }
       }
+      
       let voice_text = msg.data['voice_text'];
       let speaker = msg.data['speaker'];
       let speak_tone = msg.data['speak_tone'];
@@ -1220,9 +1221,15 @@
       let model = msg.data['model'];
       if (model_list != undefined) {
         changeModel(model_list, model);
-      }     
-      let instruct_list = msg.data['instruct_list'];
-      changeInstr(instruct_list);
+      }  
+      let using_remoteapi = msg.data["using_remoteapi"];
+      if (using_remoteapi != true){
+        let instruct_list = msg.data['instruct_list'];
+        changeInstr(instruct_list);
+        $('#instr_selector').show();
+      }else{
+        $('#instr_selector').hide();
+      }
       let SD_model_list = msg.data['SD_model_list'];
       changeSDModel(SD_model_list);
       toggleInputs(true);

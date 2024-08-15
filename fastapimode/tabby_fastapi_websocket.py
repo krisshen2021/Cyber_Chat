@@ -571,7 +571,7 @@ class tabby_fastapi:
                 "x-admin-key": admin_key,
                 "Content-Type": "application/json",
             }
-            data.pop("model", None)
+            # data.pop("model", None)
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     response = await client.post(url=apiurl, headers=headers, json=data)

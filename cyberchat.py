@@ -272,6 +272,7 @@ async def client_edit_profile(client_info, client_id):
 
 # Initialize room
 async def initialize_room(client_msg, client_id):
+    using_remoteapi = config_data["using_remoteapi"]
     username = client_msg["data"]["username"]
     user_sys_name = client_msg["data"]["user_sys_name"]
     usergender = client_msg["data"]["usergender"]
@@ -326,6 +327,7 @@ async def initialize_room(client_msg, client_id):
             "instruct_list": userCurrentRoom.instr_temp_list,
             "SD_model_list": userCurrentRoom.SD_model_list,
             "iscreatedynimage": userCurrentRoom.iscreatedynimage,
+            "using_remoteapi": using_remoteapi,
         }
         await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
@@ -333,6 +335,7 @@ async def initialize_room(client_msg, client_id):
 # Restart Room
 async def restart_room(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
+    using_remoteapi = config_data["using_remoteapi"]
     windowRatio = client_msg["data"]["windowRatio"]
     userCurrentRoom.conversation_id = client_id
     transswitcher = client_msg["data"]["istranslated"]
@@ -357,6 +360,7 @@ async def restart_room(client_msg, client_id):
         "instruct_list": userCurrentRoom.instr_temp_list,
         "SD_model_list": userCurrentRoom.SD_model_list,
         "iscreatedynimage": userCurrentRoom.iscreatedynimage,
+        "using_remoteapi": using_remoteapi,
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
     await send_status({"name": "initialization", "msg": "DONE"}, client_id)
