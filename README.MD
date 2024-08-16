@@ -14,6 +14,15 @@
 - AI-assisted character creation for immersive story experiences
 - Optimized dynamic picture generation for low-speed mobile networks
 
+## Demo
+<img src="demo_screen/index.png" alt="index page" height="320" style="border:0px solid purple; border-radius:5px"/>
+<img src="demo_screen/comic.png" alt="comic mode" height="320" style="border:0px solid purple; border-radius:5px"/>
+<img src="demo_screen/dynamic_nsfw.png" alt="dynamic nsfw" height="320" style="border:0px solid purple; border-radius:5px"/>
+
+<img src="demo_screen/custom_command.png" alt="custom command" height="320" style="border:0px solid purple; border-radius:5px"/>
+<img src="demo_screen/sentence_completion.png" alt="sentence completion" height="320" style="border:0px solid purple; border-radius:5px"/>
+<img src="demo_screen/ai_preview_char.png" alt="create char with a.i" height="320" style="border:0px solid purple; border-radius:5px"/>
+
 ## Installation and Setup
 
 ### Step 1: Clone and Set Up Environment
