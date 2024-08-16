@@ -8,6 +8,7 @@
 - Compatible with OAI, Ollama, Tabbyapi, AWSbedrock, Cohere, Claude, Deepseek, and more
 - Fully integrated TTS/STT, supporting remote API or local XTTS server
 - More accurate dynamic live background/avatar and face expressions based on conversation progress
+- Intelligent background music selection base on specific scenario 
 - Intelligent sentence completion based on dialogue context
 - Smart customized command injection integrated into user input for varied and exciting chats
 - Special dynamic NSFW scenario pictures based on latest dialogue
