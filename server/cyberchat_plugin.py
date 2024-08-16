@@ -7,6 +7,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 from httpx import Timeout
 from io import BytesIO
+from mutagen import File as MutagenFile
 from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import StreamingResponse, Response, JSONResponse
 from pydantic import BaseModel
@@ -62,6 +63,9 @@ openairouter_model, OAI_model_list = select_model()
 restapi_tts = tts_select_endpoint()
 
 restapi_stt = stt_select_endpoint()
+
+AUDIO_DIR = os.path.join(project_root, "static","music")
+
 logger.info(f"OAI model:{openairouter_model}")
 ansiColor.color_print(
     "Remote Server Started\nWaiting for connection...",
@@ -127,6 +131,10 @@ class RestAPI_TTSPayload(BaseModel):
 
 class STTPayload(BaseModel):
     audio_data: str  # {"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
+
+class StreamMuiscPayload(BaseModel):
+    moment: Optional[str] = None
+    music_name: Optional[str] = None
 
 
 sd_api_url = "http://127.0.0.1:7860"
@@ -799,3 +807,41 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
             )
     else:
         return "Invalid AI type"
+
+
+
+#Music streaming endpoints
+@router.get("/v1/music/playlist")
+async def get_playlist():
+    files = [f for f in os.listdir(AUDIO_DIR) if f.endswith(('.mp3', '.wav', '.ogg'))]
+    files.sort(key=str.lower)
+    full_playlist = []
+    for music in files:
+        music_path = os.path.join(AUDIO_DIR, music)
+        if os.path.isfile(music_path):
+            audio = MutagenFile(music_path)
+            # print(audio.tags)
+            music = {
+                "name": music,
+                "duration": audio.info.length,
+                "size": os.path.getsize(music_path),
+                "title": audio.get("TIT2").text[0] if audio.get("TIT2") else "Unknown",
+                "artist": audio.get("TPE1").text[0] if audio.get("TPE1") else "Unknown",
+                "album": audio.get("TALB").text[0] if audio.get("TALB") else "Unknown",
+            }
+            full_playlist.append(music)
+    return JSONResponse(content={"playlist": full_playlist})
+
+@router.post("/v1/music/play")
+async def play_music(required_music:StreamMuiscPayload):
+    respnose = await get_playlist()
+    music_list = respnose.body
+    music_list = json.loads(music_list.decode())
+    for music in music_list.get("playlist"):
+        if music.get("title") == required_music.moment or music.get("name") == required_music.music_name:
+            music_path = os.path.join(AUDIO_DIR, music.get("name"))
+            if os.path.isfile(music_path):
+                return JSONResponse(content={"status": "playing", "music_info": music})
+            else:
+                return JSONResponse(content={"status": "error", "message": "Music not found"})
+    return JSONResponse(content={"status": "error", "message": "Music not found"})

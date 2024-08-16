@@ -21,3 +21,4 @@ pynvml
 uvicorn
 cohere
 boto3
+mutagen
