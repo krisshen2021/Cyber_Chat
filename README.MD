@@ -14,6 +14,8 @@
 **Install and Run Cyber Chat**
 
 ```bash
+git pull https://github.com/krisshen2021/Cyber_Chat.git
+cd Cyber_Chat
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
