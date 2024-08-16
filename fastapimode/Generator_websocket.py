@@ -276,7 +276,7 @@ class CoreGenerator:
     # Generate background and outfit
     async def generate_bg_outfit(self, context):
         weartype_list = ",".join(self.state["char_outfit"].keys())
-        sysprompt = prompt_params["senario_setting_prompt"]
+        sysprompt = prompt_params["scenario_setting_prompt"]
         userprompt = f"User provided input:\n<context>\n{context}\n</context>\n<pre_env>{self.state['env_setting']}</pre_env>\n<for_char>{self.state['char_name']}</for_char>\n<wear_type>{weartype_list}</wear_type><emotion_type>{self.express_words}</emotion_type>\nOutput:"
         # logger.info(f"BG outfit prompt:\n{sysprompt}\n{userprompt}")
         config_data = await getGlobalConfig("config_data")
@@ -445,12 +445,12 @@ class CoreGenerator:
         last_ai_sentence = f"{self.state['char_name']}: {response_text}"
         self.last_context.append(last_ai_sentence)
         cliped_context = "\n".join(self.last_context[-10:])
-        last_full_talk = "\n[Senario of RolePlay]\n\n"+plot_content +"\n\n[Dialogue of RolePlay]\n"+first_sentence+"\n"+cliped_context+"\n"
+        last_full_talk = "\n[scenario of RolePlay]\n\n"+plot_content +"\n\n[Dialogue of RolePlay]\n"+first_sentence+"\n"+cliped_context+"\n"
         # create task to check background and outfits
         task = asyncio.create_task(self.generate_bg_outfit(last_full_talk))
 
         if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
-            user_msg = f"\nUser provided input for senario detection task: \n< {last_full_talk} >"
+            user_msg = f"\nUser provided input for scenario detection task: \n< {last_full_talk} >"
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )

@@ -671,13 +671,16 @@
           break;
         case "char_looks":
           $("#char_looks").val(wizardstr).trigger('input');
-          break;
-        case "prologue":
-          $("#story_prologue").val(wizardstr).trigger('input');
-          break;
-        case "story_intro":
-          $("#story_intro").val(wizardstr).trigger('input');
-          break; 
+          break;let playAttempt = setInterval(() => {
+  videoElem
+    .play()
+    .then(() => {
+      clearInterval(playAttempt);
+    })
+    .catch((error) => {
+      console.log("Unable to play the video, User has not interacted yet.");
+    });
+}, 3000);
         case "chapters":
           $("#story_chapters").val(wizardstr).trigger('input');
           break;
@@ -977,6 +980,17 @@
       btn_firstwords_wizard.on('click', function () {
         createchar_wizard("firstwords");
       });
+      //background music on
+      let playAttempt = setInterval(() => {
+        $("#bg_music")[0]
+          .play()
+          .then(() => {
+            clearInterval(playAttempt);
+          })
+          .catch((error) => {
+            console.log("Unable to play the video, User has not interacted yet.");
+          });
+      }, 2000);
 
       //password view switcher
       let icon_pwd_types = $(".pwd_type");
@@ -1721,6 +1735,9 @@
         <input type="radio" class="roleRadios" id="ainame" name="ai_role_name" value="rolename in list"
             data-uncensored="censoredmarker" data-story_name="storynamemarker" data-intro_text="introtextmarker"/>
       </div>
+    </div>
+    <div id="bg_music_player" style="display: none;">
+      <audio id="bg_music" src="/play_music/Relaxing_Moment" loop autoplay></audio>
     </div>
   </div>
 </body>

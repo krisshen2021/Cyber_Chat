@@ -5,9 +5,9 @@ from modules.global_sets_async import (
     getGlobalConfig,
     convert_to_webpbase64,
     logger,
-    config_data
+    config_data,
 )
-import os, random, re, io, base64, copy, markdown, asyncio
+import os, random, re, io, base64, copy, markdown, asyncio, httpx
 from fastapimode.airole_creator_uncensor_websocket import airole
 from modules.TranslateAsync import AsyncTranslator
 from fastapimode.Generator_websocket import CoreGenerator
@@ -83,6 +83,7 @@ class ChatRoom_Uncensored:
         self.ai_speakers = ""
         self.speaker_tone = ""
         self._model = None
+        self.bg_music = None
         self.ttskey = os.environ.get("SPEECH_KEY")
         self.sentiment_anlyzer = sentiment_anlyzer
         self.dynamic_picture = ""
@@ -94,16 +95,18 @@ class ChatRoom_Uncensored:
         )
         self.my_generate = CoreGenerator()
         self.initialization_start = False
+
     @property
     def model(self):
         return self._model
+
     # Set the model property
     @model.setter
     def model(self, value):
         self._model = value
-        if hasattr(self,"my_generate") and isinstance(self.my_generate, CoreGenerator):
+        if hasattr(self, "my_generate") and isinstance(self.my_generate, CoreGenerator):
             self.my_generate.model = value
-            
+
     async def initialize(self):
         self.initialization_start = True
         await self.serialize_data()
@@ -160,7 +163,11 @@ class ChatRoom_Uncensored:
             f"{self.ainame}:",
         ]
         if self.ai_role.custom_comp_data is not False:
-            self.state["temperature"] = self.ai_role.custom_comp_data["temperature"] if "temperaure" in self.ai_role.custom_comp_data.keys() else self.state["temperature"]
+            self.state["temperature"] = (
+                self.ai_role.custom_comp_data["temperature"]
+                if "temperaure" in self.ai_role.custom_comp_data.keys()
+                else self.state["temperature"]
+            )
             self.state["max_tokens"] = self.ai_role.custom_comp_data["max_tokens"]
             self.state["top_k"] = self.ai_role.custom_comp_data["top_k"]
             self.state["top_p"] = self.ai_role.custom_comp_data["top_p"]
@@ -212,7 +219,10 @@ class ChatRoom_Uncensored:
         )
         logger.info("Generate Character Background")
         emotion = await self.emotion_detector(self.first_message)
-        logger.info(f'{self.ainame}\'s Initial emotion: [{emotion}]')
+        logger.info(f"{self.ainame}'s Initial emotion: [{emotion}]")
+        moment = await self.scenario_moment_detector(self.first_message)
+        logger.info(f"{self.ainame}'s Initial moment: [{moment}]")
+        self.bg_music = moment
         bgimg_base64 = await self.gen_bgImg(
             tabbyGen=self.my_generate,
             char_looks=self.state["char_looks"],
@@ -424,25 +434,29 @@ class ChatRoom_Uncensored:
 
         return await convert_to_webpbase64(avatarImg)
 
-    async def emotion_detector(self, input_msg:str, fastmode:bool=False):
+    async def emotion_detector(self, input_msg: str, fastmode: bool = False):
         if not fastmode:
-            config_data = await getGlobalConfig('config_data')
-            face_expression_prompt = prompt_params['face_expression_prompt']
-            face_expression_words_list = prompt_params['face_expression_words_list']
+            config_data = await getGlobalConfig("config_data")
+            face_expression_prompt = prompt_params["face_expression_prompt"]
+            face_expression_words_list = prompt_params["face_expression_words_list"]
             user_prompt = f"User Provided Context:\n<context>{self.ainame}: {input_msg}</context><for_char>{self.ainame}</for_char><emotion_type>{face_expression_words_list}</emotion_type>\nOutput:"
-            if config_data['using_remoteapi']:
-                prompt = face_expression_prompt +"\n" + user_prompt
+            if config_data["using_remoteapi"]:
+                prompt = face_expression_prompt + "\n" + user_prompt
             else:
-                prompt = self.rephrase_template.replace("<|system_prompt|>", face_expression_prompt).replace("<|user_prompt|>",user_prompt)
+                prompt = self.rephrase_template.replace(
+                    "<|system_prompt|>", face_expression_prompt
+                ).replace("<|user_prompt|>", user_prompt)
             payloads = {
                 "prompt": prompt,
                 "max_tokens": 20,
                 "temperature": 0.5,
                 "stream": False,
-                "model":self.model
+                "model": self.model,
             }
             # logger.info(f"Emotion Detector Payload: {prompt}")
-            emotion_des = await self.my_generate.tabby_server.pure_inference(payloads=payloads)
+            emotion_des = await self.my_generate.tabby_server.pure_inference(
+                payloads=payloads
+            )
         else:
             emotion_des = await self.sentiment_anlyzer.get_sentiment(input_msg)
             positive_emotions = ["joy", "surprise", "love", "fun"]
@@ -453,34 +467,71 @@ class ChatRoom_Uncensored:
                 .replace("NEGATIVE", random.choice(negative_emotions))
             )
         return emotion_des
-    
-    async def sentence_completion(self, message:dict):
+
+    async def scenario_moment_detector(self, input_msg: str):
+        config_data = await getGlobalConfig("config_data")
+        scenario_moment_prompt = prompt_params["scenario_moment_prompt"]
+        url = config_data["openai_api_chat_base"] + "/music/playlist"
+        async with httpx.AsyncClient(timeout=300) as client:
+            response = await client.get(url=url)
+            response = response.json()
+            moments_list = [item["title"] for item in response["playlist"]]
+            moments_prompt = ", ".join(moments_list)
+            user_prompt = f"User Provided Context:\n<context>{self.ainame}: {input_msg}</context><for_char>{self.ainame}</for_char><moment_type>{moments_prompt}</moment_type>\nOutput:"
+        
+        if config_data["using_remoteapi"]:
+            prompt = scenario_moment_prompt + "\n" + user_prompt
+        else:
+            prompt = self.rephrase_template.replace(
+                "<|system_prompt|>", scenario_moment_prompt
+            ).replace("<|user_prompt|>", user_prompt)
+            
+        payloads = {
+            "prompt": prompt,
+            "max_tokens": 20,
+            "temperature": 0.5,
+            "stream": False,
+            "model": self.model,
+        }
+        # logger.info(f"Scenario Moment Detector Payload: {prompt}")
+        scenario_moment = await self.my_generate.tabby_server.pure_inference(
+            payloads=payloads
+        )
+        return scenario_moment.strip()
+
+    async def sentence_completion(self, message: dict):
         chat_history = copy.deepcopy(self.chathistory)
         system_intro = chat_history.pop(0)
         if len(chat_history) > 5:
             chat_history = chat_history[-5:]  # Only keep the last 5 messages
         chat_history = "\n".join(chat_history)
-        user_prompt = (
-        f"User provided context:<CONTEXT>{system_intro}\n{chat_history}</CONTEXT>{self.username}: <PREFIX>{message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
-        )
-        system_prompt = prompt_params['sentenceCompletion_prompt']
-        if config_data['using_remoteapi']:
-            prompt = system_prompt+"\n"+user_prompt
+        user_prompt = f"User provided context:<CONTEXT>{system_intro}\n{chat_history}</CONTEXT>{self.username}: <PREFIX>{message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
+        system_prompt = prompt_params["sentenceCompletion_prompt"]
+        if config_data["using_remoteapi"]:
+            prompt = system_prompt + "\n" + user_prompt
         else:
-            prompt = self.rephrase_template.replace("<|system_prompt|>", system_prompt).replace("<|user_prompt|>",user_prompt)
+            prompt = self.rephrase_template.replace(
+                "<|system_prompt|>", system_prompt
+            ).replace("<|user_prompt|>", user_prompt)
         payloads = {
-                "prompt": prompt,
-                "max_tokens": 120,
-                "temperature": 0.5,
-                "stream": False,
-                "model":self.model
-            }
-        sentence_result = await self.my_generate.tabby_server.pure_inference(payloads=payloads)
+            "prompt": prompt,
+            "max_tokens": 120,
+            "temperature": 0.5,
+            "stream": False,
+            "model": self.model,
+        }
+        sentence_result = await self.my_generate.tabby_server.pure_inference(
+            payloads=payloads
+        )
         if sentence_result is not None:
-            return sentence_result.rstrip().replace("[SPACE]"," ").replace("[NOSPACE]","")
+            return (
+                sentence_result.rstrip()
+                .replace("[SPACE]", " ")
+                .replace("[NOSPACE]", "")
+            )
         else:
             return "No response from server"
-        
+
     # Main Server Reply Blocks
     async def server_reply(self, usermsg):
         input_text = (
@@ -587,7 +638,7 @@ class ChatRoom_Uncensored:
             self.G_avatar_url,
             self.dynamic_picture,
         )
-        
+
     # Assistant functions for server reply function
     @staticmethod
     def is_chinese(text):

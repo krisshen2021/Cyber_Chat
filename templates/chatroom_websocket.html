@@ -1211,7 +1211,17 @@
           $('#dynimageSwitcher').next('span').css('display', 'none');
         }
       }
-      
+      if (msg.data['bg_music'] != undefined) {
+        let moment = msg.data['bg_music'];
+        if (moment != '') {
+          if ($('#bg_music')[0].src != `/play_music/${moment}`) {
+            $('#bg_music')[0].src = `/play_music/${moment}`;
+            $('#bg_music')[0].play();
+          }
+        } else {
+          $('#bg_music')[0].pause();
+        }
+      }
       let voice_text = msg.data['voice_text'];
       let speaker = msg.data['speaker'];
       let speak_tone = msg.data['speak_tone'];
@@ -1888,6 +1898,9 @@
         <div class="avatar"></div>
         <div class="message"></div>
       </div>
+    </div>
+    <div id="bg_music_player" style="display: none;">
+      <audio id="bg_music" loop></audio>
     </div>
     <div class="overlay" id="overLayer">
       <div class="overlay-content">

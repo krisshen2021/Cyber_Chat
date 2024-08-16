@@ -13,7 +13,7 @@ from modules.global_sets_async import (
 import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy
 from datetime import datetime
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from modules.user_validation import Validation
@@ -129,6 +129,17 @@ async def enter_room(
     context["timestamp"] = timestamp
     return non_cache_response("chatroom_websocket.html", context)
 
+#Redirect background music play
+@app.get("/play_music/{filename}")
+async def play_music(filename: str):
+    url = config_data["openai_api_chat_base"] + "/music/play/" + filename
+    async def stream_response():
+        async with httpx.AsyncClient(timeout=300) as client:
+            async with client.stream("GET", url) as response:
+                async for chunk in response.aiter_bytes():
+                        if chunk:
+                            yield chunk
+    return StreamingResponse(stream_response(), media_type="audio/mpeg")
 
 async def client_connect(client_info, client_id):
     print("{}".format(ansiColor.color_text(client_id, ansiColor.BG_BRIGHT_BLUE)))
@@ -328,6 +339,7 @@ async def initialize_room(client_msg, client_id):
             "SD_model_list": userCurrentRoom.SD_model_list,
             "iscreatedynimage": userCurrentRoom.iscreatedynimage,
             "using_remoteapi": using_remoteapi,
+            "bg_music": userCurrentRoom.bg_music,
         }
         await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
@@ -361,6 +373,7 @@ async def restart_room(client_msg, client_id):
         "SD_model_list": userCurrentRoom.SD_model_list,
         "iscreatedynimage": userCurrentRoom.iscreatedynimage,
         "using_remoteapi": using_remoteapi,
+        "bg_music": userCurrentRoom.bg_music,
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
     await send_status({"name": "initialization", "msg": "DONE"}, client_id)
@@ -818,7 +831,7 @@ async def client_save_character(client_info, client_id):
     data_to_send = {"result": msg_to_send, "task": "after_char_saved"}
     await send_datapackage("save_character_result", data_to_send, client_id)
 
-
+# transcribe audio
 async def transcribe_audio(client_info, client_id):
     audio_data = client_info["data"]["audio_data"]
     if "," in audio_data:
@@ -829,7 +842,30 @@ async def transcribe_audio(client_info, client_id):
     data_to_send = {"transcripted_text": transcripted_text, "task": "transcript_audio"}
     await send_datapackage("transcript_audio_result", data_to_send, client_id)
 
-
+# play background music
+async def play_bg_music(client_info, client_id):
+    music_name = client_info["data"]["music_name"]
+    url = config_data["openai_api_chat_base"] + "/music/play/" + music_name
+    async with httpx.AsyncClient(timeout=300) as client:
+        async with client.stream("GET", url) as response:
+            async for chunk in response.aiter_bytes():
+                    if chunk:
+                        audio_data_base64 = base64.b64encode(chunk).decode("utf-8")
+                        data_to_send = {
+                            "audio_data": audio_data_base64,
+                            "mode": "stream",
+                            "status": "transfer",
+                        }
+                        await send_datapackage("play_bg_music_result", data_to_send, client_id)
+                        await asyncio.sleep(0.01)
+                    else:
+                        logger.info("Failed to get audio data")
+    logger.info("Transfer ends")
+    await send_datapackage(
+        "play_bg_music_result",
+        {"mode": "stream", "status": "end"},
+        client_id,
+    )
 # ws event handler
 ws_events_dict = {
     "connect to server": client_connect,
@@ -853,6 +889,7 @@ ws_events_dict = {
     "client_save_character": client_save_character,
     "transcribe_audio": transcribe_audio,
     "sentence_completion": sentence_completion,
+    "play_bg_music": play_bg_music,
 }
 
 

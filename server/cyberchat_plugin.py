@@ -132,9 +132,9 @@ class RestAPI_TTSPayload(BaseModel):
 class STTPayload(BaseModel):
     audio_data: str  # {"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
 
-class StreamMuiscPayload(BaseModel):
-    moment: Optional[str] = None
-    music_name: Optional[str] = None
+# class StreamMuiscPayload(BaseModel):
+#     moment: Optional[str] = None
+#     music_name: Optional[str] = None
 
 
 sd_api_url = "http://127.0.0.1:7860"
@@ -832,16 +832,21 @@ async def get_playlist():
             full_playlist.append(music)
     return JSONResponse(content={"playlist": full_playlist})
 
-@router.post("/v1/music/play")
-async def play_music(required_music:StreamMuiscPayload):
+@router.get("/v1/music/play/{filename}")
+async def play_music(filename: str):
     respnose = await get_playlist()
     music_list = respnose.body
     music_list = json.loads(music_list.decode())
     for music in music_list.get("playlist"):
-        if music.get("title") == required_music.moment or music.get("name") == required_music.music_name:
+        if music.get("title") == filename or music.get("name") == filename:
             music_path = os.path.join(AUDIO_DIR, music.get("name"))
             if os.path.isfile(music_path):
-                return JSONResponse(content={"status": "playing", "music_info": music})
+                async def interfile(start=0, chunk_size=8192):
+                    async with aiofiles.open(music_path, "rb") as f:
+                        await f.seek(start)
+                        while chunk := await f.read(chunk_size):
+                            yield chunk
+                return StreamingResponse(interfile(), media_type="audio/mpeg")
             else:
-                return JSONResponse(content={"status": "error", "message": "Music not found"})
-    return JSONResponse(content={"status": "error", "message": "Music not found"})
+                raise HTTPException(status_code=404, detail="Music not found")
+    raise HTTPException(status_code=404, detail="Music not found")
