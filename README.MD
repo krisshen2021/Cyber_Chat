@@ -1,8 +1,8 @@
-## **The Cyber Chat V1.0**
+## **Cyber Chat V1.0**
 
 **_Endless Enviroment Experiences_**
 - Fully support for remote and local inference
-- OAI, Ollama, Tabbyapi, AWSbedrock, cohere, claude, deepseek ..... fully support
+  - OAI, Ollama, Tabbyapi, AWSbedrock, cohere, claude, deepseek ...
 - TTS/STT fully integrated, can use remote api or local xtts server
 - More accurate dynamic live background/avatar and face expression base on conversatino progress
 - Inteligence sentence completion base on context in dialogue
