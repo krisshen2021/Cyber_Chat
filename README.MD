@@ -1,53 +1,61 @@
-## **Cyber Chat V1.0**
+## 🌟 Cyber Chat V1.0 🌟
 
-**_Endless Enviroment Experiences_**
-- Fully support for remote and local inference
-  - OAI, Ollama, Tabbyapi, AWSbedrock, cohere, claude, deepseek ...
-- TTS/STT fully integrated, can use remote api or local xtts server
-- More accurate dynamic live background/avatar and face expression base on conversatino progress
-- Inteligence sentence completion base on context in dialogue
-- Inteligence customize command injection integrated in user input to create more variable and exciting chat.
-- Special dynamic NSFW senario pic base on latest dialogue
-- Create decent character with assistance of  A.I system, fully release the great story experience
-- Optimize dynampic picture generate for low speed mobile network, lighting speed!
+**_Endless Cyber Chatting Experiences_**
 
-**Install and Run Cyber Chat**
-Step 1.
+## Features
+
+- Full support for remote and local inference
+- Compatible with OAI, Ollama, Tabbyapi, AWSbedrock, Cohere, Claude, Deepseek, and more
+- Fully integrated TTS/STT, supporting remote API or local XTTS server
+- More accurate dynamic live background/avatar and face expressions based on conversation progress
+- Intelligent sentence completion based on dialogue context
+- Smart customized command injection integrated into user input for varied and exciting chats
+- Special dynamic NSFW scenario pictures based on latest dialogue
+- AI-assisted character creation for immersive story experiences
+- Optimized dynamic picture generation for low-speed mobile networks
+
+## Installation and Setup
+
+### Step 1: Clone and Set Up Environment
+
 ```bash
-git pull https://github.com/krisshen2021/Cyber_Chat.git
+git clone https://github.com/krisshen2021/Cyber_Chat.git
 cd Cyber_Chat
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-after install depenencies, 
-you need to start your stable diffusion server(must, auto1111 only).
 
-Step 2.
-open a new terminal and run
+After installing dependencies, start your Stable Diffusion server (Auto1111 only, required).
+
+### Step 2: Configure and Start Server
+
+Open a new terminal and run:
+
 ```bash
 cd server
 source ../venv/bin/activate
-mv .env_sample to .env
-nano .env #set up all api keys you own
+mv .env_sample .env
+nano .env  # Set up all API keys you own
 python start_server.py
 ```
-Then:
-- input stable diffusion address and setup info
-- select remote or local inference endpoint
-  - if select local, you need to start tabbyapi server(start in completion mode) or xtts api server
-  - if select remote, you need to setup your own api key in .env
 
-After server started, back to current terminal and run
+Follow the prompts to:
+- Input Stable Diffusion address and setup info
+- Select remote or local inference endpoint
+- For local inference, start TabbyAPI server (in completion mode) or XTTS API server
+- For remote inference, set up your API key in .env
+
+### Step 3: Launch Cyber Chat
+
+In the main terminal, run:
 
 ```bash
 python cyberchat.py
 ```
-tabbyapi server repo:
-https://github.com/theroyallab/tabbyAPI.git
 
-xtts api server repo:
-https://github.com/daswer123/xtts-api-server.git
+## Required Servers
 
-auto1111 repo:
-https://github.com/AUTOMATIC1111/stable-diffusion-webui.git
+- TabbyAPI server: [GitHub Repo](https://github.com/theroyallab/tabbyAPI.git)
+- XTTS API server: [GitHub Repo](https://github.com/daswer123/xtts-api-server.git)
+- Auto1111: [GitHub Repo](https://github.com/AUTOMATIC1111/stable-diffusion-webui.git)
