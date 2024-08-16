@@ -443,6 +443,7 @@ async def load_chat_history(client_msg, client_id):
 # LLM inference message
 async def reply_user_query(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
+    using_remoteapi = config_data["using_remoteapi"]
     usermsg = client_msg["data"]["message"]
     transswitcher = client_msg["data"]["istranslated"]
     windowRatio = client_msg["data"]["windowRatio"]
@@ -463,6 +464,7 @@ async def reply_user_query(client_msg, client_id):
         "speak_tone": speak_tone,
         "ttskey": userCurrentRoom.ttskey,
         "dynamic_picture": dynamic_picture,
+        "using_remoteapi": using_remoteapi
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
@@ -470,6 +472,7 @@ async def reply_user_query(client_msg, client_id):
 # Regen message
 async def regen_msg(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
+    using_remoteapi = config_data["using_remoteapi"]
     usermsg = client_msg["data"]["message"]
     transswitcher = client_msg["data"]["istranslated"]
     windowRatio = client_msg["data"]["windowRatio"]
@@ -490,6 +493,7 @@ async def regen_msg(client_msg, client_id):
         "speak_tone": speak_tone,
         "ttskey": userCurrentRoom.ttskey,
         "dynamic_picture": dynamic_picture,
+        "using_remoteapi": using_remoteapi
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
