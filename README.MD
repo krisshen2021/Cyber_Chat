@@ -25,6 +25,7 @@ open a new terminal and run
 
 ```bash
 cd server
+source ../venv/bin/activate
 mv .env_sample to .env
 nano .env #set up all api keys you own
 python start_server.py
