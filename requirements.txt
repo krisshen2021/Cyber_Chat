@@ -8,8 +8,6 @@ ruamel.yaml
 Requests
 tiktoken
 transformers
-yeelight
-sentence_transformers
 pymdown-extensions
 pygments
 pydantic

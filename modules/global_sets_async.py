@@ -1,6 +1,5 @@
 from database.sqliteclass import SQLiteDB
-from transformers import pipeline
-import os, yaml, json, asyncio, aiofiles, base64, io
+import os, yaml, asyncio, aiofiles, base64, io
 from PIL import Image
 
 # from yeelight import Bulb
@@ -29,7 +28,6 @@ prompt_params = None
 suggestions_params = None
 config_data = None
 roleconf = None
-# sentiment_pipeline = None
 # bulb = None
 
 
@@ -96,13 +94,6 @@ async def load_roles():
     roleconf = rolelist.copy()
 
 
-# async def gen_sentimodel(model_path):
-#     global sentiment_pipeline
-#     sentiment_pipeline = pipeline(
-#         "sentiment-analysis", model=model_path, tokenizer=model_path, device="cuda"
-#     )
-
-
 # async def conn_bulb(yeelight_url):
 #     global bulb
 #     try:
@@ -127,7 +118,6 @@ async def multitask():
     func_prompt_temp = asyncio.create_task(load_prompts_template())
     func_prompt_param = asyncio.create_task(load_prompts_params())
     func_suggestions = asyncio.create_task(load_suggestions())
-    # sentiment = asyncio.create_task(gen_sentimodel(config_data["sentimodelpath"]))
     # bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
     await asyncio.gather(roles, func_prompt_temp, func_prompt_param, func_suggestions)
 
@@ -141,7 +131,7 @@ async def getGlobalConfig(data: str):
     """
     get global config for app start,
     type of data:
-    'config_data','roleconf','sentiment_pipeline','bulb','prompt_templates','prompt_params'
+    'config_data','roleconf','bulb','prompt_templates','prompt_params'
     """
     if data == "config_data":
         await load_config()
@@ -158,8 +148,6 @@ async def getGlobalConfig(data: str):
     if data == "suggestions_params":
         await load_suggestions()
         return suggestions_params
-    # if data == "sentiment_pipeline":
-    #     return sentiment_pipeline
     # if data == "bulb":
     #     return bulb
 
