@@ -12,7 +12,7 @@ from fastapimode.airole_creator_uncensor_websocket import airole
 from modules.TranslateAsync import AsyncTranslator
 from fastapimode.Generator_websocket import CoreGenerator
 from PIL import Image
-from modules.payload_state import sd_payload, room_state
+from modules.payload_state import sd_payload, sd_payload_for_vram, room_state
 from fastapimode.sys_path import project_root
 
 dir_path = project_root
@@ -200,6 +200,9 @@ class ChatRoom_Uncensored:
         )
         self.model_list = await self.my_generate.tabby_server.get_model_list()
         self.SD_model_list = await self.my_generate.tabby_server.get_sd_model_list()
+        self.SD_vram_status = await self.my_generate.tabby_server.get_sd_vram_status()
+        logger.info(f"SD server vram status: {self.SD_vram_status}")
+        self.my_generate.image_payload.update(sd_payload_for_vram.get(self.SD_vram_status, {}))
         self.model = await self.my_generate.tabby_server.get_model()
         logger.info(f"Set model in My_Generate: {self.my_generate.model}")
         logger.info(f"Set model in tabby_server: {self.my_generate.tabby_server.model}")
@@ -340,18 +343,19 @@ class ChatRoom_Uncensored:
         if not is_user:
             if char_outfit is not None:
                 char_looks = f"{char_looks},{char_outfit['normal']}"
-
+            # tabbyGen.image_payload["hr_second_pass_steps"] = 4
             tabbyGen.image_payload["hr_scale"] = 1.5
             tabbyGen.image_payload["width"] = 1024 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload["height"] = int(
                 tabbyGen.image_payload["width"] / self.windowRatio
             )
-            tabbyGen.image_payload["steps"] = 40
+            # tabbyGen.image_payload["steps"] = 4
             portraitprefix = "(half body portrait:1.27), looking at the viewer"
             # logger.info(
             #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
             # )
         elif is_user:
+            # tabbyGen.image_payload["hr_second_pass_steps"] = 4
             tabbyGen.image_payload["hr_scale"] = 1.5
             tabbyGen.image_payload["width"] = 768 if self.windowRatio >= 1 else 512
             tabbyGen.image_payload["height"] = (
@@ -359,7 +363,7 @@ class ChatRoom_Uncensored:
                 if self.windowRatio >= 1
                 else int((tabbyGen.image_payload["width"] / self.windowRatio) * 0.5)
             )
-            tabbyGen.image_payload["steps"] = 20
+            # tabbyGen.image_payload["steps"] = 4
             portraitprefix = "Upper body portrait, looking at the viewer"
             # logger.info(
             #     f"{tabbyGen.image_payload['width']} / {tabbyGen.image_payload['height']}"
@@ -406,12 +410,12 @@ class ChatRoom_Uncensored:
         )
         if not char_outfit_setting.strip(","):
             char_outfit_setting = ""
-        tabbyGen.image_payload["enable_hr"] = True
+        tabbyGen.image_payload["enable_hr"] = False
         tabbyGen.image_payload["hr_scale"] = 1.2
-        tabbyGen.image_payload["hr_second_pass_steps"] = 10
+        # tabbyGen.image_payload["hr_second_pass_steps"] = 4
         tabbyGen.image_payload["width"] = 512
         tabbyGen.image_payload["height"] = 512
-        tabbyGen.image_payload["steps"] = 20
+        # tabbyGen.image_payload["steps"] = 4
         char_avatar = char_avatar.replace("<|emotion|>", emotion)
         avatarImg = await tabbyGen.generate_image(
             prompt_prefix=tabbyGen.prmopt_fixed_prefix,
@@ -562,7 +566,7 @@ class ChatRoom_Uncensored:
         self.my_generate.image_payload["width"] = 512 if self.windowRatio <= 1 else 768
         self.my_generate.image_payload["height"] = 768 if self.windowRatio <= 1 else 512
         self.my_generate.image_payload["enable_hr"] = True
-        self.my_generate.image_payload["steps"] = 20
+        # self.my_generate.image_payload["steps"] = 20
         self.my_generate.image_payload["hr_scale"] = 1.5
         # self.my_generate.state["temperature"] = random.choice([0.75, 0.82, 0.93])
         await self.send_msg_websocket(

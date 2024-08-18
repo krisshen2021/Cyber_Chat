@@ -290,17 +290,47 @@ async def check_progress(payload: SDProcessPayload, SD_URL: str = Header(None)):
 # SD model list
 @router.post("/v1/SDapiModelList")
 async def SD_api_modellist(SD_URL: str = Header(None)):
-    logger.info(f"Getting Model list from {SD_URL.replace('/sdapi/v1/sd-models','')}")
+    logger.info(f"Getting Model list from {SD_URL}")
+    model_list_endpoint = "/sdapi/v1/sd-models"
     headers = {"accept": "application/json"}
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url=SD_URL, headers=headers, timeout=timeout)
+            response = await client.get(url=SD_URL+model_list_endpoint, headers=headers, timeout=timeout)
             response.raise_for_status()
             response_data = response.json()
             return response_data
     except Exception as e:
         print("Error on fetch Model List from SDapi: ", e)
 
+# SD vram status
+@router.post("/v1/SDapiVRAMStatus")
+async def SD_api_vram(SD_URL: str = Header(None)):
+    logger.info(f"Getting VRAM status from {SD_URL}")
+    memory_endpoint = "/sdapi/v1/memory"
+    cmd_flags_endpoint = "/sdapi/v1/cmd-flags"
+    headers = {"accept": "application/json"}
+    try:
+        # Fetch memory information
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url=SD_URL+memory_endpoint, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            memory_data = response.json()
+            memory = memory_data["cuda"]["system"]["total"]
+        # Fetch cmd_flags to check if lowvram is enabled
+            response = await client.get(url=SD_URL+cmd_flags_endpoint, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            cmd_flags = response.json()
+            lowvram = cmd_flags["lowvram"]
+            medvram = cmd_flags["medvram"]
+        # identiify vram status
+            if lowvram or medvram or memory < 10000000000:
+                vram_status = "low"
+            else:
+                vram_status = "high"
+            return {"vram_status": vram_status}
+                
+    except Exception as e:
+        print("Error on fetch VRAM status from SDapi: ", e)
 
 # GPU list endpoint
 @router.get("/v1/gpu")

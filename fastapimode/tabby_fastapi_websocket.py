@@ -313,8 +313,8 @@ class tabby_fastapi:
             return "Success"
 
     async def get_sd_model_list(self):
-        url = config_data["SDAPI_url"] + "/sdapi/v1/sd-models"
-        tabbyAPIurl = f'{config_data["openai_api_chat_base"]}/SDapiModelList'
+        url = config_data["SDAPI_url"]
+        APIurl = f'{config_data["openai_api_chat_base"]}/SDapiModelList'
         headers = {
             # 'accept': 'application/json'
             "SD-URL": url
@@ -322,7 +322,7 @@ class tabby_fastapi:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    url=tabbyAPIurl, headers=headers, timeout=timeout
+                    url=APIurl, headers=headers, timeout=timeout
                 )
                 response = response.json()
                 model_list = []
@@ -332,6 +332,23 @@ class tabby_fastapi:
                 return model_list
         except Exception as e:
             logger.info("Error on get SD model list: ", e)
+            return None
+        
+    async def get_sd_vram_status(self):
+        url = config_data["SDAPI_url"]
+        APIurl = f'{config_data["openai_api_chat_base"]}/SDapiVRAMStatus'
+        headers = {
+            "SD-URL": url
+        }
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url=APIurl, headers=headers, timeout=timeout
+                )
+                vram_status = response.json()
+                return vram_status.get("vram_status", None)
+        except Exception as e:
+            logger.info("Error on get SD vram status: ", e)
             return None
 
     @staticmethod

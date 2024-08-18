@@ -1,23 +1,23 @@
 from modules.global_sets_async import getGlobalConfig
 import asyncio
 
-config_data = asyncio.run(getGlobalConfig('config_data'))
+config_data = asyncio.run(getGlobalConfig("config_data"))
 
 sd_payload = {
-    "hr_negative_prompt":"",
-    "negative_prompt":"",
-    "hr_prompt":"",
+    "hr_negative_prompt": "",
+    "negative_prompt": "",
+    "hr_prompt": "",
     "hr_scale": 1.5,
-    "hr_second_pass_steps": 20,
+    "hr_second_pass_steps": 40,
     "seed": -1,
     "enable_hr": False,
     "width": 256,
     "height": 256,
     "hr_upscaler": config_data["hr_upscaler"],
     "sampler_name": config_data["sampler_name"],
-    "cfg_scale": 7,
-    "denoising_strength": 0.55,
-    "steps": 30,
+    "cfg_scale": 1.5,
+    "denoising_strength": 0.7,
+    "steps": 40,
     "prompt": "a cat",
     "override_settings": {
         "sd_vae": "Automatic",
@@ -26,14 +26,29 @@ sd_payload = {
     "override_settings_restore_afterwards": True,
 }
 
+sd_payload_for_vram = {
+    "high": {
+        "hr_second_pass_steps": 10,
+        "steps": 30,
+        "cfg_scale": 7,
+        "denoising_strength": 0.55
+    },
+    "low": {
+        "hr_second_pass_steps": 4,
+        "steps": 4,
+        "cfg_scale": 2,
+        "denoising_strength": 0.7
+    },
+}
+
 room_state = {
     "openai_api_chat_base": config_data["openai_api_chat_base"],
     "tappyapi_api_key": config_data["api_key"],
     "tappyapi_admin_key": config_data["admin_key"],
     "SDAPI_url": config_data["SDAPI_url"],
     "prompt_template": "Alpaca_RP",
-    "char_name":"",
-    "user_name":"",
+    "char_name": "",
+    "user_name": "",
     # completions data
     "max_seq_len": 4096,
     "max_tokens": 300,
@@ -49,7 +64,7 @@ room_state = {
     "mirostat_eta": 0.1,
     "temperature_last": True,
     "ban_eos_token": False,
-    "custom_stop_string": ["###","</s>", "<|eot_id|>"],
+    "custom_stop_string": ["###", "</s>", "<|eot_id|>"],
     "temperature": 1,
     # other settings
     "translate": True,

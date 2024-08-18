@@ -241,7 +241,7 @@ class CoreGenerator:
                         width=self.image_bg_size["width"],
                         height=self.image_bg_size["height"],
                         hr_scale=1.5,
-                        steps=40,
+                        steps=self.image_payload["steps"],
                         enable_hr=True,
                         prompt_prefix=self.prmopt_fixed_prefix,
                         char_looks=self.state["char_looks"]
@@ -355,7 +355,7 @@ class CoreGenerator:
             steps = self.image_payload["steps"]
         if enable_hr is None:
             enable_hr = self.image_payload["enable_hr"]
-        prompt_api = f"{prompt_prefix}{char_looks}{prompt_main}{env_setting}{lora_prompt}{prompt_suffix}"
+        prompt_api = f"{prompt_prefix}{char_looks}{prompt_main}{lora_prompt}{env_setting}{prompt_suffix}"
         if show_prompt:
             logger.info(f"The SD prompt: \n {prompt_api}")
         payload = {
@@ -417,6 +417,7 @@ class CoreGenerator:
             lora_prompt=lora_prompt,
             env_setting=self.state["env_setting"],
             show_prompt=True,
+            enable_hr=True,
             task_flag="generate_live-DynamicPicture",
         )
         return image

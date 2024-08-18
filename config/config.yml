@@ -8,8 +8,8 @@ remoteapi_endpoint: openairouter #openairouter,cohere, mistral, claude, xiaoai
 
 ### SD settings
 SDAPI_url: http://127.0.0.1:7860
-hr_upscaler: Latent (bicubic)
-sampler_name: Euler a
+hr_upscaler: Latent (antialiased)
+sampler_name: DPM++ SDE
 sd_model_checkpoint: astranime_V6
 
 ### server settings
