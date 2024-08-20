@@ -34,10 +34,10 @@ sd_payload_for_vram = {
         "denoising_strength": 0.55
     },
     "low": {
-        "hr_second_pass_steps": 12,
-        "steps": 12,
+        "hr_second_pass_steps": 8,
+        "steps": 8,
         "cfg_scale": 2,
-        "denoising_strength": 0.55
+        "denoising_strength": 0.7
     },
 }
 
