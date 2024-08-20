@@ -51,12 +51,28 @@ body {
   gap: 5px;
   z-index: 1;
 }
-
+.top_left_group{
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  width:fit-content;
+  margin-right: auto;
+}
+.bg_music_knob{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width:fit-content;
+  gap: 2px;
+}
 .user_profile_edit_menu {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.3rem;
-  margin-right: auto;
+  /* margin-right: auto; */
   background: #eee;
   color: black;
   display: flex;
