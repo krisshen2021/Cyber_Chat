@@ -10,7 +10,7 @@ export class VolumeKnob {
         this.backgroundColor = options.backgroundColor || 'transparent';
         this.knobHandlerColor = options.knobHandlerColor || '#ffffff';
         this.audioElement = options.audioElement;
-
+        this.initialVolume = options.initialVolume !== undefined ? options.initialVolume : 0.5;
         this.isDragging = false;
         this.startAngle = 0;
 
@@ -51,6 +51,7 @@ export class VolumeKnob {
         $(document).on('mouseup', this.onMouseUp.bind(this));
 
         if (this.audioElement) {
+            this.audioElement.volume = this.initialVolume;
             this.value = this.audioElement.volume;
             this.angle = this.valueToAngle(this.value);
         } else {

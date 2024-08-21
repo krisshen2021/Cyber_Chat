@@ -220,12 +220,18 @@ class CoreGenerator:
             response_text,
             re.DOTALL,
         )
+        match_behavior = re.search(
+            r"<current_postures_actions>(.*?)</current_postures_actions>",
+            response_text,
+            re.DOTALL,
+            )
         if match_bg and match_outfit and match_emotion:
             result_bg = match_bg.group(1).strip()
             result_outfit = match_outfit.group(1).strip()
             result_emotion = match_emotion.group(1).strip()
+            result_behavior = match_behavior.group(1).strip()
             logger.info(
-                f"Background:> {result_bg}  Outfits:> {result_outfit}  Emotion:> {result_emotion}"
+                f"Background:> {result_bg}  Outfits:> {result_outfit}  Emotion:> {result_emotion} Behavior:> {result_behavior}"
             )
             if result_bg != "SIMILAR_ENV":
                 self.state["env_setting"] = (
@@ -248,7 +254,9 @@ class CoreGenerator:
                         + ", "
                         + outfits
                         + ", "
-                        + f"({result_emotion} expressions:1.15)",
+                        + f"({result_emotion} expressions:1.15)"
+                        + ", "
+                        + result_behavior,
                         prompt_main="",
                         prompt_suffix=self.prmopt_fixed_suffix,
                         lora_prompt="",
@@ -283,7 +291,7 @@ class CoreGenerator:
         using_remoteapi = config_data["using_remoteapi"]
         temperature = 0.5
         stream = False
-        max_tokens = 100
+        max_tokens = 300
         if using_remoteapi:
             payloads = {
                 "system_prompt": sysprompt,

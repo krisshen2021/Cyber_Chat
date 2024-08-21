@@ -202,7 +202,9 @@ class ChatRoom_Uncensored:
         self.SD_model_list = await self.my_generate.tabby_server.get_sd_model_list()
         self.SD_vram_status = await self.my_generate.tabby_server.get_sd_vram_status()
         logger.info(f"SD server vram status: {self.SD_vram_status}")
-        self.my_generate.image_payload.update(sd_payload_for_vram.get(self.SD_vram_status, {}))
+        self.my_generate.image_payload.update(
+            sd_payload_for_vram.get(self.SD_vram_status, {})
+        )
         self.model = await self.my_generate.tabby_server.get_model()
         logger.info(f"Set model in My_Generate: {self.my_generate.model}")
         logger.info(f"Set model in tabby_server: {self.my_generate.tabby_server.model}")
@@ -482,14 +484,14 @@ class ChatRoom_Uncensored:
             moments_list = [item["title"] for item in response["playlist"]]
             moments_prompt = ", ".join(moments_list)
             user_prompt = f"User Provided Context:\n<context>{self.ainame}: {input_msg}</context><for_char>{self.ainame}</for_char><moment_type>{moments_prompt}</moment_type>\nOutput:"
-        
+
         if config_data["using_remoteapi"]:
             prompt = scenario_moment_prompt + "\n" + user_prompt
         else:
             prompt = self.rephrase_template.replace(
                 "<|system_prompt|>", scenario_moment_prompt
             ).replace("<|user_prompt|>", user_prompt)
-            
+
         payloads = {
             "prompt": prompt,
             "max_tokens": 20,
@@ -506,10 +508,12 @@ class ChatRoom_Uncensored:
     async def sentence_completion(self, message: dict):
         chat_history = copy.deepcopy(self.chathistory)
         system_intro = chat_history.pop(0)
-        if len(chat_history) > 5:
+        system_intro = re.sub(re.escape(f"{self.ainame}: {self.first_message}"), '', system_intro)
+        chat_history.insert(0,f"{self.ainame}: {self.first_message}")
+        if len(chat_history) >= 5:
             chat_history = chat_history[-5:]  # Only keep the last 5 messages
         chat_history = "\n".join(chat_history)
-        user_prompt = f"User provided context:<CONTEXT>{system_intro}\n{chat_history}</CONTEXT>{self.username}: <PREFIX>{message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
+        user_prompt = f"User provided context:<CONTEXT>{system_intro}\n{chat_history}</CONTEXT><PREFIX>{self.username}: {message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
         system_prompt = prompt_params["sentenceCompletion_prompt"]
         if config_data["using_remoteapi"]:
             prompt = system_prompt + "\n" + user_prompt
@@ -520,10 +524,11 @@ class ChatRoom_Uncensored:
         payloads = {
             "prompt": prompt,
             "max_tokens": 120,
-            "temperature": 0.5,
+            "temperature": 0.9,
             "stream": False,
             "model": self.model,
         }
+        logger.info(f"Sentence Completion Processing >>>")
         sentence_result = await self.my_generate.tabby_server.pure_inference(
             payloads=payloads
         )
