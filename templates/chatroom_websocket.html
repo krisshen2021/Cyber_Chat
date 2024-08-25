@@ -1398,7 +1398,17 @@
         cssClasses,
         sentenceCompletion
       );
-      // TODO:create a process for audio data, send the data to server and get the response
+      //background music on
+      let playAttempt = setInterval(() => {
+        $("#bg_music")[0]
+          .play()
+          .then(() => {
+            clearInterval(playAttempt);
+          })
+          .catch((error) => {
+            console.log("Unable to play the video, User has not interacted yet.");
+          });
+      }, 2000);
 
       // svg timer progress bar
       let circle = document.querySelector('.progress-ring__circle-progress');

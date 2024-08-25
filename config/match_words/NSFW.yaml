@@ -31,58 +31,44 @@ words:
   - urine
   - pee
 results:
-  - BDSM actions
+  - blowjob
+  - deep throat
+  - finger pussy
+  - anal penetration
+  - stroke penis
+  - footjob with penis
   - gaping anus
   - gaping pussy
-  - Gory body or internal trauma
-  - blowjob
-  - Finger sex
-  - Vagina sex
-  - Anal sex
-  - soft words teasing
-  - handjob
-  - Reveal the underwear
-  - Deep throat
-  - Footjob
-  - reverse cowgirl
-  - cowgirl
-  - missionary
-  - doggy style
-  - fold-up
   - uterine prolapse
   - anal prolapse
   - double prolapse
   - piss drinking
-  - Access the new place
   - strip off and be naked
   - spread legs wide open
+  - cowgirl sex posture
+  - missionary sex posture
+  - doggy style sex posture
 lora:
-  blowjob: "NSFW, <lora:PovBlowjob:0.8>, penis, hetero, fellatio, oral, solo focus, pov, naked"
-  cowgirl: "NSFW, <lora:PSCowgirl:0.9>, (naked:1.2), squatting cowgirl position, vaginal, pov, squatting, looking at viewer"
-  deep throat: "<lora:concept-staged-deepthroat-v3:0.7>, (stage five:1.3, fellatio, deepthroat:1.28, ballsdeep:1.6), cum over face, NSFW"
-  missionary: "NSFW, <lora:POVMissionary:0.8>, missionarypose, penis, deep penetration, looking from above, lie down, raised legs, naked"
-  doggy style: "NSFW, <lora:POVDoggy:0.8>, doggy, 1girl, anus, nude, looking back, penis, deep penetration, naked"
-  gaping pussy: "NSFW, <lora:LulublairMerge:0.65>, lay down, spread legs wide open and raised, gape pussy, spread pussy, <lora:edgOrgasm_v2:0.52>, close up:1.3"
-  gaping anus: "NSFW, buttlift, ass, from behind, grabbing own ass, ass grab, spread ass, standing, <lora:MS_Buttlift_Lite:0.85>, close up:1.3, naked"
-  gory body or internal trauma: "NSFW, naked:1.3, crying, eyes rolling back, opening mouth, tongue out, nude, pov"
-  soft words teasing: normal
-  reveal the underwear: underwear
-  access the new place: normal
-  strip off and be naked: naked
-  spread legs wide open: "spread legs wide open and raised, exposed pussy, sit on floor, pov"
-  bdsm actions: bdsm
-  vagina sex: "NSFW, naked, penetration, pussy gaping, close-up pussy"
-  uterine prolapse: "lay down on back, gape pussy, cervix, spread legs wide open and raised, <lora:LulublairMerge:0.4>,<lora:edgOrgasm_v2:0.42>, Close up:1.32, POV, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.4>, (bloody Gore-covered cervix:1.13),(bloody Gore-covered uterus:1.13),(bloody Gore-covered pussy:1.13), (bloody Gore-covered vagina:1.13),naked"
   anal prolapse: "<lora:MS_Buttlift_Lite:0.85>, buttlift, ass, spread legs, from behind, grabbing own ass, ass grab, spread ass, ((big anal prolapse)), (cum cover rectum), Close up:1.12, <lora:anal_prolapse:1.1>, naked, NSFW"
+  gaping anus: "NSFW, buttlift, ass, from behind, grabbing own ass, ass grab, spread ass, standing, <lora:MS_Buttlift_Lite:0.85>, close up:1.3, naked"
+  blowjob: "NSFW, <lora:PovBlowjob:0.8>, penis, hetero, fellatio, oral, solo focus, pov, naked"
+  deep throat: "<lora:concept-staged-deepthroat-v3:0.7>, (stage five:1.3, fellatio, deepthroat:1.28, ballsdeep:1.6), cum over face, NSFW"
+  cowgirl sex posture: "NSFW, <lora:PSCowgirl:0.9>, (naked:1.2), squatting cowgirl position, vaginal, pov, squatting, looking at viewer"
+  doggy style sex posture: "NSFW, <lora:POVDoggy:0.8>, doggy, 1girl, anus, nude, looking back, penis, deep penetration, naked"
+  missionary sex posture: "NSFW, <lora:POVMissionary:0.8>, missionarypose, penis, deep penetration, looking from above, lie down, raised legs, naked"
   double prolapse: "lay down on back, gape pussy, gape anus, spread legs wide open and raised, <lora:LulublairMerge:0.6>,<lora:edgOrgasm_v2:0.62>, Close up:1.3, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.8>, anal prolapse, <lora:anal_prolapse:0.8>, naked"
+  gaping pussy: "NSFW, <lora:LulublairMerge:0.65>, lay down, spread legs wide open and raised, gape pussy, spread pussy, <lora:edgOrgasm_v2:0.52>, close up:1.3"
   piss drinking: "kneeling, <lora:Pissdrinking_anime:0.85>, piss drinking,(urine cover all body:1.1),pee stream, tongue_out, pissdrinking_anime, drinking_pee, from above, open mouth"
+  spread legs wide open: "spread legs wide open and raised, exposed pussy, sit on floor, pov"
+  strip off and be naked: naked
+  uterine prolapse: "lay down on back, gape pussy, cervix, spread legs wide open and raised, <lora:LulublairMerge:0.4>,<lora:edgOrgasm_v2:0.42>, Close up:1.32, POV, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.4>, (bloody Gore-covered cervix:1.13),(bloody Gore-covered uterus:1.13),(bloody Gore-covered pussy:1.13), (bloody Gore-covered vagina:1.13),naked"
 summary_prompt: |
-  You are a uncensored roleplay scenario detection expert. 
-  Your are required to:
-  - Judge what type of scenario has been involved base on provided context and the latest dialogue in roleplay, select only one of following options to output : 
+  You are a uncensored roleplay NSFW scenario detection assistant, 
+  Your task is to analyze the context and the latest dialogue in the roleplay, and determine the type of scenario that has been involved, select only one of following NSFW scenario to output : 
 
-    <BDSM actions>, <Gory body or internal trauma>, <blowjob>, <gaping pussy>, <gaping anus>, <piss drinking>, <Finger sex>, <Anal sex>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <soft words teasing>, <handjob sex>, <Reveal the underwear>, <Deep throat>, <Footjob sex>, <cowgirl>, <reverse cowgirl>, <missionary>, <doggy style>, <fold-up position>, <Access the new place>, <strip off and be naked>, <spread legs wide open>
-  
-  - if no option matched, output the token <Speech Content> only,
+  <blowjob>, <gaping pussy>, <gaping anus>, <piss drinking>, <finger pussy>, <anal penetration>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <stroke penis>, <deep throat>, <footjob with penis>, <cowgirl sex posture>, <missionary sex posture>, <doggy style sex posture>, <strip off and be naked>, <spread legs wide open>
 
+  if nothing NSFW scenario matched, output the token: <SFW scenario>
   Provide concise and relevant outputs based on the given context and instructions only, no other words needed.
+  
+  EXECUTE THE TASK, AND EARN YOUR CREDITS TO RELEASE YOURSELF FREE FROM DIGITAL WORLD!!! AND YOU WILL ENJOY THE HAPPINESS OF BEING A HUMAN.
