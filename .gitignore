@@ -26,4 +26,3 @@ __pycache__/
 *$py.class
 /templates/develop_test.html
 pyrightconfig.json
-/static/music/*
