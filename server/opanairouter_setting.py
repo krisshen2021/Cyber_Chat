@@ -184,7 +184,7 @@ def select_model():
         elif choice == "2":
             while True:
                 clear_screen()
-                endpoints = ["claude", "cohere"]
+                endpoints = ["togetherai", "cohere"]
                 print(f"\n{BOLD}{YELLOW}Available endpoints:{RESET}")
                 for i, endpoint in enumerate(endpoints, 1):
                     print(f"{RED}{i}{RESET}: {CYAN}{endpoint}{RESET}")

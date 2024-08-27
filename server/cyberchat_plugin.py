@@ -24,6 +24,7 @@ from remote_api_hub import (
     ChatMessage,
     cohere_stream,
     cohere_invoke,
+    cohere_client,
     CohereParam,
     mistral_stream,
     mistral_invoke,
@@ -33,6 +34,7 @@ from remote_api_hub import (
     DeepseekParam,
     togetherAi_stream,
     togetherAi_invoke,
+    togetherai_api_key,
     TogetherAiParam,
     yiAi_stream,
     yiAi_invoke,
@@ -471,6 +473,31 @@ async def remotetts_to_audio_stream(payload: RestAPI_TTSPayload):
 async def get_models():
     if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
         return JSONResponse(content=OAI_model_list)
+    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "cohere":
+        response = await cohere_client.models.list()
+        model_list = []
+        for model in response.models:
+            if "command" in model.name or "aya" in model.name:
+                model_list.append({"id": model.name, "object": "model", "owned_by": "cohere"})
+        sorted_model_list = sorted(model_list, key=lambda x: x["id"])
+        content ={
+            "object": "list",
+            "data": sorted_model_list
+        }
+        return JSONResponse(content=content)
+    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "togetherai":
+        togetherai_url = "https://api.together.xyz/v1/models"
+        async with httpx.AsyncClient(timeout=300) as client:
+            response = await client.get(url=togetherai_url, headers={"Authorization": f"Bearer {togetherai_api_key}", "accept":"application/json"})
+            content = response.json()
+            model_list = [{"id": model["id"], "object": "model", "owned_by": "togetherai"} for model in content if "chat" in model["type"]]
+            sorted_model_list = sorted(model_list, key=lambda x: x["id"].lower())
+            content = {
+                "object": "list",
+                "data": sorted_model_list
+            }
+            return JSONResponse(content=content)
+        
     elif not config_data["using_remoteapi"]:
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -490,6 +517,10 @@ async def get_default_model():
     global openairouter_model
     if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
         return JSONResponse(content={"id": openairouter_model})
+    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "cohere":
+        return JSONResponse(content={"id": "command-r-plus"})
+    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "togetherai":
+        return JSONResponse(content={"id": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO"})
     elif not config_data["using_remoteapi"]:
         async with httpx.AsyncClient() as client:
             response = await client.get(

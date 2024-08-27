@@ -32,7 +32,6 @@ aws_bedrock_config = {
 remote_OAI_config = {
     "mistral": {"api_key": mistral_api_key, "url":"https://api.mistral.ai/v1"},
     "deepseek": {"api_key": deepseek_api_key, "url":"https://api.deepseek.com/v1"},
-    "togetherai": {"api_key": togetherai_api_key, "url":"https://api.together.xyz/v1"},
     "yi": {"api_key": yi_api_key, "url":"https://api.01.ai/v1"},
     "nvidia": {"api_key": nvidia_api_key, "url":"https://integrate.api.nvidia.com/v1"},
     "xiaoai": {"api_key": xiaoai_api_key, "url":"https://api.xiaoai.plus/v1"},

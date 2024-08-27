@@ -7,8 +7,8 @@ using_remoteapi: true
 remoteapi_endpoint: openairouter #openairouter,cohere, mistral, claude, xiaoai
 
 ### SD settings
-SDAPI_url: http://debian.local:7860
-hr_upscaler: Latent (nearest)
+SDAPI_url: http://192.168.5.104:7860
+hr_upscaler: Latent (antialiased)
 sampler_name: LCM
 sd_model_checkpoint: dreamshaper_8LCM
 

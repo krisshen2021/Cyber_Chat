@@ -13,7 +13,7 @@ export class VolumeKnob {
         this.initialVolume = options.initialVolume !== undefined ? options.initialVolume : 0.5;
         this.isDragging = false;
         this.startAngle = 0;
-
+        this.mouseLocation = [0, 0];
         this.init();
     }
 
@@ -61,13 +61,31 @@ export class VolumeKnob {
 
         this.updateKnob();
     }
-
+    toggleStatus() {
+        //toggle play/pause
+        if (this.audioElement.paused) {
+            this.audioElement.play();
+            this.element.css({
+                'background-color': this.backgroundColor,
+                'transition': 'background-color 0.5s ease-in-out'
+            });
+            console.log("background music is playing");
+        } else {
+            this.audioElement.pause();
+            this.element.css({
+                'background-color': 'rgba(111, 111, 111, 0.5)',
+                'transition': 'background-color 0.5s ease-in-out'
+            });
+            console.log("background music is paused");
+        }
+    }
     onMouseDown(e) {
         this.isDragging = true;
         const rect = this.element[0].getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         this.startAngle = this.calculateAngle(e.clientX, e.clientY, centerX, centerY);
+        this.mouseLocation = [e.clientX, e.clientY];
     }
 
     onMouseMove(e) {
@@ -77,7 +95,7 @@ export class VolumeKnob {
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         const currentAngle = this.calculateAngle(e.clientX, e.clientY, centerX, centerY);
-        
+
         let angleDiff = currentAngle - this.startAngle;
         if (angleDiff > 180) angleDiff -= 360;
         if (angleDiff < -180) angleDiff += 360;
@@ -89,8 +107,11 @@ export class VolumeKnob {
         this.updateKnob();
     }
 
-    onMouseUp() {
+    onMouseUp(e) {
         this.isDragging = false;
+        if (this.mouseLocation[0] === e.clientX && this.mouseLocation[1] === e.clientY) {
+            this.toggleStatus();
+        }
     }
 
     calculateAngle(x, y, centerX, centerY) {
@@ -103,7 +124,7 @@ export class VolumeKnob {
 
     updateKnob() {
         this.element.css('transform', `rotate(${this.angle}deg)`);
-        
+
         const range = this.maxValue - this.minValue;
         const angleRange = 270; // -135 to 135 degrees
         this.value = this.minValue + (this.angle + 135) / angleRange * range;
