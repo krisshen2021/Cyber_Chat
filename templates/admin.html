@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/images/favicon.ico" />
+    <title>AI Role Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cyberchat': {
+                            100: '#2a1257'
+                        }
+                    },
+                    fontSize: {
+                        'xxs': '0.625rem'
+                    }
+                },
+            },
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <!-- Add Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.875rem;
+            /* Reduced from default 1rem */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div id="app" class="flex">
+        <!-- Left Sidebar -->
+        <div class="w-auto  bg-cyberchat-100 text-white">
+            <div class="p-4">
+                <h1 class="text-lg font-semibold">Dashboard</h1> <!-- Changed from text-2xl to text-lg -->
+            </div>
+            <nav class="mt-4">
+                <a href="#"
+                    class="block py-2 px-4 hover:bg-gray-100 hover:text-cyberchat-100 transition duration-500 text-sm"
+                    @click="toggleLogin"> <!-- Added text-sm -->
+                    ${ isLoggedIn ? 'Logout' : 'Login' }
+                </a>
+                <a href="#"
+                    class="block py-2 px-4 hover:bg-gray-100 hover:text-cyberchat-100 transition duration-500 text-sm">Manage
+                    AI
+                    Roles</a> <!-- Added text-sm -->
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-10">
+            <h2 class="text-xl font-semibold mb-6">AI Roles</h2> <!-- Changed from text-3xl to text-xl -->
+            <div class="bg-white shadow-md rounded-lg">
+                <ul class="divide-y divide-gray-200">
+                    <li v-for="role in aiRoles" :key="role.Data.ai_name"
+                        class="p-4 hover:bg-cyberchat-100 transition duration-200 hover:text-white hover:rounded-lg hover:shadow-lg hover:cursor-pointer text-sm text-cyberchat-100 font-semibold flex items-center gap-2" @click="selectRole(role)">
+                        <!-- Added text-sm -->
+                        <img :src="`/static/images/avatar/${role.aiRoleId}/none.webp`" alt="Avatar" class="w-10 h-10 rounded-full">
+                        <div>${ role.Data.ai_name }</div>
+                        <div class="text-white rounded-sm bg-cyberchat-100 p-1 ml-auto text-xxs">${ role.Data.Match_words_cata }</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            delimiters: ['${', '}'],
+            data: {
+                isLoggedIn: JSON.parse('{{ is_logged_in | tojson | safe }}'),
+                aiRoles: JSON.parse('{{ ai_role_list | tojson | safe }}')
+            },
+            methods: {
+                toggleLogin() {
+                    this.isLoggedIn = !this.isLoggedIn;
+                    // 这里可以添加实际的登录/登出逻辑
+                },
+                selectRole(role) {
+                    console.log(role.Data)
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -34,7 +34,6 @@ database.create_table()
 
 
 def clear_screen():
-    # 针对不同操作系统的清屏命令
     if os.name == "nt":  # Windows
         _ = os.system("cls")
     else:  # Mac and Linux
@@ -42,7 +41,6 @@ def clear_screen():
 
 
 def generate_timestamp():
-    # 获取当前时间的时间戳，以秒为单位
     timestamp = datetime.now().timestamp()
     return int(timestamp)
 
@@ -84,7 +82,20 @@ def non_cache_response(template_name: str, context: dict) -> Response:
 async def test(request: Request):
     context = {"request": request}
     return non_cache_response("develop_test.html", context)
-
+# Admin backend
+@app.get("/admin")
+async def admin(request: Request):
+    is_logged_in = False  # 或者从会话中获取
+    ai_role_list = []
+    roleconf = await getGlobalConfig("roleconf")
+    roleconf_reversed = dict(reversed(list(roleconf.items())))
+    for key, value in roleconf_reversed.items():
+        ai_role_list.append({"aiRoleId": key, "Data": value})
+    return templates.TemplateResponse("admin.html", {
+        "request": request,
+        "is_logged_in": is_logged_in,
+        "ai_role_list": ai_role_list,
+        })
 
 # Role selection page
 @app.get("/")
