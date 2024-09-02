@@ -719,7 +719,10 @@
         var form = $("<form></form>");
         form.attr("method", "post");
         form.attr("action", "/enter_room");
-
+        let is_live_char = $('#live_char_switch').attr('data-value');
+        if(!is_live_char){
+          is_live_char = false;
+        }
         var fields = {
           username: userdata["username"],
           nickname: userdata["nickname"],
@@ -732,6 +735,7 @@
           story_name: story_name,
           intro_text: intro_text,
           is_uncensored: is_uncensored,
+          is_live_char: is_live_char,
           clientID: clientID,
         };
 
@@ -1152,10 +1156,22 @@
     });
   </script>
   <script type="module">
-    import { VolumeKnob } from '/static/js/knob.js';
+    import { VolumeKnob, SwitchUI } from '/static/js/ui.js';
     const knobElement = document.getElementById('knob');
     const audioElement = document.getElementById('bg_music');
-
+    const liveCharSwitch = document.getElementById('live_char_switch');
+    const liveCharSwitchUI = new SwitchUI({
+        element: liveCharSwitch,
+        onColor: '#462256',
+        offColor: '#3d3d3d',
+        width: 40,
+        height: 20,
+        value: true
+    });
+    $(liveCharSwitch).on('change', (event, value) => {
+        $(liveCharSwitch).attr('data-value', value);
+        console.log($(liveCharSwitch).attr('data-value'));
+    });
     const volumeKnob = new VolumeKnob({
         element: knobElement,
         minValue: 0,
@@ -1203,11 +1219,17 @@
           </div>
         </div>
       </div>
-      <div class = "bg_music_knob">
+      <div class = "UI_flex_row">
         <div>
-          <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke=""><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M13.75 2C13.75 1.58579 13.4142 1.25 13 1.25C12.5858 1.25 12.25 1.58579 12.25 2V14.5359C11.4003 13.7384 10.2572 13.25 9 13.25C6.37665 13.25 4.25 15.3766 4.25 18C4.25 20.6234 6.37665 22.75 9 22.75C11.6234 22.75 13.75 20.6234 13.75 18V6.243C14.9875 7.77225 16.8795 8.75 19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25C16.1005 7.25 13.75 4.8995 13.75 2Z" fill="#ffffff"></path> </g></svg>
+          <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke=""><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M13.75 2C13.75 1.58579 13.4142 1.25 13 1.25C12.5858 1.25 12.25 1.58579 12.25 2V14.5359C11.4003 13.7384 10.2572 13.25 9 13.25C6.37665 13.25 4.25 15.3766 4.25 18C4.25 20.6234 6.37665 22.75 9 22.75C11.6234 22.75 13.75 20.6234 13.75 18V6.243C14.9875 7.77225 16.8795 8.75 19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25C16.1005 7.25 13.75 4.8995 13.75 2Z" fill="#ffffff"></path> </g></svg>
         </div>
-        <div id="knob" class="knob"></div>
+        <div id="knob"></div>
+      </div>
+      <div class="UI_flex_row">
+        <div>
+          <svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke=""><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M15 15.5C14.7164 14.3589 13.481 13.5 12 13.5C10.519 13.5 9.28364 14.3589 9 15.5M12 9.5H12.01M13 9.5C13 10.0523 12.5523 10.5 12 10.5C11.4477 10.5 11 10.0523 11 9.5C11 8.94772 11.4477 8.5 12 8.5C12.5523 8.5 13 8.94772 13 9.5ZM7 21H17C18.1046 21 19 20.1046 19 19V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+        </div>
+        <div id="live_char_switch"></div>
       </div>
     </div>
       <div id="btn_signup" class="top_buttons">sign up</div>

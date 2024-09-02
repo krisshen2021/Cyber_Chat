@@ -12,6 +12,7 @@ class EnterRoom(BaseModel):
     ai_role_name: str
     ainame: str
     is_uncensored: str
+    is_live_char: bool
     clientID: str
 
 

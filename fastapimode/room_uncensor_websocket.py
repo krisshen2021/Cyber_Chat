@@ -218,25 +218,45 @@ class ChatRoom_Uncensored:
             self.my_generate.get_rephrase_template()
 
     async def create_envart(self):
-        await self.send_msg_websocket(
-            {"name": "initialization", "msg": "Preparing A.I Role"},
+        if self.state["ai_is_live_char"] is True:
+            await self.send_msg_websocket(
+                {"name": "initialization", "msg": "Preparing A.I Role"},
+                self.conversation_id,
+            )
+            logger.info("Generate Character Background")
+            emotion = await self.emotion_detector(self.first_message)
+            logger.info(f"{self.ainame}'s Initial emotion: [{emotion}]")
+            moment = await self.scenario_moment_detector(self.first_message)
+            logger.info(f"{self.ainame}'s Initial moment: [{moment}]")
+            self.bg_music = moment
+            bgimg_base64 = await self.gen_bgImg(
+                tabbyGen=self.my_generate,
+                char_looks=self.state["char_looks"],
+                bgImgstr=self.state["env_setting"],
+                char_outfit=self.state["char_outfit"],
+                task_flag="generate_background-ai",
+                emotion=emotion,
+            )
+            self.bkImg = "data:image/webp;base64," + bgimg_base64
+            await self.send_msg_websocket(
+            {"name": "initialization", "msg": "Generate A.I Avatar"},
             self.conversation_id,
-        )
-        logger.info("Generate Character Background")
-        emotion = await self.emotion_detector(self.first_message)
-        logger.info(f"{self.ainame}'s Initial emotion: [{emotion}]")
-        moment = await self.scenario_moment_detector(self.first_message)
-        logger.info(f"{self.ainame}'s Initial moment: [{moment}]")
-        self.bg_music = moment
-        bgimg_base64 = await self.gen_bgImg(
-            tabbyGen=self.my_generate,
-            char_looks=self.state["char_looks"],
-            bgImgstr=self.state["env_setting"],
-            char_outfit=self.state["char_outfit"],
-            task_flag="generate_background-ai",
-            emotion=emotion,
-        )
-        self.bkImg = "data:image/webp;base64," + bgimg_base64
+            )
+            logger.info("Generate A.I Avatar")
+            avatarimg_base64 = await self.gen_avatar(
+                tabbyGen=self.my_generate,
+                char_avatar=self.state["char_avatar"],
+                emotion=emotion,
+                char_outfit=self.state["char_outfit"],
+                is_save=True,
+                task_flag="generate_avatar-ai",
+            )
+            self.G_avatar_url = "data:image/webp;base64," + avatarimg_base64
+        else:
+            self.bkImg = None
+            self.G_avatar_url = None
+            self.bg_music = "Relaxing_Moment"
+            
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Preparing Your Role"},
             self.conversation_id,
@@ -251,21 +271,8 @@ class ChatRoom_Uncensored:
             task_flag="generate_background-user",
         )
         self.user_bkImg = "data:image/webp;base64," + bgimg_base64
-
-        await self.send_msg_websocket(
-            {"name": "initialization", "msg": "Generate A.I Avatar"},
-            self.conversation_id,
-        )
-        logger.info("Generate A.I Avatar")
-        avatarimg_base64 = await self.gen_avatar(
-            tabbyGen=self.my_generate,
-            char_avatar=self.state["char_avatar"],
-            emotion=emotion,
-            char_outfit=self.state["char_outfit"],
-            is_save=True,
-            task_flag="generate_avatar-ai",
-        )
-        self.G_avatar_url = "data:image/webp;base64," + avatarimg_base64
+        
+        
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Generate Your Avatar"},
             self.conversation_id,
@@ -564,10 +571,6 @@ class ChatRoom_Uncensored:
                 self.chathistory.pop(1)
             prompt = "\n".join(self.chathistory)
             prompt = instruct_template.replace(r"<|prompt|>", prompt)
-        # logger.info(
-        #     f"The number tokens: {self.my_generate.count_token_numbers(prompt)} \n The limitation token is: {token_limition}"
-        # )
-        # logger.info(f'>>> The final prompt is :{prompt}') #test the prompt output
         # llm request
         self.my_generate.image_payload["width"] = 512 if self.windowRatio <= 1 else 768
         self.my_generate.image_payload["height"] = 768 if self.windowRatio <= 1 else 512
@@ -615,15 +618,18 @@ class ChatRoom_Uncensored:
             logger.info("Error get emotion: ", e)
             emotion_des = "none"
 
-        avatarimg_base64 = await self.gen_avatar(
-            tabbyGen=self.my_generate,
-            char_avatar=self.state["char_avatar"],
-            emotion=emotion_des,
-            char_outfit=self.state["char_outfit"],
-            is_save=True,
-            task_flag="generate_live-CharacterAvatar",
-        )
-        avatar_url = "data:image/webp;base64," + avatarimg_base64
+        if self.state['ai_is_live_char'] is True:
+            avatarimg_base64 = await self.gen_avatar(
+                tabbyGen=self.my_generate,
+                char_avatar=self.state["char_avatar"],
+                emotion=emotion_des,
+                char_outfit=self.state["char_outfit"],
+                is_save=True,
+                task_flag="generate_live-CharacterAvatar",
+            )
+            avatar_url = "data:image/webp;base64," + avatarimg_base64
+        else:
+            avatar_url = None
 
         self.ai_lastword = result_text
         self.chathistory.append(f"{self.ainame}: {result_text}")

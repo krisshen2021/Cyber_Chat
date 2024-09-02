@@ -23,7 +23,9 @@ body::-webkit-scrollbar {
 body {
   font-size: 1rem;
 }
-
+.font_xsmall{
+  font-size: 0.6rem;
+}
 .placeholder {
   /* background-color: aqua; */
   display: flex;
@@ -60,7 +62,7 @@ body {
   width:fit-content;
   margin-right: auto;
 }
-.bg_music_knob{
+.UI_flex_row{
   display: flex;
   flex-direction: row;
   justify-content: center;

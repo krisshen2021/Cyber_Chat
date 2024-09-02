@@ -326,6 +326,8 @@ async def initialize_room(client_msg, client_id):
     user_facelooks = client_msg["data"]["user_facelooks"]
     ai_role_name = client_msg["data"]["ai_role_name"]
     transswitcher = client_msg["data"]["istranslated"]
+    ai_is_uncensored = client_msg["data"]["ai_is_uncensored"]
+    ai_is_live_char = client_msg["data"]["ai_is_live_char"]
     windowRatio = round(float(client_msg["data"]["windowRatio"]), 2)
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     if userCurrentRoom:
@@ -336,6 +338,7 @@ async def initialize_room(client_msg, client_id):
         userCurrentRoom.usergender = usergender
         userCurrentRoom.user_facelooks = user_facelooks
         userCurrentRoom.state["translate"] = True if transswitcher else False
+        userCurrentRoom.state["ai_is_live_char"] = ai_is_live_char
         userCurrentRoom.windowRatio = windowRatio
     else:
         conn_ws_mgr.set_room(
@@ -354,6 +357,7 @@ async def initialize_room(client_msg, client_id):
         logger.info(f"Cyber Chat Room created for: {ai_role_name} & {username}")
         userCurrentRoom = conn_ws_mgr.get_room(client_id)
         userCurrentRoom.state["translate"] = True if transswitcher else False
+        userCurrentRoom.state["ai_is_live_char"] = ai_is_live_char
 
     if not userCurrentRoom.initialization_start:
         await userCurrentRoom.initialize()

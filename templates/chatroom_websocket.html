@@ -26,7 +26,7 @@
     const msttser = new msTTS();
     import { CommandInputHandler } from '/static/js/input_control.js';
     import { AudioRecorder } from '/static/js/AudioRecorder.js';
-    import { VolumeKnob } from '/static/js/knob.js';
+    import { VolumeKnob, SwitchUI } from '/static/js/ui.js';
     const knobElement = document.getElementById('knob');
     const audioElement = document.getElementById('bg_music');
 
@@ -66,11 +66,17 @@
     var ainame = '{{ainame}}';
     var Prologue = `{{Prologue | safe}}`;
     var ai_is_uncensored = '{{is_uncensored}}';
+    var ai_is_live_char = JSON.parse('{{ is_live_char | tojson }}');
     var conid = '{{clientID}}';
     var bkimg_path =
       '/static/images/avatar/' +
       ai_role_name +
       '/background.webp?nocache=' +
+      timestamp;
+    var ai_avatar_path =
+      '/static/images/avatar/' +
+      ai_role_name +
+      '/none.webp?nocache=' +
       timestamp;
     var currentIndex = 0;
     var userLastMsg = '';
@@ -1145,18 +1151,27 @@
             .last()
             .find('.message-comic');
           if (msgText != '[DONE]') {
-            streamingBuffer.push(msgText);
+            // streamingBuffer.push(msgText);
             let streamText = streamingBuffer.join('');
             $lastmsg.html("<p class='stream_text'>" + streamText + '</p>');
+            $lastmsg.find('p').append("<span class='stream_text_char'>"+msgText+"</span>");
+            $lastmsg.find(".stream_text_char").css({
+              "opacity": "1"
+            });
             $lastmsg.find('p').append("<span class='stream_hint'></span>");
             $lastmsg_comic.html(
               "<p class='stream_text'>" + streamText + '</p>',
             );
-            $lastmsg_comic
-              .find('p')
-              .append("<span class='stream_hint'></span>");
+            $lastmsg_comic.find('p').append("<span class='stream_text_char'>"+msgText+"</span>");
+            $lastmsg_comic.find(".stream_text_char").css({
+              "opacity": "1"
+            });
+            $lastmsg_comic.find('p').append("<span class='stream_hint'></span>");
+            streamingBuffer.push(msgText);
           } else {
+            $lastmsg.find(".stream_text_char").addClass("stream_text").removeClass("stream_text_char");
             $lastmsg.find('p').find('.stream_hint').fadeOut(1500);
+            $lastmsg_comic.find(".stream_text_char").addClass("stream_text").removeClass("stream_text_char");
             $lastmsg_comic.find('p').find('.stream_hint').fadeOut(1500);
             streamingBuffer = [];
           }
@@ -1210,7 +1225,11 @@
     /* Message proccesing for server-end : server_reply_done: true, msg from: 'server'*/
     function msg_proc(msg) {
       let message = msg.data['message'];
-      ai_avatar = msg.data['avatar'];
+      if (msg.data['avatar'] != undefined){
+        ai_avatar = msg.data['avatar'];
+      }else{
+        ai_avatar = ai_avatar_path;
+      }
       if (msg.data['user_looks'] != undefined) {
         user_looks = msg.data['user_looks'];
       }
@@ -1336,6 +1355,7 @@
           ai_role_name: ai_role_name,
           conid: clientID,
           ai_is_uncensored: ai_is_uncensored,
+          ai_is_live_char: ai_is_live_char,
           istranslated: statechk.transswitcher,
           windowRatio: windowSize.ratio,
         };
@@ -1406,7 +1426,8 @@
             clearInterval(playAttempt);
           })
           .catch((error) => {
-            console.log("Unable to play the video, User has not interacted yet.");
+            console.log(error);
+            console.log("Unable to play the music, User has not interacted yet.");
           });
       }, 2000);
 
@@ -1842,7 +1863,7 @@
         <select id="sd_selector" class="topSelect" name="instrParam">
           <option value="No Select">SD Selector</option>
         </select>
-        <div class="bg_music_knob">
+        <div class="UI_flex_row">
           <div>
             <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke=""><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M13.75 2C13.75 1.58579 13.4142 1.25 13 1.25C12.5858 1.25 12.25 1.58579 12.25 2V14.5359C11.4003 13.7384 10.2572 13.25 9 13.25C6.37665 13.25 4.25 15.3766 4.25 18C4.25 20.6234 6.37665 22.75 9 22.75C11.6234 22.75 13.75 20.6234 13.75 18V6.243C14.9875 7.77225 16.8795 8.75 19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25C16.1005 7.25 13.75 4.8995 13.75 2Z" fill="#ffffff"></path> </g></svg>
           </div>
