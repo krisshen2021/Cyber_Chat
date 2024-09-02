@@ -96,7 +96,32 @@ async def admin(request: Request):
         "is_logged_in": is_logged_in,
         "ai_role_list": ai_role_list,
         })
-
+@app.get("/admin/{Name}")
+async def get_role_details(request: Request, Name: str):
+    role_details = database.get_airole(Name)
+    if role_details:
+        role_details.pop("UNIQUE_ID")
+        role_details.pop("Name")
+        role_details.pop("Creator_ID")
+        return role_details
+    else:
+        return False
+@app.post("/admin/edit_role")
+async def edit_role(role_data: dict):
+    result = database.edit_airole(role_data)
+    if result:
+        return True
+    else:
+        return False
+@app.post("/admin/login")
+async def admin_login(login_data: dict):
+    username = login_data["username"]
+    password = login_data["password"]
+    login_result = database.get_user(username, password)
+    if isinstance(login_result, str):
+        return {"status": "Fail", "data": login_result}
+    else:
+        return {"status": "Success", "data": login_result}
 # Role selection page
 @app.get("/")
 async def initpage(request: Request):

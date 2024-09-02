@@ -671,16 +671,10 @@
           break;
         case "char_looks":
           $("#char_looks").val(wizardstr).trigger('input');
-          break;let playAttempt = setInterval(() => {
-  videoElem
-    .play()
-    .then(() => {
-      clearInterval(playAttempt);
-    })
-    .catch((error) => {
-      console.log("Unable to play the video, User has not interacted yet.");
-    });
-}, 3000);
+          break;
+        case "prologue":
+          $("#story_prologue").val(wizardstr).trigger('input');
+          break;
         case "chapters":
           $("#story_chapters").val(wizardstr).trigger('input');
           break;
@@ -695,6 +689,9 @@
           break;
         case "chat_bg":
           $("#chat_bg").val(wizardstr).trigger('input');
+          break;
+        case "story_intro":
+          $("#story_intro").val(wizardstr).trigger('input');
           break;
         case "preview_createchar":
           //update char preview image
@@ -988,7 +985,7 @@
             clearInterval(playAttempt);
           })
           .catch((error) => {
-            console.log("Unable to play the video, User has not interacted yet.");
+            console.log("Unable to play the music, User has not interacted yet.");
           });
       }, 2000);
 

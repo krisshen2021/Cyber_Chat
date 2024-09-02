@@ -319,7 +319,11 @@ class ChatRoom_Uncensored:
         image_save = Image.open(io.BytesIO(base64.b64decode(image_data)))
         image_save.save(file_path, format="WEBP", quality=75)
 
-    async def save_image_async(self, image_data, file_path):
+    async def save_image_async(self, image_data, file_path, file_name):
+        # if file_path not exists, create it
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
+        file_path = os.path.join(file_path, file_name)
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
             None,  # 使用默认的线程池
@@ -386,10 +390,9 @@ class ChatRoom_Uncensored:
                 "static",
                 "images",
                 "avatar",
-                self.ai_role_name,
-                "background.webp",
+                self.ai_role_name
             )
-            await self.save_image_async(bkImg, img_path)
+            await self.save_image_async(bkImg, img_path, "background.webp")
 
         return await convert_to_webpbase64(bkImg, quality=85)
 
@@ -433,10 +436,9 @@ class ChatRoom_Uncensored:
                 "static",
                 "images",
                 "avatar",
-                self.ai_role_name,
-                "none.webp",
+                self.ai_role_name
             )
-            await self.save_image_async(avatarImg, img_path)
+            await self.save_image_async(avatarImg, img_path, "none.webp")
 
         return await convert_to_webpbase64(avatarImg)
 

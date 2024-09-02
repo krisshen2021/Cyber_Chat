@@ -140,41 +140,23 @@ class SQLiteDB:
     def edit_airole(self, airole):
         self.conn = sqlite3.connect(self.database)
         self.cursor = self.conn.cursor()
+        role_Name = airole.pop("Name")
+        
+        # Convert JSON objects to strings
+        for key, value in airole.items():
+            if self.is_json_field(key) and isinstance(value, (dict, list)):
+                airole[key] = json.dumps(value)
+                
+        query_keys = airole.keys()
+        query_values = tuple(airole.values())
+        query_update = ", ".join([f"{key} = ?" for key in query_keys])    
         try:
-            user_query = """
-            UPDATE airoles SET Ai_name = ?, Ai_speaker = ?, Ai_speaker_en = ?, is_Uncensored = ?, Prologue = ?, Char_Persona = ?, User_Persona = ?, json_Chapters = ?, Char_looks = ?, json_Char_outfit = ?, Char_avatar = ?, Default_bg = ?, Firstwords = ?, is_Gen_DynaPic = ?, Prompt_to_load = ?, Match_words_cata = ?, json_Completions_data = ?, Creator_ID = ?, json_Story_intro = ? WHERE Name = ?
-            """
-            self.cursor.execute(
-                user_query,
-                (
-                    airole["Ai_name"],
-                    airole["Ai_speaker"],
-                    airole["Ai_speaker_en"],
-                    airole["is_Uncensored"],
-                    airole["Prologue"],
-                    airole["Char_Persona"],
-                    airole["User_Persona"],
-                    airole["json_Chapters"],
-                    airole["Char_looks"],
-                    airole["json_Char_outfit"],
-                    airole["Char_avatar"],
-                    airole["Default_bg"],
-                    airole["Firstwords"],
-                    airole["is_Gen_DynaPic"],
-                    airole["Prompt_to_load"],
-                    airole["Match_words_cata"],
-                    airole["json_Completions_data"],
-                    airole["Creator_ID"],
-                    airole["json_Story_intro"],
-                    airole["Name"],
-                ),
-            )
+            user_query = f"UPDATE airoles SET {query_update} WHERE Name = ?"
+            self.cursor.execute(user_query, query_values + (role_Name,))    
         except sqlite3.IntegrityError as e:
             error_message = str(e)
-            if "Name" in error_message:
-                return "airole already exists"
-            else:
-                return f"Database error: {error_message}"
+            print(error_message)
+            return False
         else:
             self.conn.commit()
             return True

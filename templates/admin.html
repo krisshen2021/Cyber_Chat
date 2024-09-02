@@ -35,64 +35,207 @@
             /* Reduced from default 1rem */
         }
     </style>
+
 </head>
 
-<body class="bg-gray-100">
-    <div id="app" class="flex">
+<body class="bg-gray-100 h-full">
+    <div id="app" class="flex min-h-screen">
         <!-- Left Sidebar -->
-        <div class="w-auto  bg-cyberchat-100 text-white">
+        <div class="w-auto bg-cyberchat-100 text-white">
             <div class="p-4">
                 <h1 class="text-lg font-semibold">Dashboard</h1> <!-- Changed from text-2xl to text-lg -->
             </div>
             <nav class="mt-4">
                 <a href="#"
                     class="block py-2 px-4 hover:bg-gray-100 hover:text-cyberchat-100 transition duration-500 text-sm"
-                    @click="toggleLogin"> <!-- Added text-sm -->
+                    @click="toggleLogin">
                     ${ isLoggedIn ? 'Logout' : 'Login' }
                 </a>
-                <a href="#"
-                    class="block py-2 px-4 hover:bg-gray-100 hover:text-cyberchat-100 transition duration-500 text-sm">Manage
-                    AI
-                    Roles</a> <!-- Added text-sm -->
+                <a href="/"
+                    class="block py-2 px-4 hover:bg-gray-100 hover:text-cyberchat-100 transition duration-500 text-sm" target="_blank">Go to Chat</a> <!-- Added text-sm -->
             </nav>
         </div>
 
         <!-- Main Content -->
         <div class="flex-1 p-10">
-            <h2 class="text-xl font-semibold mb-6">AI Roles</h2> <!-- Changed from text-3xl to text-xl -->
-            <div class="bg-white shadow-md rounded-lg">
-                <ul class="divide-y divide-gray-200">
-                    <li v-for="role in aiRoles" :key="role.Data.ai_name"
-                        class="p-4 hover:bg-cyberchat-100 transition duration-200 hover:text-white hover:rounded-lg hover:shadow-lg hover:cursor-pointer text-sm text-cyberchat-100 font-semibold flex items-center gap-2" @click="selectRole(role)">
-                        <!-- Added text-sm -->
-                        <img :src="`/static/images/avatar/${role.aiRoleId}/none.webp`" alt="Avatar" class="w-10 h-10 rounded-full">
-                        <div>${ role.Data.ai_name }</div>
-                        <div class="text-white rounded-sm bg-cyberchat-100 p-1 ml-auto text-xxs">${ role.Data.Match_words_cata }</div>
+            <div v-if="!selectedRole && isLoggedIn" >
+                <h2 class="text-xl font-semibold mb-6">AI Roles</h2>
+                <ul class="divide-y divide-gray-200 bg-white shadow-md rounded-lg">
+                    <li v-for="role in aiRoles" :key="role.Data.ai_name" v-if="currentUserID == 1 || role.Data.Creator_ID == currentUserID"
+                        class="p-4 hover:bg-cyberchat-100 transition duration-200 hover:text-white hover:rounded-lg hover:shadow-lg hover:cursor-pointer text-sm text-cyberchat-100 font-semibold flex items-center gap-2"
+                        @click="selectRole(role.aiRoleId)">
+                        <img :src="`/static/images/avatar/${role.aiRoleId}/none.webp`" alt="Avatar"
+                            class="w-10 h-10 rounded-full">
+                        <div>${ role.aiRoleId }</div>
+                        <div class="text-white rounded-sm bg-cyberchat-100 p-1 ml-auto text-xxs">${
+                            role.Data.Match_words_cata }</div>
                     </li>
                 </ul>
             </div>
+            <div v-else-if="isLoggedIn && selectedRole" class="bg-white shadow-md rounded-lg">
+                <div class="p-4">
+                    <div class="flex items-center gap-4 p-4">
+                        <img :src="`/static/images/avatar/${selectedRole}/none.webp`" alt="Avatar"
+                            class="w-20 h-20 rounded-full">
+                            <h3 class="text-lg font-semibold">${ selectedRole }</h3>
+                            <button @click="goBackToList" class="mt-4 bg-gray-200 text-gray-700 px-4 py-2 rounded">Back to
+                                List</button>
+                    </div>
+                    <div v-for="(value, key) in roleDetails" :key="key" class="mb-2 text-xs">
+                        <label class="block font-semibold mb-1">${ key }</label>
+                        <template v-if="typeof value === 'string'">
+                            <textarea style="width: 100%;" class="p-4 border rounded bg-gray-100" rows="1"
+                                @input="autoResize($event)" v-model="roleDetails[key]"></textarea>
+                        </template>
+                        <template v-else-if="typeof value === 'boolean'">
+                            <input type="checkbox" class="mr-2" v-model="roleDetails[key]">
+                        </template>
+                        <template v-else-if="typeof value === 'number'">
+                            <input type="number" class="w-full p-2 border rounded bg-gray-100"
+                                v-model="roleDetails[key]">
+                        </template>
+                        <template v-else-if="typeof value === 'object'">
+                            <textarea style="width: 100%;" class="p-4 border rounded bg-gray-100"
+                                @input="updateJsonValue(key, $event)" :value="JSON.stringify(roleDetails[key], null, 2)"></textarea>
+                        </template>
+                    </div>
+                    <button @click="saveRoleDetails" class="mt-4 bg-cyberchat-100 text-white px-4 py-2 rounded">Save</button>
+                </div>           
+            </div>
+            <div v-else>
+                <h2 class="text-xl font-semibold mb-6 text-cyberchat-100">Please login</h2>
+                <div class="flex flex-col gap-2">   
+                    <label for="username" class="text-cyberchat-100">Username</label>
+                    <input type="text" class="p-2 border rounded bg-gray-100" id="username" v-model="username">
+                    <label for="password" class="text-cyberchat-100">Password</label>
+                    <input type="password" class="p-2 border rounded bg-gray-100" id="password" v-model="password">
+                    <button @click="login" class="w-20 mt-4 bg-cyberchat-100 text-white px-4 py-2 rounded">Login</button>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-        new Vue({
-            el: '#app',
-            delimiters: ['${', '}'],
-            data: {
-                isLoggedIn: JSON.parse('{{ is_logged_in | tojson | safe }}'),
-                aiRoles: JSON.parse('{{ ai_role_list | tojson | safe }}')
-            },
-            methods: {
-                toggleLogin() {
-                    this.isLoggedIn = !this.isLoggedIn;
-                    // 这里可以添加实际的登录/登出逻辑
-                },
-                selectRole(role) {
-                    console.log(role.Data)
-                }
-            }
-        });
-    </script>
 </body>
+<script>
+    new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+            isLoggedIn: JSON.parse('{{ is_logged_in | tojson | safe }}'),
+            aiRoles: JSON.parse('{{ ai_role_list | tojson | safe }}'),
+            selectedRole: null,
+            roleDetails: null,
+            username: null,
+            password: null,
+            currentUserID: null,
+        },
+        methods: {
+            toggleLogin() {
+                this.isLoggedIn = false;
+                this.username = null;
+                this.password = null;
+                this.selectedRole = null;
+                this.roleDetails = null;
+                this.currentUserID = null;
+            },
+            selectRole(roleId) {
+                console.log(roleId);
+                this.selectedRole = roleId;
+                this.fetchRoleDetails(roleId);
+            },
+            async fetchRoleDetails(roleId) {
+                try {
+                    const response = await fetch(`/admin/${roleId}`);
+                    const data = await response.json();
+                    this.roleDetails = data;
+                    console.log(this.roleDetails);
+                    this.resizeAllTextareas();
+                } catch (error) {
+                    console.error('Error fetching role details:', error);
+                }
+            },
+            goBackToList() {
+                this.selectedRole = null;
+                this.roleDetails = null;
+            },
+            autoResize(event) {
+                const textarea = event.target;
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            },
+            updateJsonValue(key, event) {
+                try {
+                    const newValue = JSON.parse(event.target.value);
+                    this.$set(this.roleDetails, key, newValue);
+                } catch (e) {
+                    console.error('Invalid JSON:', e);
+                } finally {
+                    this.autoResize(event);
+                }
+            },
+            resizeAllTextareas() {
+                this.$nextTick(() => {
+                    const textareas = this.$el.querySelectorAll('textarea');
+                    textareas.forEach(textarea => {
+                        textarea.style.height = 'auto';
+                        textarea.style.height = textarea.scrollHeight + 'px';
+                    });
+                });
+            },
+            async saveRoleDetails() {
+                try {
+                    this.roleDetails.Name = this.selectedRole;
+                    const response = await fetch('/admin/edit_role', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.roleDetails),
+                    });
+        
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+        
+                    const result = await response.json();
+                    if (result === true) {
+                        console.log('Role edited successfully');
+                        alert('Role edited successfully');
+                    } else {
+                        console.log('Failed to edit role');
+                        alert('Failed to edit role');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error: ' + error.message);
+                }
+            },
+            async login() {
+                if (!this.username || !this.password) {
+                    alert('Please enter both username and password');
+                    return;
+                }
+                const response = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username: this.username, password: this.password }),
+                });
+                const data = await response.json();
+                if (data.status === 'Success') {
+                    this.isLoggedIn = true;
+                    this.username = null;
+                    this.password = null;
+                    this.selectedRole = null;
+                    this.roleDetails = null;
+                    this.currentUserID = data.data.unique_id;
+                    console.log(data.data);
+                } else {
+                    alert('Login failed: ' + data.data);
+                }
+            },
+        },
+    });
+</script>
 
 </html>
