@@ -320,13 +320,12 @@ class ChatRoom_Uncensored:
         image_save.save(file_path, format="WEBP", quality=75)
 
     async def save_image_async(self, image_data, file_path, file_name):
-        # if file_path not exists, create it
         if not os.path.exists(file_path):
             os.makedirs(file_path)
         file_path = os.path.join(file_path, file_name)
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
-            None,  # 使用默认的线程池
+            None, 
             self.save_image_sync,
             image_data,
             file_path,
