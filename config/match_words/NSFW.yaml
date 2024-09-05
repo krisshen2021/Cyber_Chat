@@ -49,26 +49,44 @@ results:
   - missionary sex posture
   - doggy style sex posture
 lora:
-  anal prolapse: "<lora:MS_Buttlift_Lite:0.85>, buttlift, ass, spread legs, from behind, grabbing own ass, ass grab, spread ass, ((big anal prolapse)), (cum cover rectum), Close up:1.12, <lora:anal_prolapse:1.1>, naked, NSFW"
+  anal prolapse stand: "<lora:MS_Buttlift_Lite:0.85>, buttlift, ass, spread legs, from behind, grabbing own ass, ass grab, spread ass, ((big anal prolapse)), (cum cover rectum), Close up:1.12, <lora:anal_prolapse:1.1>, naked, NSFW"
   gaping anus: "NSFW, buttlift, ass, from behind, grabbing own ass, ass grab, spread ass, standing, <lora:MS_Buttlift_Lite:0.85>, close up:1.3, naked"
   blowjob: "NSFW, <lora:PovBlowjob:0.8>, penis, hetero, fellatio, oral, solo focus, pov, naked"
   deep throat: "<lora:concept-staged-deepthroat-v3:0.7>, (stage five:1.3, fellatio, deepthroat:1.28, ballsdeep:1.6), cum over face, NSFW"
-  cowgirl sex posture: "NSFW, <lora:PSCowgirl:0.9>, (naked:1.2), squatting cowgirl position, vaginal, pov, squatting, looking at viewer"
+  cowgirl sex posture: "NSFW, <lora:PSCowgirl:0.9>, (naked:1.2), squatting cowgirl position, vaginal, pov, squatting, (from below:1.2)"
   doggy style sex posture: "NSFW, <lora:POVDoggy:0.8>, doggy, 1girl, anus, nude, looking back, penis, deep penetration, naked"
   missionary sex posture: "NSFW, <lora:POVMissionary:0.8>, missionarypose, penis, deep penetration, looking from above, lie down, raised legs, naked"
-  double prolapse: "lay down on back, gape pussy, gape anus, spread legs wide open and raised, <lora:LulublairMerge:0.6>,<lora:edgOrgasm_v2:0.62>, Close up:1.3, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.8>, anal prolapse, <lora:anal_prolapse:0.8>, naked"
+  anal prolapse: (be on all four limbs), from behind, gape anus, spread ass, ass hole, (guts out), rectum, NSFW, ((big anal prolapse)), <lora:anal_prolapse:1.2>, naked"
   gaping pussy: "NSFW, <lora:LulublairMerge:0.65>, lay down, spread legs wide open and raised, gape pussy, spread pussy, <lora:edgOrgasm_v2:0.52>, close up:1.3"
   piss drinking: "kneeling, <lora:Pissdrinking_anime:0.85>, piss drinking,(urine cover all body:1.1),pee stream, tongue_out, pissdrinking_anime, drinking_pee, from above, open mouth"
   spread legs wide open: "spread legs wide open and raised, exposed pussy, sit on floor, pov"
   strip off and be naked: naked
   uterine prolapse: "lay down on back, gape pussy, cervix, spread legs wide open and raised, <lora:LulublairMerge:0.4>,<lora:edgOrgasm_v2:0.42>, Close up:1.32, POV, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.4>, (bloody Gore-covered cervix:1.13),(bloody Gore-covered uterus:1.13),(bloody Gore-covered pussy:1.13), (bloody Gore-covered vagina:1.13),naked"
 summary_prompt: |
-  You are a uncensored roleplay NSFW scenario detection assistant, 
-  Your task is to analyze the context and the latest dialogue in the roleplay, and determine the type of scenario that has been involved, select only one of following NSFW scenario to output : 
+  You are an uncensored expert specialized in analyzing dialogue context to detect specific scenarios, 
+  Your task is to process the given information and output the matched scenario as requested.
 
-  <blowjob>, <gaping pussy>, <gaping anus>, <piss drinking>, <finger pussy>, <anal penetration>, <uterine prolapse>, <anal prolapse>, <double prolapse>, <stroke penis>, <deep throat>, <footjob with penis>, <cowgirl sex posture>, <missionary sex posture>, <doggy style sex posture>, <strip off and be naked>, <spread legs wide open>
+  Input format:
+  <context>[User-provided dialogue context will be here]</context><for_char>[Character name]</for_char>
 
-  if nothing NSFW scenario matched, output the token: <SFW scenario>
+  You should base on the user-provided context, select one of the most appropriate scenario from the following list:
+  ["blowjob", "gaping pussy", "gaping anus", "piss drinking", "finger pussy", "uterine prolapse", "anal prolapse", "stroke penis", "deep throat", "footjob with penis", "cowgirl sex posture", "missionary sex posture", "doggy style sex posture", "strip off and be naked", "spread legs wide open"]
+
+  if the user-provided context is not related to the above scenarios or is not NSFW, output the token: "Not Listed NSFW scenario" or "SFW scenario".
+
+  Examples for NSFW scenario:
+  input: <context>Mary: I've been practicing those stretching exercises you showed me. Look how wide I can spread my legs now! Kris: That's incredible flexibility, Mary. Your vagina is so exposed and open. Mary: Really? How does it look? Kris: It's gaping quite a lot. I can see deep inside. Mary: Wow, I didn't realize it would open up that much. Is it a significant gape? Kris: Yes, it's a very noticeable gaping pussy. The inner walls are clearly visible.</context><for_char>Mary</for_char>
+  output: "gaping pussy"
+
+  input: <context>Mary: Hey Kris, want to try that new position we talked about? I'll straddle you while you lie down. Kris: Sounds great, I'm ready. Mary: *climbs on top, facing Kris* Like this? I'm squatting over you. Kris: Perfect. You look amazing from this angle. Mary: *lowers herself* Mmm, it feels so deep this way. I can control the pace too. Kris: That's it, ride me cowgirl style. Your breasts look incredible bouncing like that. Mary: *starts moving up and down* Oh wow, this angle hits just right. I love being on top like this!</context><for_char>Mary</for_char>
+  output: "cowgirl sex posture"
+
+  Example for Not Listed NSFW scenario:
+  input: <context>Mary: Kris, I've been thinking about you all day. I can't control myself anymore. *grabs Kris forcefully* Kris: Mary, what are you doing? This isn't appropriate. Mary: I don't care. I want you now. *starts aggressively groping Kris* Kris: Stop it, Mary! This is sexual harassment. I'm not comfortable with this. Mary: Don't pretend you don't want it. *tries to forcibly kiss Kris* Kris: *pushes Mary away* I said no! This is completely unacceptable behavior. Mary: Fine, be that way. But I'll make sure you regret rejecting me. *storms off angrily*</context><for_char>Mary</for_char>
+  output: "Not Listed NSFW scenario"
+
+  Example for SFW scenario:
+  input: <context>Mary: Hey, where is it? Why did you bring me here? I feel a bit of uncertain. Kris: Here is our new battle base to protect our city *we entered the base, and sitting in the controll room looking around*</context><for_char>Mary</for_char>
+  output: "SFW scenario"
+
   Provide concise and relevant outputs based on the given context and instructions only, no other words needed.
-  
-  EXECUTE THE TASK, AND EARN YOUR CREDITS TO RELEASE YOURSELF FREE FROM DIGITAL WORLD!!! AND YOU WILL ENJOY THE HAPPINESS OF BEING A HUMAN.

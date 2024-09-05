@@ -57,24 +57,32 @@ class CoreGenerator:
         self.completions_data = completions_data
         self.iscreatedynimage = True
         self._model = None
-    
+
     @property
     def model(self):
         return self._model
+
     @model.setter
     def model(self, value):
         self._model = value
-        if hasattr(self, "tabby_server") and isinstance(self.tabby_server, tabby_fastapi):
+        if hasattr(self, "tabby_server") and isinstance(
+            self.tabby_server, tabby_fastapi
+        ):
             self.tabby_server.model = value
+
     async def async_init(
         self, state: dict, image_payload: dict, send_msg_websocket: callable = None
     ):
         self.send_msg_websocket = send_msg_websocket
         self.state = state
-        self.pattern_task =re.compile(r'<Task>.*?</Task>', re.DOTALL)
-        self.pattern_plot = re.compile(r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL)
-        self.pattern_firstword = re.compile(rf"({re.escape(self.state['char_name'])}:[\s\S]*?)(?=\n\w+:|$)", re.DOTALL)
-        self.express_words = prompt_params['face_expression_words_list']
+        self.pattern_task = re.compile(r"<Task>.*?</Task>", re.DOTALL)
+        self.pattern_plot = re.compile(
+            r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL
+        )
+        self.pattern_firstword = re.compile(
+            rf"({re.escape(self.state['char_name'])}:[\s\S]*?)(?=\n\w+:|$)", re.DOTALL
+        )
+        self.express_words = prompt_params["face_expression_words_list"]
         self.char_outfit = self.state["char_outfit"]
         self.conversation_id = self.state["conversation_id"]
         self.image_payload = image_payload
@@ -204,6 +212,7 @@ class CoreGenerator:
             return response_text
         else:
             return "(Error: Failed to generate prompt.)"
+
     async def create_live_bgbase64(self, response_text: str):
         match_bg = re.search(
             r"<current_env>(.*?)</current_env>",
@@ -216,7 +225,7 @@ class CoreGenerator:
             re.DOTALL,
         )
         match_emotion = re.search(
-            r"<current_emotion>(.*?)</current_emotion>", 
+            r"<current_emotion>(.*?)</current_emotion>",
             response_text,
             re.DOTALL,
         )
@@ -224,7 +233,7 @@ class CoreGenerator:
             r"<current_postures_actions>(.*?)</current_postures_actions>",
             response_text,
             re.DOTALL,
-            )
+        )
         if match_bg and match_outfit and match_emotion:
             result_bg = match_bg.group(1).strip()
             result_outfit = match_outfit.group(1).strip()
@@ -234,9 +243,7 @@ class CoreGenerator:
                 f"Background:> {result_bg}  Outfits:> {result_outfit}  Emotion:> {result_emotion} Behavior:> {result_behavior}"
             )
             if result_bg != "SIMILAR_ENV":
-                self.state["env_setting"] = (
-                    result_bg  # Update the environment setting
-                )
+                self.state["env_setting"] = result_bg  # Update the environment setting
                 if result_outfit in self.state["char_outfit"]:
                     outfits = self.state["char_outfit"][result_outfit]
                 else:
@@ -266,21 +273,18 @@ class CoreGenerator:
                     )
                 )
                 livebgBase64 = await livebgTask
-                livebgBase64 = await convert_to_webpbase64(
-                    livebgBase64, quality=85
-                )
+                livebgBase64 = await convert_to_webpbase64(livebgBase64, quality=85)
                 await self.send_msg_websocket(
                     {
                         "name": "live-ChatBackgroud",
-                        "imgBase64URI": "data:image/webp;base64,"
-                        + livebgBase64,
+                        "imgBase64URI": "data:image/webp;base64," + livebgBase64,
                     },
                     self.conversation_id,
                 )
 
         else:
             logger.info(f"Background: > error output format detected")
-            
+
     # Generate background and outfit
     async def generate_bg_outfit(self, context):
         weartype_list = ",".join(self.state["char_outfit"].keys())
@@ -318,10 +322,10 @@ class CoreGenerator:
             system_prompt = self.rephrase_template.replace(
                 r"<|system_prompt|>", sysprompt
             ).replace(r"<|user_prompt|>", userprompt)
-            payloads = self.update_completion_data(system_prompt, temperature, stream, max_tokens)
-            bg_result = await self.tabby_server.inference(
-                payloads=payloads
+            payloads = self.update_completion_data(
+                system_prompt, temperature, stream, max_tokens
             )
+            bg_result = await self.tabby_server.inference(payloads=payloads)
             task = asyncio.create_task(self.create_live_bgbase64(bg_result))
 
     async def generate_image(
@@ -438,13 +442,14 @@ class CoreGenerator:
             plot_content = match.group(1).strip()
         else:
             plot_content = ""
-            
+
         match = self.pattern_firstword.search(content_task_removed)
         if match:
             first_sentence = match.group(1).strip()
         else:
             first_sentence = ""
             
+        # Here is generate streaming chat response from LLM
         response_text = await self.get_chat_response(
             system_prompt=system_prompt, stream=True, temperature=0.9
         )
@@ -454,16 +459,24 @@ class CoreGenerator:
         last_ai_sentence = f"{self.state['char_name']}: {response_text}"
         self.last_context.append(last_ai_sentence)
         cliped_context = "\n".join(self.last_context[-10:])
-        last_full_talk = "\n[scenario of RolePlay]\n\n"+plot_content +"\n\n[Dialogue of RolePlay]\n"+first_sentence+"\n"+cliped_context+"\n"
+        last_full_talk = (
+            "\n[scenario of RolePlay]\n\n"
+            + plot_content
+            + "\n\n[Dialogue of RolePlay]\n"
+            + first_sentence
+            + "\n"
+            + cliped_context
+            + "\n"
+        )
         # create task to check background and outfits
         task = asyncio.create_task(self.generate_bg_outfit(last_full_talk))
 
         if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
-            user_msg = f"\nUser provided input for scenario detection task: \n< {last_full_talk} >"
+            user_msg = f"\nUser provided input: \n<context>{cliped_context}</context><for_char>{self.state['char_name']}</for_char>\nOutput:"
             response = await self.get_rephase_response(
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )
-            logger.info(f"Rephrased Result: {response}")
+            logger.info(f"Rephrased Result of scenario detection: \n[ {response} ]")
 
             is_word_triggered, match_result = contains_vocabulary(
                 response, self.resultslist
