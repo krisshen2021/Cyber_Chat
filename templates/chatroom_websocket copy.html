@@ -29,27 +29,6 @@
     import { VolumeKnob, SwitchUI } from '/static/js/ui.js';
     const knobElement = document.getElementById('knob');
     const audioElement = document.getElementById('bg_music');
-    const messageBox_switch = document.getElementById('messageBox_switch');
-    const messageBox_switchUI = new SwitchUI({
-        element: messageBox_switch,
-        onColor: '#462256',
-        offColor: '#3d3d3d',
-        width: 40,
-        height: 20,
-        value: true
-    });
-    $(messageBox_switch).on('change', (event, value) => {
-        if (value && !$('#comicMode').is(':checked')) {
-            $('#message_box').css('display', 'flex');
-            $('#holder_box').css('height', '50vh');
-            updateScroll();
-        } else {
-            $('#message_box').css('display', 'none');
-            $('#holder_box').css('height', 'min-content');
-            updateScroll();
-        }
-        console.log('Current messageBox_switch:', value);
-    });
     const volumeKnob = new VolumeKnob({
         element: knobElement,
         minValue: 0,
@@ -252,7 +231,6 @@
 
     function dispModeSwitch() {
       if ($('#comicMode').is(':checked')) {
-        $('#messageBox_switch_holder').css('display', 'none');
         holdbox_origin_height = $('#holder_box').height();
         $('#message_box').css('display', 'none');
         $('#holder_box').css('height', 'auto');
@@ -267,7 +245,6 @@
           $('.comic_msg_holder_user').css('display', 'flex');
         }
       } else {
-        $('#messageBox_switch_holder').css('display', 'flex');
         $('#char-dynpic-wrapper')
           .removeClass('wrapper-char-dynpic')
           .removeClass('wrapper-char-dynpic-horizon')
@@ -1963,10 +1940,6 @@
             <button id="exitchat">Exit</button>
           </div>
           <div class="sub_options">
-            <div id="messageBox_switch_holder">
-              <div id="messageBox_switch"></div>
-              <span class="smallFonts">Message Box</span>
-            </div>
             <div>
               <input id="voiceswitcher" type="checkbox" />
               <span class="smallFonts">Voice Output</span>

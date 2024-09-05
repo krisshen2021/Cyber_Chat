@@ -38,6 +38,7 @@ remote_OAI_config = {
     "openrouter": {"api_key": openrouter_api_key, "url": "https://openrouter.ai/api/v1"},
     "groq": {"api_key": groq_api_key, "url": "https://api.groq.com/openai/v1"},
     "ollama": {"api_key":"ollama","url": "http://localhost:11434/v1"},
+    "lmstudio": {"api_key":"lmstudio","url": "http://localhost:1234/v1"},
     "tabby": {"api_key":tabby_api_key,"url": "http://localhost:5555/v1"},
 }
 

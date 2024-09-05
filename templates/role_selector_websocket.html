@@ -1166,11 +1166,7 @@
         offColor: '#3d3d3d',
         width: 40,
         height: 20,
-        value: true
-    });
-    $(liveCharSwitch).on('change', (event, value) => {
-        $(liveCharSwitch).attr('data-value', value);
-        console.log($(liveCharSwitch).attr('data-value'));
+        value: false
     });
     const volumeKnob = new VolumeKnob({
         element: knobElement,

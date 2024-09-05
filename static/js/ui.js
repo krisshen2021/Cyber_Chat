@@ -4,23 +4,22 @@ export class SwitchUI {
         this.element = $(options.element);
         this.width = options.width;
         this.height = options.height;
-        this.isOn = false;
-        this.value = false;
-        this.defaultValue = options.value || false;
+        this.isOn = options.value || false;
         this.onColor = options.onColor;
         this.offColor = options.offColor;
         this.init();
     }
     init() {
+        this.element.attr('data-value', this.isOn);
         this.element.css({
             'width': this.width + 'px',
             'height': this.height + 'px',
             'border-radius': this.height / 2 + 'px',
-            'background-color': this.offColor,
             'cursor': 'pointer',
             'position': 'relative',
             'overflow': 'hidden'
         });
+
         this.roundButton = $('<div>').css({
             'width': this.height * 0.8 + 'px',
             'height': this.height * 0.8 + 'px',
@@ -32,6 +31,19 @@ export class SwitchUI {
             'transform': 'translate(0, -50%)',
             'transition': 'left 0.3s'
         });
+
+        if (this.isOn) {
+            this.element.css({
+                'background-color': this.onColor,
+            });
+            this.roundButton.css('left', 'calc(100% - ' + this.height * 0.9 + 'px)');
+        } else {
+            this.element.css({
+                'background-color': this.offColor,
+            });
+            this.roundButton.css('left', this.height * 0.1 + 'px');
+        }
+
         this.element.append(this.roundButton);
         this.element.on('click', () => {
             this.toggle();
@@ -42,16 +54,16 @@ export class SwitchUI {
         if (this.isOn) {
             this.element.css('background-color', this.onColor);
             this.roundButton.css('left', 'calc(100% - ' + this.height * 0.9 + 'px)');
-            this.value = this.defaultValue;
+            this.element.attr('data-value', this.isOn);
         } else {
             this.element.css('background-color', this.offColor);
             this.roundButton.css('left', this.height * 0.1 + 'px');
-            this.value = false;
+            this.element.attr('data-value', this.isOn);
         }
-        this.element.trigger('change', [this.value]);
+        this.element.trigger('change', [this.isOn]);
     }
     getValue() {
-        return this.value;
+        return this.isOn;
     }
 }
 
