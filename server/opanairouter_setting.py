@@ -117,14 +117,14 @@ def select_model():
                             router_details = picked_routers[selected_router]
                             api_key = router_details["api_key"]
                             base_url = router_details["url"]
-                        openairouter_sync_client.base_url = base_url
-                        openairouter_sync_client.api_key = api_key
+                        # openairouter_sync_client.base_url = base_url
+                        # openairouter_sync_client.api_key = api_key
                         openairouter_client.base_url = base_url
                         openairouter_client.api_key = api_key
                         # openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)
                         headers = {
                             "accept": "application/json",
-                            "Authorization": f"Bearer {openairouter_sync_client.api_key}",
+                            "Authorization": f"Bearer {api_key}",
                         }
                         url = base_url+"/models"
                         print(url)

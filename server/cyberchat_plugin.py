@@ -51,8 +51,6 @@ from remote_api_hub import (
     openairouter_stream,
     openairouter_invoke,
     OAIParam,
-    sentenceCompletionParam,
-    sentenceCompletion_invoke,
 )
 
 
@@ -66,7 +64,7 @@ restapi_tts = tts_select_endpoint()
 
 restapi_stt = stt_select_endpoint()
 
-AUDIO_DIR = os.path.join(project_root, "static","music")
+AUDIO_DIR = os.path.join(project_root, "static", "music")
 
 logger.info(f"OAI model:{openairouter_model}")
 ansiColor.color_print(
@@ -134,6 +132,7 @@ class RestAPI_TTSPayload(BaseModel):
 class STTPayload(BaseModel):
     audio_data: str  # {"file": ("audio.webm", io.BytesIO(audio_data), "audio/webm")}
 
+
 # class StreamMuiscPayload(BaseModel):
 #     moment: Optional[str] = None
 #     music_name: Optional[str] = None
@@ -167,11 +166,12 @@ local_tabby_server_base = config_data["local_tabby_server_base"]
 api_key = config_data["api_key"]
 admin_key = config_data["admin_key"]
 tabbyHeaders = {
-            "accept": "application/json",
-            "x-api-key": api_key,
-            "x-admin-key": admin_key,
-            "Content-Type": "application/json",
-        }
+    "accept": "application/json",
+    "x-api-key": api_key,
+    "x-admin-key": admin_key,
+    "Content-Type": "application/json",
+}
+
 
 class StableDiffusionAPI:
     def __init__(self):
@@ -262,7 +262,8 @@ async def xtts_to_audio(payload: XTTSPayload):
                 )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 # SD Picture Generator
 @router.post("/v1/SDapi")
 async def generate_image(payload: SDPayload, SD_URL: str = Header(None)):
@@ -297,12 +298,15 @@ async def SD_api_modellist(SD_URL: str = Header(None)):
     headers = {"accept": "application/json"}
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url=SD_URL+model_list_endpoint, headers=headers, timeout=timeout)
+            response = await client.get(
+                url=SD_URL + model_list_endpoint, headers=headers, timeout=timeout
+            )
             response.raise_for_status()
             response_data = response.json()
             return response_data
     except Exception as e:
         print("Error on fetch Model List from SDapi: ", e)
+
 
 # SD vram status
 @router.post("/v1/SDapiVRAMStatus")
@@ -314,25 +318,30 @@ async def SD_api_vram(SD_URL: str = Header(None)):
     try:
         # Fetch memory information
         async with httpx.AsyncClient() as client:
-            response = await client.get(url=SD_URL+memory_endpoint, headers=headers, timeout=timeout)
+            response = await client.get(
+                url=SD_URL + memory_endpoint, headers=headers, timeout=timeout
+            )
             response.raise_for_status()
             memory_data = response.json()
             memory = memory_data["cuda"]["system"]["total"]
-        # Fetch cmd_flags to check if lowvram is enabled
-            response = await client.get(url=SD_URL+cmd_flags_endpoint, headers=headers, timeout=timeout)
+            # Fetch cmd_flags to check if lowvram is enabled
+            response = await client.get(
+                url=SD_URL + cmd_flags_endpoint, headers=headers, timeout=timeout
+            )
             response.raise_for_status()
             cmd_flags = response.json()
             lowvram = cmd_flags["lowvram"]
             medvram = cmd_flags["medvram"]
-        # identiify vram status
+            # identiify vram status
             if lowvram or medvram or memory < 10000000000:
                 vram_status = "low"
             else:
                 vram_status = "high"
             return {"vram_status": vram_status}
-                
+
     except Exception as e:
         print("Error on fetch VRAM status from SDapi: ", e)
+
 
 # GPU list endpoint
 @router.get("/v1/gpu")
@@ -352,7 +361,6 @@ async def get_gpu_info():
     return {"GPU Count": device_count, "GPU Info": gpu_info}
 
 
-
 # local tabby server ONLY endpoints
 @router.post("/v1/model/unload")
 async def unload_model():
@@ -366,9 +374,10 @@ async def unload_model():
             return True
         else:
             return False
-    
+
+
 @router.post("/v1/model/load")
-async def load_model(payload:dict):
+async def load_model(payload: dict):
     async with httpx.AsyncClient() as client:
         response = await client.post(
             url=f"{local_tabby_server_base}/model/load",
@@ -380,6 +389,8 @@ async def load_model(payload:dict):
             return True
         else:
             return False
+
+
 @router.post("/v1/completions")
 async def local_completion(params: CompletionsParam):
     data = params.model_dump(exclude_none=True)
@@ -408,7 +419,7 @@ async def local_completion(params: CompletionsParam):
                 print("Error on fetch from Tabby: ", e)
 
         return StreamingResponse(stream_generator(), media_type="application/json")
-    
+
     else:
         try:
             async with httpx.AsyncClient() as client:
@@ -423,7 +434,6 @@ async def local_completion(params: CompletionsParam):
                 return response_data
         except Exception as e:
             print("Error on fetch from Tabby: ", e)
-
 
 
 # Endpoints for remote actions
@@ -468,36 +478,52 @@ async def remotetts_to_audio_stream(payload: RestAPI_TTSPayload):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
 # OAI model list endpoint
 @router.get("/v1/models")
 async def get_models():
-    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
+    if (
+        config_data["using_remoteapi"]
+        and config_data["remoteapi_endpoint"] == "openairouter"
+    ):
         return JSONResponse(content=OAI_model_list)
-    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "cohere":
+    elif (
+        config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "cohere"
+    ):
         response = await cohere_client.models.list()
         model_list = []
         for model in response.models:
             if "command" in model.name or "aya" in model.name:
-                model_list.append({"id": model.name, "object": "model", "owned_by": "cohere"})
+                model_list.append(
+                    {"id": model.name, "object": "model", "owned_by": "cohere"}
+                )
         sorted_model_list = sorted(model_list, key=lambda x: x["id"])
-        content ={
-            "object": "list",
-            "data": sorted_model_list
-        }
+        content = {"object": "list", "data": sorted_model_list}
         return JSONResponse(content=content)
-    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "togetherai":
+    elif (
+        config_data["using_remoteapi"]
+        and config_data["remoteapi_endpoint"] == "togetherai"
+    ):
         togetherai_url = "https://api.together.xyz/v1/models"
         async with httpx.AsyncClient(timeout=300) as client:
-            response = await client.get(url=togetherai_url, headers={"Authorization": f"Bearer {togetherai_api_key}", "accept":"application/json"})
+            response = await client.get(
+                url=togetherai_url,
+                headers={
+                    "Authorization": f"Bearer {togetherai_api_key}",
+                    "accept": "application/json",
+                },
+            )
             content = response.json()
-            model_list = [{"id": model["id"], "object": "model", "owned_by": "togetherai"} for model in content if "chat" in model["type"]]
+            model_list = [
+                {"id": model["id"], "object": "model", "owned_by": "togetherai"}
+                for model in content
+                if "chat" in model["type"]
+            ]
             sorted_model_list = sorted(model_list, key=lambda x: x["id"].lower())
-            content = {
-                "object": "list",
-                "data": sorted_model_list
-            }
+            content = {"object": "list", "data": sorted_model_list}
             return JSONResponse(content=content)
-        
+
     elif not config_data["using_remoteapi"]:
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -510,17 +536,28 @@ async def get_models():
             return response_data
     else:
         raise HTTPException(status_code=404, detail="Model list not found")
-    
+
+
 # OAI model get default model
 @router.get("/v1/model")
 async def get_default_model():
     global openairouter_model
-    if config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "openairouter":
+    if (
+        config_data["using_remoteapi"]
+        and config_data["remoteapi_endpoint"] == "openairouter"
+    ):
         return JSONResponse(content={"id": openairouter_model})
-    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "cohere":
+    elif (
+        config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "cohere"
+    ):
         return JSONResponse(content={"id": "command-r-plus"})
-    elif config_data["using_remoteapi"] and config_data["remoteapi_endpoint"] == "togetherai":
-        return JSONResponse(content={"id": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO"})
+    elif (
+        config_data["using_remoteapi"]
+        and config_data["remoteapi_endpoint"] == "togetherai"
+    ):
+        return JSONResponse(
+            content={"id": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO"}
+        )
     elif not config_data["using_remoteapi"]:
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -533,13 +570,22 @@ async def get_default_model():
             return response_data
     else:
         raise HTTPException(status_code=404, detail="Current model not found")
-# OAI default model switch  
+
+
+# OAI default model switch
 @router.post("/v1/OAI_Switch_Model")
 async def switch_model(model: dict):
     global openairouter_model
     openairouter_model = model["model"]
     logger.info(f"Switching to model: {openairouter_model}")
-    return JSONResponse(content={"model":openairouter_model,"message": f"Switched to model: {openairouter_model}"})
+    return JSONResponse(
+        content={
+            "model": openairouter_model,
+            "message": f"Switched to model: {openairouter_model}",
+        }
+    )
+
+
 # OAI STT speak to text
 @router.post("/v1/stt_remote")
 async def stt_to_text(payload: STTPayload):
@@ -561,6 +607,8 @@ async def stt_to_text(payload: STTPayload):
                 return {"text": "Error on transcribe audio"}
     except Exception as e:
         print(f"Error on transcribe audio: {e}")
+
+
 # OAI remote api endpoint
 @router.post("/v1/remoteapi/{ai_type}")
 async def remote_ai_stream(ai_type: str, params_json: dict):
@@ -870,11 +918,10 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
         return "Invalid AI type"
 
 
-
-#Music streaming endpoints
+# Music streaming endpoints
 @router.get("/v1/music/playlist")
 async def get_playlist():
-    files = [f for f in os.listdir(AUDIO_DIR) if f.endswith(('.mp3', '.wav', '.ogg'))]
+    files = [f for f in os.listdir(AUDIO_DIR) if f.endswith((".mp3", ".wav", ".ogg"))]
     files.sort(key=str.lower)
     full_playlist = []
     for music in files:
@@ -893,6 +940,7 @@ async def get_playlist():
             full_playlist.append(music)
     return JSONResponse(content={"playlist": full_playlist})
 
+
 @router.get("/v1/music/play/{filename}")
 async def play_music(filename: str):
     respnose = await get_playlist()
@@ -902,11 +950,13 @@ async def play_music(filename: str):
         if music.get("title") == filename or music.get("name") == filename:
             music_path = os.path.join(AUDIO_DIR, music.get("name"))
             if os.path.isfile(music_path):
+
                 async def interfile(start=0, chunk_size=8192):
                     async with aiofiles.open(music_path, "rb") as f:
                         await f.seek(start)
                         while chunk := await f.read(chunk_size):
                             yield chunk
+
                 return StreamingResponse(interfile(), media_type="audio/mpeg")
             else:
                 raise HTTPException(status_code=404, detail="Music not found")

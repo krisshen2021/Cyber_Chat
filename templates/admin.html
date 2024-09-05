@@ -23,8 +23,7 @@
             },
         }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-    <!-- Add Google Fonts -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -32,7 +31,6 @@
         body {
             font-family: 'Poppins', sans-serif;
             font-size: 0.875rem;
-            /* Reduced from default 1rem */
         }
     </style>
 
@@ -40,10 +38,9 @@
 
 <body class="bg-gray-100 h-full">
     <div id="app" class="flex min-h-screen">
-        <!-- Left Sidebar -->
         <div class="w-auto bg-cyberchat-100 text-white">
             <div class="p-4">
-                <h1 class="text-lg font-semibold">Dashboard</h1> <!-- Changed from text-2xl to text-lg -->
+                <h1 class="text-lg font-semibold">Dashboard</h1>
             </div>
             <nav class="mt-4">
                 <a href="#"
@@ -52,13 +49,12 @@
                     ${ isLoggedIn ? 'Logout' : 'Login' }
                 </a>
                 <a href="/"
-                    class="block py-2 px-4 hover:bg-gray-100 hover:text-cyberchat-100 transition duration-500 text-sm" target="_blank">Go to Chat</a> <!-- Added text-sm -->
+                    class="block py-2 px-4 hover:bg-gray-100 hover:text-cyberchat-100 transition duration-500 text-sm" target="_blank">Go to Chat</a>
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="flex-1 p-10">
-            <div v-if="!selectedRole && isLoggedIn" >
+            <div v-if="!selectedRole && isLoggedIn">
                 <h2 class="text-xl font-semibold mb-6">AI Roles</h2>
                 <ul class="divide-y divide-gray-200 bg-white shadow-md rounded-lg">
                     <li v-for="role in aiRoles" :key="role.Data.ai_name" v-if="currentUserID == 1 || role.Data.Creator_ID == currentUserID"
@@ -77,9 +73,9 @@
                     <div class="flex items-center gap-4 p-4">
                         <img :src="`/static/images/avatar/${selectedRole}/none.webp`" alt="Avatar"
                             class="w-20 h-20 rounded-full">
-                            <h3 class="text-lg font-semibold">${ selectedRole }</h3>
-                            <button @click="goBackToList" class="mt-4 bg-gray-200 text-gray-700 px-4 py-2 rounded">Back to
-                                List</button>
+                        <h3 class="text-lg font-semibold">${ selectedRole }</h3>
+                        <button @click="goBackToList" class="mt-4 bg-gray-200 text-gray-700 px-4 py-2 rounded">Back to
+                            List</button>
                     </div>
                     <div v-for="(value, key) in roleDetails" :key="key" class="mb-2 text-xs">
                         <label class="block font-semibold mb-1">${ key }</label>
@@ -108,7 +104,7 @@
                     <label for="username" class="text-cyberchat-100">Username</label>
                     <input type="text" class="p-2 border rounded bg-gray-100" id="username" v-model="username">
                     <label for="password" class="text-cyberchat-100">Password</label>
-                    <input type="password" class="p-2 border rounded bg-gray-100" id="password" v-model="password">
+                    <input type="password" class="p-2 border rounded bg-gray-100" id="password" v-model="password" @keyup.enter="login">
                     <button @click="login" class="w-20 mt-4 bg-cyberchat-100 text-white px-4 py-2 rounded">Login</button>
                 </div>
             </div>
@@ -116,86 +112,93 @@
     </div>
 </body>
 <script>
-    new Vue({
-        el: '#app',
+    const { createApp, ref, reactive } = Vue;
+
+    createApp({
         delimiters: ['${', '}'],
-        data: {
-            isLoggedIn: JSON.parse('{{ is_logged_in | tojson | safe }}'),
-            aiRoles: JSON.parse('{{ ai_role_list | tojson | safe }}'),
-            selectedRole: null,
-            roleDetails: null,
-            username: null,
-            password: null,
-            currentUserID: null,
-        },
-        methods: {
-            toggleLogin() {
-                this.isLoggedIn = false;
-                this.username = null;
-                this.password = null;
-                this.selectedRole = null;
-                this.roleDetails = null;
-                this.currentUserID = null;
-            },
-            selectRole(roleId) {
+        setup() {
+            const isLoggedIn = ref(JSON.parse('{{ is_logged_in | tojson | safe }}'));
+            const aiRoles = ref(JSON.parse('{{ ai_role_list | tojson | safe }}'));
+            const selectedRole = ref(null);
+            const roleDetails = ref(null);
+            const username = ref(null);
+            const password = ref(null);
+            const currentUserID = ref(null);
+
+            const toggleLogin = () => {
+                isLoggedIn.value = false;
+                username.value = null;
+                password.value = null;
+                selectedRole.value = null;
+                roleDetails.value = null;
+                currentUserID.value = null;
+            };
+
+            const selectRole = (roleId) => {
                 console.log(roleId);
-                this.selectedRole = roleId;
-                this.fetchRoleDetails(roleId);
-            },
-            async fetchRoleDetails(roleId) {
+                selectedRole.value = roleId;
+                fetchRoleDetails(roleId);
+            };
+
+            const fetchRoleDetails = async (roleId) => {
                 try {
                     const response = await fetch(`/admin/${roleId}`);
                     const data = await response.json();
-                    this.roleDetails = data;
-                    console.log(this.roleDetails);
-                    this.resizeAllTextareas();
+                    roleDetails.value = data;
+                    console.log(roleDetails.value);
+                    resizeAllTextareas();
                 } catch (error) {
                     console.error('Error fetching role details:', error);
                 }
-            },
-            goBackToList() {
-                this.selectedRole = null;
-                this.roleDetails = null;
-            },
-            autoResize(event) {
+            };
+
+            const goBackToList = () => {
+                selectedRole.value = null;
+                roleDetails.value = null;
+            };
+
+            const autoResize = (event) => {
                 const textarea = event.target;
                 textarea.style.height = 'auto';
                 textarea.style.height = textarea.scrollHeight + 'px';
-            },
-            updateJsonValue(key, event) {
+            };
+
+            const updateJsonValue = (key, event) => {
                 try {
                     const newValue = JSON.parse(event.target.value);
-                    this.$set(this.roleDetails, key, newValue);
+                    roleDetails.value[key] = newValue;
                 } catch (e) {
                     console.error('Invalid JSON:', e);
                 } finally {
-                    this.autoResize(event);
+                    autoResize(event);
                 }
-            },
-            resizeAllTextareas() {
-                this.$nextTick(() => {
-                    const textareas = this.$el.querySelectorAll('textarea');
+            };
+
+            const resizeAllTextareas = () => {
+                setTimeout(() => {
+                    const textareas = document.querySelectorAll('textarea');
                     textareas.forEach(textarea => {
                         textarea.style.height = 'auto';
                         textarea.style.height = textarea.scrollHeight + 'px';
                     });
-                });
-            },
-            async saveRoleDetails() {
+                }, 0);
+            };
+
+            const saveRoleDetails = async () => {
                 try {
-                    this.roleDetails.Name = this.selectedRole;
+                    roleDetails.value.Name = selectedRole.value;
                     const response = await fetch('/admin/edit_role', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify(this.roleDetails),
+                        body: JSON.stringify(roleDetails.value),
                     });
-        
+
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
-        
+
                     const result = await response.json();
                     if (result === true) {
                         console.log('Role edited successfully');
@@ -208,9 +211,10 @@
                     console.error('Error:', error);
                     alert('Error: ' + error.message);
                 }
-            },
-            async login() {
-                if (!this.username || !this.password) {
+            };
+
+            const login = async () => {
+                if (!username.value || !password.value) {
                     alert('Please enter both username and password');
                     return;
                 }
@@ -219,23 +223,40 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ username: this.username, password: this.password }),
+                    body: JSON.stringify({ username: username.value, password: password.value }),
                 });
                 const data = await response.json();
                 if (data.status === 'Success') {
-                    this.isLoggedIn = true;
-                    this.username = null;
-                    this.password = null;
-                    this.selectedRole = null;
-                    this.roleDetails = null;
-                    this.currentUserID = data.data.unique_id;
+                    isLoggedIn.value = true;
+                    username.value = null;
+                    password.value = null;
+                    selectedRole.value = null;
+                    roleDetails.value = null;
+                    currentUserID.value = data.data.unique_id;
                     console.log(data.data);
                 } else {
                     alert('Login failed: ' + data.data);
                 }
-            },
-        },
-    });
+            };
+
+            return {
+                isLoggedIn,
+                aiRoles,
+                selectedRole,
+                roleDetails,
+                username,
+                password,
+                currentUserID,
+                toggleLogin,
+                selectRole,
+                goBackToList,
+                autoResize,
+                updateJsonValue,
+                saveRoleDetails,
+                login
+            };
+        }
+    }).mount('#app');
 </script>
 
 </html>

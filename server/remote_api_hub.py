@@ -71,7 +71,6 @@ openairouter_client = AsyncOpenAI(
 openairouter_sync_client = OpenAI(
     api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1", timeout=600
 )
-sentenceCompletion_client = AsyncOpenAI(base_url="http://localhost:11434/v1", timeout=120, api_key="ollama")
 # Pydantic models for different remote api params
 class ChatMessage(BaseModel):
     role: str
@@ -87,12 +86,6 @@ class OAIParam(BaseModel):
     stop: Optional[List[str]] = None
     model: str
     stream: Optional[bool] = True
-
-class sentenceCompletionParam(OAIParam):
-    model: Optional[str] = "gemma2-9b" # "gemma-2-uncensored" "gemma2-9b" "llama3-1-uncensored"
-    stream: Optional[bool] = False
-    max_tokens: Optional[int] = 200
-    temperature: Optional[float] = 0.5
     
 class XiaoaiParam(OAIParam):
     model: Optional[str] = "gpt-4o"
@@ -525,8 +518,4 @@ async def openairouter_invoke(params: OAIParam):
     resp = await openairouter_client.chat.completions.create(**data)
     return resp.choices[0].message.content
 
-async def sentenceCompletion_invoke(params: sentenceCompletionParam):
-    data = params.model_dump(exclude_none=True)
-    resp = await sentenceCompletion_client.chat.completions.create(**data)
-    return resp.choices[0].message.content
 logger.info("...Starting Remote Hub Server...")
