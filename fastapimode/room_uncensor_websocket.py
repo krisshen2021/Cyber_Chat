@@ -532,7 +532,7 @@ class ChatRoom_Uncensored:
         payloads = {
             "prompt": prompt,
             "max_tokens": 120,
-            "temperature": 0.9,
+            "temperature": 0.7,
             "stream": False,
             "model": self.model,
         }
@@ -671,7 +671,10 @@ class ChatRoom_Uncensored:
         if self.config_data["using_remoteapi"] is not True:
             template = self.prompts_templates[self.state["prompt_template"]]
         else:
-            template = self.prompts_templates["Remote_RP"]
+            if self.ai_role.match_words_cata == "SFW":
+                template = self.prompts_templates["Remote_RP_SFW"]
+            elif self.ai_role.match_words_cata == "NSFW":
+                template = self.prompts_templates["Remote_RP_NSFW"]
         pt = template.replace(r"<|character|>", ainame).replace(r"<|user|>", username)
         self.my_generate.get_rephrase_template()
         return pt

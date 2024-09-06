@@ -20,14 +20,12 @@ class airole:
         self.user_role_gender = usergender      
 
     async def async_init(self):
-        roleconf = await getGlobalConfig("roleconf")
-        self.ai_speaker = roleconf[f"{self.roleselector}"]["ai_speaker"]
-        self.ai_speaker_en = roleconf[f"{self.roleselector}"]["ai_speaker_en"]
-        self.ai_if_uncensored = roleconf[f"{self.roleselector}"]["if_uncensored"]
-        self.ai_role_name = roleconf[f"{self.roleselector}"]["ai_name"]
-        self.story_intro = roleconf[f"{self.roleselector}"]["json_Story_intro"]
         role_result = await ARO.fetch_airole(ai_Name=self.roleselector)
-        # logger.info(role_result)
+        self.ai_speaker = role_result["Ai_speaker"]
+        self.ai_speaker_en = role_result["Ai_speaker_en"]
+        self.ai_if_uncensored = role_result["is_Uncensored"]
+        self.ai_role_name = role_result["Ai_name"]
+        self.story_intro = role_result["json_Story_intro"]
         role_desc = f"""<Plot_of_the_RolePlay>
 {role_result['Prologue']}
 </Plot_of_the_RolePlay>
