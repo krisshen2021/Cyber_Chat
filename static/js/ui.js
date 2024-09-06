@@ -234,6 +234,8 @@ export class SelectorUI {
         this.itemTextHoverColor = options.itemTextHoverColor || '#ffffff';
         this.isOpen = false;
         this.itemList = options.itemList || [];
+        this.titleAlign = options.titleAlign || 'center';
+        this.itemAlign = options.itemAlign || 'center';
         this.init();
     }
     init() {
@@ -306,11 +308,15 @@ export class SelectorUI {
             'transition': 'background-color 0.3s ease-in-out',
             'color': this.selectorTextColor,
             'width': 'max-content',
+            'max-width': (this.width * 1.5) + 'px',
+            'overflow': 'hidden',
+            'text-overflow': 'ellipsis',
+            'white-space': 'nowrap',
             'height': this.height + 'px',
             'font-size': this.height / 2 + 'px',
             'display': 'flex',
             'align-items': 'center',
-            'justify-content': 'center',
+            'justify-content': this.titleAlign,
         });
         this.clickArea.text(this.currentItem.name);
         this.element.css({
@@ -327,14 +333,18 @@ export class SelectorUI {
             'position': 'absolute',
             'top': (this.height + 10) + 'px',
             'left': '0',
-            'width': 'max-content',
+            'width': 'min-content',
+            'max-width': (this.width * 2) + 'px',
+            'text-overflow': 'ellipsis',
+            'white-space': 'nowrap',
             'max-height': '300px',
             'overflow-y': 'auto',
+            'overflow-x': 'hidden',
             'border-radius': '5px',
             'background-color': this.itemColor,
             'display': 'none',
             'flex-direction': 'column',
-            'align-items': 'center',
+            'align-items': this.itemAlign,
             'justify-content': 'flex-start',
             'padding': '10px',
             'gap': '5px',
@@ -348,7 +358,7 @@ export class SelectorUI {
                 'cursor': 'pointer',
                 'border-radius': '3px',
                 'color': this.itemTextColor,
-                'width': '100%',
+                'width': 'min-content',
                 'min-height': this.height + 'px',
                 'padding': '0 10px',
                 'display': 'flex',
@@ -400,12 +410,12 @@ export class SelectorUI {
         this.currentItem = item;
         this.currentItemIndex = this.itemList.indexOf(item);
         this.updateItemDisplay();
+        this.element.trigger('change', [this.currentItem.value]);
     }
     updateItemDisplay() {
         this.clickArea.text(this.currentItem.name);
         this.element.attr('data-value', this.currentItem.value);
-        //trigger a change event
-        this.element.trigger('change', [this.currentItem]);
+        
     }
     toggleItemList() {
         if (this.isOpen) {
@@ -433,7 +443,6 @@ export class SelectorUI {
         if (item) {
             this.currentItem = item;
             this.updateItemDisplay();
-            this.element.attr('data-value', this.currentItem.value);
         } else {
             console.warn(`Item with value "${value}" not found in the item list.`);
         }
@@ -442,7 +451,6 @@ export class SelectorUI {
         // 更新列表，外部调用
         this.itemList = itemList;
 
-        // 保存当前选中项的值
         const currentValue = this.currentItem.value;
 
         // 更新列表容器
@@ -451,12 +459,8 @@ export class SelectorUI {
             const listItem = this.createListItem(item);
             this.itemListContainer.append(listItem);
         });
-
-        // 尝试恢复之前的选择，如果不存在则选择第一项
-        // const newSelectedItem = this.itemList.find(item => item.value === currentValue) || this.itemList[0];
-        // this.selectItem(newSelectedItem);
-
-        // 更新显示
+        
+        this.currentItem = this.itemList[0];
         this.updateItemDisplay();
     }
 
@@ -465,7 +469,7 @@ export class SelectorUI {
             'cursor': 'pointer',
             'border-radius': '3px',
             'color': this.itemTextColor,
-            'width': '100%',
+            'width': 'min-content',
             'min-height': this.height + 'px',
             'padding': '0 10px',
             'display': 'flex',

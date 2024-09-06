@@ -51,10 +51,12 @@
       element: modelSwitch,
       width: 100,
       height: 24,
+      titleAlign: 'flex-start',
+      itemAlign: 'flex-start',
       itemList: [
         {
           name: 'Model',
-          value: null
+          value: null,
         }
       ]
     });
@@ -62,6 +64,8 @@
       element: instrSwitch,
       width: 100,
       height: 24,
+      titleAlign: 'flex-start',
+      itemAlign: 'flex-start',
       itemList: [
         {
           name: 'instruction',
@@ -73,12 +77,41 @@
       element: sdSwitch,
       width: 100,
       height: 24,
+      titleAlign: 'flex-start',
+      itemAlign: 'flex-start',
       itemList: [
         {
           name: 'SD model',
           value: null
         }
       ]
+    });
+    $(modelSwitch).on('change', (event, value) => {
+      console.log('Current model:', value);
+      var querydata = {
+        model: value,
+        conid: conid,
+      };
+      ws.send(wsData('change_model', querydata));
+      toggleInputs(false);
+    });
+    $(sdSwitch).on('change', (event, value) => {
+      console.log('Current SD Model:', value);
+      var querydata = {
+        SD_Model: value,
+        conid: conid,
+      };
+      ws.send(wsData('change_SD_Model', querydata));
+      toggleInputs(false);
+    });
+    $(instrSwitch).on('change', (event, value) => {
+      console.log('Current Instruction:', value);
+      var querydata = {
+        instruction: value,
+        conid: conid,
+      };
+      ws.send(wsData('change_instruction', querydata));
+      toggleInputs(false);
     });
     languageSwitchUI.setItem('{{language}}');
     console.log('Current language:', $(languageSwitch).attr('data-value'));
@@ -978,23 +1011,15 @@
         console.log(model_list);
         const modelSwitchItemList = [];
         $.each(model_list, function (index, value) {
+          //if value includes"/", get the text after "/"
+          let name = value.split('/')[1];
           modelSwitchItemList.push({
-            name: value,
+            name: name,
             value: value,
           });
         });
         modelSwitchUI.updateListItems(modelSwitchItemList);
         modelSwitchUI.setItem(model);
-        $(modelSwitch).on('change', (event, value) => {
-          console.log('Current model:', $(modelSwitch).attr('data-value'));
-          var querydata = {
-            model: $(modelSwitch).attr('data-value'),
-            conid: conid,
-          };
-          ws.send(wsData('change_model', querydata));
-          toggleInputs(false);
-        });
-
       }
     }
 
@@ -1011,20 +1036,11 @@
           });
           instrSwitchUI.updateListItems(instructSwitchItemList);
           // instrSwitchUI.setItem(instrSelected);
-          $(instrSwitch).on('change', (event, value) => {
-            console.log('Current Instruction:', $(instrSwitch).attr('data-value'));
-            var querydata = {
-              instruction: $(instrSwitch).attr('data-value'),
-              conid: conid,
-            };
-            ws.send(wsData('change_instruction', querydata));
-            toggleInputs(false);
-          });
         }
       }
     }
 
-    function changeSDModel(SD_model_list) {
+    function changeSDModel(SD_model_list, SD_model) {
       if (SD_model_list !== undefined) {
         if (SD_model_list.length > 0) {
           console.log(SD_model_list);
@@ -1036,16 +1052,7 @@
             });
           });
           sdSwitchUI.updateListItems(sdSwitchItemList);
-          // sdSwitchUI.setItem(sdSelected);
-          $(sdSwitch).on('change', (event, value) => {
-            console.log('Current SD Model:', $(sdSwitch).attr('data-value'));
-            var querydata = {
-              SD_Model: $(sdSwitch).attr('data-value'),
-              conid: conid,
-            };
-            ws.send(wsData('change_SD_Model', querydata));
-            toggleInputs(false);
-          });
+          sdSwitchUI.setItem(SD_model);
         }
       }
     }
@@ -1333,6 +1340,11 @@
       if (model_list != undefined) {
         changeModel(model_list, model);
       }
+      let SD_model_list = msg.data['SD_model_list'];
+      let SD_model = msg.data['SD_model'];
+      if (SD_model_list != undefined) {
+        changeSDModel(SD_model_list, SD_model);
+      }
       let using_remoteapi = msg.data["using_remoteapi"];
       if (using_remoteapi != true) {
         let instruct_list = msg.data['instruct_list'];
@@ -1341,8 +1353,8 @@
       } else {
         $(instrSwitch).parent().hide();
       }
-      let SD_model_list = msg.data['SD_model_list'];
-      changeSDModel(SD_model_list);
+      
+
       toggleInputs(true);
       add_msg({
         message_input: message,

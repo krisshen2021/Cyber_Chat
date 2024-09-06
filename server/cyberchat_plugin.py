@@ -556,7 +556,7 @@ async def get_default_model():
         and config_data["remoteapi_endpoint"] == "togetherai"
     ):
         return JSONResponse(
-            content={"id": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO"}
+            content={"id": "Qwen/Qwen1.5-110B-Chat"}
         )
     elif not config_data["using_remoteapi"]:
         async with httpx.AsyncClient() as client:

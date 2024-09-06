@@ -393,6 +393,7 @@ async def initialize_room(client_msg, client_id):
             "model": userCurrentRoom.model,
             "instruct_list": userCurrentRoom.instr_temp_list,
             "SD_model_list": userCurrentRoom.SD_model_list,
+            "SD_model": userCurrentRoom.image_payload["override_settings"]["sd_model_checkpoint"],
             "iscreatedynimage": userCurrentRoom.iscreatedynimage,
             "using_remoteapi": using_remoteapi,
             "bg_music": userCurrentRoom.bg_music,
@@ -428,6 +429,7 @@ async def restart_room(client_msg, client_id):
         "model": userCurrentRoom.model,
         "instruct_list": userCurrentRoom.instr_temp_list,
         "SD_model_list": userCurrentRoom.SD_model_list,
+        "SD_model": userCurrentRoom.image_payload["override_settings"]["sd_model_checkpoint"],
         "iscreatedynimage": userCurrentRoom.iscreatedynimage,
         "using_remoteapi": using_remoteapi,
         "bg_music": userCurrentRoom.bg_music,
@@ -443,13 +445,15 @@ async def change_model(client_msg, client_id):
     model = client_msg["data"]["model"]
     userCurrentRoom.conversation_id = client_id
     userCurrentRoom.model = model
-    unloadresp = await userCurrentRoom.my_generate.tabby_server.unload_model()
-    if unloadresp:
-        response = await userCurrentRoom.my_generate.tabby_server.load_model(name=model)
-        if response == "Success":
-            await send_status({"name": "initialization", "msg": "DONE"}, client_id)
-        data_to_send = {"message": response}
-        await send_datapackage("model_change_result", data_to_send, client_id)
+    if not config_data["using_remoteapi"]:
+        unloadresp = await userCurrentRoom.my_generate.tabby_server.unload_model()
+        if unloadresp:
+            response = await userCurrentRoom.my_generate.tabby_server.load_model(name=model)
+            if response == "Success":
+                await send_status({"name": "initialization", "msg": "DONE"}, client_id)
+                await send_datapackage("model_change_result", {"message": response}, client_id)
+    else:
+        await send_datapackage("model_change_result", {"message": "Success"}, client_id)
 
 
 # Change Instruction

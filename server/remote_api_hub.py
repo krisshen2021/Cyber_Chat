@@ -131,7 +131,7 @@ class TogetherAiParam(BaseModel):
     presence_penalty: Optional[float] = None
     top_p: Optional[float] = None
     stop: Optional[List[str]] = None
-    model: Optional[str] = "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO"
+    model: Optional[str] = "Qwen/Qwen1.5-110B-Chat"
     stream: Optional[bool] = True
 
 
