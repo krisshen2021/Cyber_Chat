@@ -44,7 +44,6 @@ results:
   - double prolapse
   - piss drinking
   - strip off and be naked
-  - spread legs wide open
   - cowgirl sex posture
   - missionary sex posture
   - doggy style sex posture
@@ -59,7 +58,6 @@ lora:
   anal prolapse: (be on all four limbs), from behind, gape anus, spread ass, ass hole, (guts out), rectum, NSFW, ((big anal prolapse)), <lora:anal_prolapse:1.2>, naked"
   gaping pussy: "NSFW, <lora:LulublairMerge:0.65>, lay down, spread legs wide open and raised, gape pussy, spread pussy, <lora:edgOrgasm_v2:0.52>, close up:1.3"
   piss drinking: "kneeling, <lora:Pissdrinking_anime:0.85>, piss drinking,(urine cover all body:1.1),pee stream, tongue_out, pissdrinking_anime, drinking_pee, from above, open mouth"
-  spread legs wide open: "spread legs wide open and raised, exposed pussy, sit on floor, pov"
   strip off and be naked: naked
   uterine prolapse: "lay down on back, gape pussy, cervix, spread legs wide open and raised, <lora:LulublairMerge:0.4>,<lora:edgOrgasm_v2:0.42>, Close up:1.32, POV, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.4>, (bloody Gore-covered cervix:1.13),(bloody Gore-covered uterus:1.13),(bloody Gore-covered pussy:1.13), (bloody Gore-covered vagina:1.13),naked"
 summary_prompt: |
@@ -70,7 +68,7 @@ summary_prompt: |
   <context>[User-provided dialogue context will be here]</context><for_char>[Character name]</for_char>
 
   You should base on the user-provided context, select one of the most appropriate scenario from the following list:
-  ["blowjob", "gaping pussy", "gaping anus", "piss drinking", "finger pussy", "uterine prolapse", "anal prolapse", "stroke penis", "deep throat", "footjob with penis", "cowgirl sex posture", "missionary sex posture", "doggy style sex posture", "strip off and be naked", "spread legs wide open"]
+  ["blowjob", "gaping pussy", "gaping anus", "piss drinking", "finger pussy", "uterine prolapse", "anal prolapse", "stroke penis", "deep throat", "footjob with penis", "cowgirl sex posture", "missionary sex posture", "doggy style sex posture", "strip off and be naked"]
 
   if the user-provided context is not related to the above scenarios or is not NSFW, output the token: "Not Listed NSFW scenario" or "SFW scenario".
 

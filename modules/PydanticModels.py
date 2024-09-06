@@ -14,7 +14,7 @@ class EnterRoom(BaseModel):
     is_uncensored: str
     is_live_char: bool
     clientID: str
-
+    language: str
 
 def as_form(cls: Type[BaseModel]):
     async def _as_form(request:Request):

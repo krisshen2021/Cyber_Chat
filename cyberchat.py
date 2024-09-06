@@ -82,6 +82,8 @@ def non_cache_response(template_name: str, context: dict) -> Response:
 async def test(request: Request):
     context = {"request": request}
     return non_cache_response("develop_test.html", context)
+
+
 # Admin backend
 @app.get("/admin")
 async def admin(request: Request):
@@ -91,11 +93,16 @@ async def admin(request: Request):
     roleconf_reversed = dict(reversed(list(roleconf.items())))
     for key, value in roleconf_reversed.items():
         ai_role_list.append({"aiRoleId": key, "Data": value})
-    return templates.TemplateResponse("admin.html", {
-        "request": request,
-        "is_logged_in": is_logged_in,
-        "ai_role_list": ai_role_list,
-        })
+    return templates.TemplateResponse(
+        "admin.html",
+        {
+            "request": request,
+            "is_logged_in": is_logged_in,
+            "ai_role_list": ai_role_list,
+        },
+    )
+
+
 @app.get("/admin/{Name}")
 async def get_role_details(request: Request, Name: str):
     role_details = database.get_airole(Name)
@@ -106,6 +113,8 @@ async def get_role_details(request: Request, Name: str):
         return role_details
     else:
         return False
+
+
 @app.post("/admin/edit_role")
 async def edit_role(role_data: dict):
     result = database.edit_airole(role_data)
@@ -113,6 +122,8 @@ async def edit_role(role_data: dict):
         return True
     else:
         return False
+
+
 @app.post("/admin/login")
 async def admin_login(login_data: dict):
     username = login_data["username"]
@@ -122,6 +133,8 @@ async def admin_login(login_data: dict):
         return {"status": "Fail", "data": login_result}
     else:
         return {"status": "Success", "data": login_result}
+
+
 # Role selection page
 @app.get("/")
 async def initpage(request: Request):
@@ -151,31 +164,35 @@ async def enter_room(
     suggestions = await getGlobalConfig("suggestions_params")
     context["suggestions"] = suggestions
     ai_role_data = database.get_airole(context["ai_role_name"])
-    prologue = ai_role_data["Prologue"]
+    # prologue = ai_role_data["Prologue"]
     username = context["username"]
     ainame = context["ainame"]
-    prologue = (
-        prologue.replace("\n", "<br>")
-        .replace(r"{{user}}", f"<em>{username}</em>")
-        .replace(r"{{char}}", f"<em>{ainame}</em>")
-    )
-    context["Prologue"] = prologue
+    # prologue = (
+    #     prologue.replace("\n", "<br>")
+    #     .replace(r"{{user}}", f"<em>{username}</em>")
+    #     .replace(r"{{char}}", f"<em>{ainame}</em>")
+    # )
+    # context["Prologue"] = prologue
     context["request"] = request
     timestamp = generate_timestamp()
     context["timestamp"] = timestamp
     return non_cache_response("chatroom_websocket.html", context)
 
-#Redirect background music play
+
+# Redirect background music play
 @app.get("/play_music/{filename}")
 async def play_music(filename: str):
     url = config_data["openai_api_chat_base"] + "/music/play/" + filename
+
     async def stream_response():
         async with httpx.AsyncClient(timeout=300) as client:
             async with client.stream("GET", url) as response:
                 async for chunk in response.aiter_bytes():
-                        if chunk:
-                            yield chunk
+                    if chunk:
+                        yield chunk
+
     return StreamingResponse(stream_response(), media_type="audio/mpeg")
+
 
 async def client_connect(client_info, client_id):
     print("{}".format(ansiColor.color_text(client_id, ansiColor.BG_BRIGHT_BLUE)))
@@ -325,9 +342,9 @@ async def initialize_room(client_msg, client_id):
     usergender = client_msg["data"]["usergender"]
     user_facelooks = client_msg["data"]["user_facelooks"]
     ai_role_name = client_msg["data"]["ai_role_name"]
-    transswitcher = client_msg["data"]["istranslated"]
     ai_is_uncensored = client_msg["data"]["ai_is_uncensored"]
     ai_is_live_char = client_msg["data"]["ai_is_live_char"]
+    language = client_msg["data"]["language"]
     windowRatio = round(float(client_msg["data"]["windowRatio"]), 2)
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     if userCurrentRoom:
@@ -337,9 +354,9 @@ async def initialize_room(client_msg, client_id):
         userCurrentRoom.user_sys_name = user_sys_name
         userCurrentRoom.usergender = usergender
         userCurrentRoom.user_facelooks = user_facelooks
-        userCurrentRoom.state["translate"] = True if transswitcher else False
         userCurrentRoom.state["ai_is_live_char"] = ai_is_live_char
         userCurrentRoom.windowRatio = windowRatio
+        userCurrentRoom.state["language"] = language
     else:
         conn_ws_mgr.set_room(
             client_id,
@@ -356,9 +373,8 @@ async def initialize_room(client_msg, client_id):
         )
         logger.info(f"Cyber Chat Room created for: {ai_role_name} & {username}")
         userCurrentRoom = conn_ws_mgr.get_room(client_id)
-        userCurrentRoom.state["translate"] = True if transswitcher else False
         userCurrentRoom.state["ai_is_live_char"] = ai_is_live_char
-
+        userCurrentRoom.state["language"] = language
     if not userCurrentRoom.initialization_start:
         await userCurrentRoom.initialize()
         user_ai_text = markdownText(userCurrentRoom.G_ai_text)
@@ -380,6 +396,7 @@ async def initialize_room(client_msg, client_id):
             "iscreatedynimage": userCurrentRoom.iscreatedynimage,
             "using_remoteapi": using_remoteapi,
             "bg_music": userCurrentRoom.bg_music,
+            "prologue": userCurrentRoom.prologue_intro,
         }
         await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
@@ -390,8 +407,8 @@ async def restart_room(client_msg, client_id):
     using_remoteapi = config_data["using_remoteapi"]
     windowRatio = client_msg["data"]["windowRatio"]
     userCurrentRoom.conversation_id = client_id
-    transswitcher = client_msg["data"]["istranslated"]
-    userCurrentRoom.state["translate"] = True if transswitcher else False
+    language = client_msg["data"]["language"]
+    userCurrentRoom.state["language"] = language
     userCurrentRoom.windowRatio = round(float(windowRatio), 2)
     await userCurrentRoom.serialize_data()
     user_ai_text = markdownText(userCurrentRoom.G_ai_text)
@@ -414,6 +431,7 @@ async def restart_room(client_msg, client_id):
         "iscreatedynimage": userCurrentRoom.iscreatedynimage,
         "using_remoteapi": using_remoteapi,
         "bg_music": userCurrentRoom.bg_music,
+        "prologue": userCurrentRoom.prologue_intro,
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
     await send_status({"name": "initialization", "msg": "DONE"}, client_id)
@@ -449,6 +467,7 @@ async def change_SD_Model(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     SD_Model = client_msg["data"]["SD_Model"]
     userCurrentRoom.conversation_id = client_id
+    userCurrentRoom.image_payload["override_settings"]["sd_model_checkpoint"] = SD_Model
     userCurrentRoom.my_generate.image_payload["override_settings"][
         "sd_model_checkpoint"
     ] = SD_Model
@@ -498,13 +517,13 @@ async def reply_user_query(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     using_remoteapi = config_data["using_remoteapi"]
     usermsg = client_msg["data"]["message"]
-    transswitcher = client_msg["data"]["istranslated"]
+    language = client_msg["data"]["language"]
     windowRatio = client_msg["data"]["windowRatio"]
     iscreatedynimage = client_msg["data"]["iscreatedynimage"]
     userCurrentRoom.conversation_id = client_id
-    userCurrentRoom.state["translate"] = True if transswitcher else False
     userCurrentRoom.windowRatio = round(float(windowRatio), 2)
     userCurrentRoom.iscreatedynimage = iscreatedynimage
+    userCurrentRoom.state["language"] = language
     ai_text, voice_text, speaker, speak_tone, avatar_url, dynamic_picture = (
         await userCurrentRoom.server_reply(usermsg)
     )
@@ -517,7 +536,7 @@ async def reply_user_query(client_msg, client_id):
         "speak_tone": speak_tone,
         "ttskey": userCurrentRoom.ttskey,
         "dynamic_picture": dynamic_picture,
-        "using_remoteapi": using_remoteapi
+        "using_remoteapi": using_remoteapi,
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
@@ -527,13 +546,13 @@ async def regen_msg(client_msg, client_id):
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     using_remoteapi = config_data["using_remoteapi"]
     usermsg = client_msg["data"]["message"]
-    transswitcher = client_msg["data"]["istranslated"]
     windowRatio = client_msg["data"]["windowRatio"]
     iscreatedynimage = client_msg["data"]["iscreatedynimage"]
+    language = client_msg["data"]["language"]
     userCurrentRoom.conversation_id = client_id
-    userCurrentRoom.state["translate"] = True if transswitcher else False
     userCurrentRoom.windowRatio = round(float(windowRatio), 2)
     userCurrentRoom.iscreatedynimage = iscreatedynimage
+    userCurrentRoom.state["language"] = language
     ai_text, voice_text, speaker, speak_tone, avatar_url, dynamic_picture = (
         await userCurrentRoom.regen_msg(usermsg)
     )
@@ -546,7 +565,7 @@ async def regen_msg(client_msg, client_id):
         "speak_tone": speak_tone,
         "ttskey": userCurrentRoom.ttskey,
         "dynamic_picture": dynamic_picture,
-        "using_remoteapi": using_remoteapi
+        "using_remoteapi": using_remoteapi,
     }
     await send_datapackage("Message_data_from_server", data_to_send, client_id)
 
@@ -871,6 +890,7 @@ async def client_save_character(client_info, client_id):
     data_to_send = {"result": msg_to_send, "task": "after_char_saved"}
     await send_datapackage("save_character_result", data_to_send, client_id)
 
+
 # transcribe audio
 async def transcribe_audio(client_info, client_id):
     audio_data = client_info["data"]["audio_data"]
@@ -882,6 +902,7 @@ async def transcribe_audio(client_info, client_id):
     data_to_send = {"transcripted_text": transcripted_text, "task": "transcript_audio"}
     await send_datapackage("transcript_audio_result", data_to_send, client_id)
 
+
 # play background music
 async def play_bg_music(client_info, client_id):
     music_name = client_info["data"]["music_name"]
@@ -889,23 +910,27 @@ async def play_bg_music(client_info, client_id):
     async with httpx.AsyncClient(timeout=300) as client:
         async with client.stream("GET", url) as response:
             async for chunk in response.aiter_bytes():
-                    if chunk:
-                        audio_data_base64 = base64.b64encode(chunk).decode("utf-8")
-                        data_to_send = {
-                            "audio_data": audio_data_base64,
-                            "mode": "stream",
-                            "status": "transfer",
-                        }
-                        await send_datapackage("play_bg_music_result", data_to_send, client_id)
-                        await asyncio.sleep(0.01)
-                    else:
-                        logger.info("Failed to get audio data")
+                if chunk:
+                    audio_data_base64 = base64.b64encode(chunk).decode("utf-8")
+                    data_to_send = {
+                        "audio_data": audio_data_base64,
+                        "mode": "stream",
+                        "status": "transfer",
+                    }
+                    await send_datapackage(
+                        "play_bg_music_result", data_to_send, client_id
+                    )
+                    await asyncio.sleep(0.01)
+                else:
+                    logger.info("Failed to get audio data")
     logger.info("Transfer ends")
     await send_datapackage(
         "play_bg_music_result",
         {"mode": "stream", "status": "end"},
         client_id,
     )
+
+
 # ws event handler
 ws_events_dict = {
     "connect to server": client_connect,

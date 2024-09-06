@@ -7,7 +7,7 @@ from modules.global_sets_async import (
     logger,
     config_data,
 )
-import os, random, re, io, base64, copy, markdown, asyncio, httpx
+import os, random, re, io, base64, copy, markdown, asyncio, httpx, copy
 from fastapimode.airole_creator_uncensor_websocket import airole
 from modules.TranslateAsync import AsyncTranslator
 from fastapimode.Generator_websocket import CoreGenerator
@@ -16,7 +16,6 @@ from modules.payload_state import sd_payload, sd_payload_for_vram, room_state
 from fastapimode.sys_path import project_root
 
 dir_path = project_root
-# image_payload = sd_payload
 
 
 # Read prompt template
@@ -109,6 +108,7 @@ class ChatRoom_Uncensored:
 
     async def initialize(self):
         self.initialization_start = True
+        self.image_payload = copy.deepcopy(sd_payload)
         await self.serialize_data()
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "DONE"}, self.conversation_id
@@ -150,7 +150,7 @@ class ChatRoom_Uncensored:
         self.state["user_name"] = self.username
         self.state["char_name"] = self.ai_role.ai_role_name
         self.ainame = self.ai_role.ai_role_name
-        await self.create_role_desc_msg(self.state["translate"])
+        await self.create_role_desc_msg()
         self.ai_lastword = ""
         self.G_ai_text = self.welcome_text
         self.G_voice_text = self.extract_text(self.G_ai_text)
@@ -195,7 +195,7 @@ class ChatRoom_Uncensored:
     async def create_chat_generator(self):
         await self.my_generate.async_init(
             state=self.state,
-            image_payload=sd_payload,
+            image_payload=self.image_payload,
             send_msg_websocket=self.send_msg_websocket,
         )
         self.model_list = await self.my_generate.tabby_server.get_model_list()
@@ -239,8 +239,8 @@ class ChatRoom_Uncensored:
             )
             self.bkImg = "data:image/webp;base64," + bgimg_base64
             await self.send_msg_websocket(
-            {"name": "initialization", "msg": "Generate A.I Avatar"},
-            self.conversation_id,
+                {"name": "initialization", "msg": "Generate A.I Avatar"},
+                self.conversation_id,
             )
             logger.info("Generate A.I Avatar")
             avatarimg_base64 = await self.gen_avatar(
@@ -256,7 +256,7 @@ class ChatRoom_Uncensored:
             self.bkImg = None
             self.G_avatar_url = None
             self.bg_music = "Relaxing_Moment"
-            
+
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Preparing Your Role"},
             self.conversation_id,
@@ -271,8 +271,7 @@ class ChatRoom_Uncensored:
             task_flag="generate_background-user",
         )
         self.user_bkImg = "data:image/webp;base64," + bgimg_base64
-        
-        
+
         await self.send_msg_websocket(
             {"name": "initialization", "msg": "Generate Your Avatar"},
             self.conversation_id,
@@ -290,7 +289,7 @@ class ChatRoom_Uncensored:
         return True
 
     # assistant functions
-    async def create_role_desc_msg(self, istranslated: bool = True):
+    async def create_role_desc_msg(self):
         self.state["prompt_template"] = self.ai_role.prompt_to_load
         chat_template_name = self.state["prompt_template"].split("_")
         rephrase_template_name = chat_template_name[0] + "_Rephrase"
@@ -307,13 +306,30 @@ class ChatRoom_Uncensored:
         self.first_message = self.ai_role.welcome_text_dec.replace(
             r"{{user}}", self.username
         ).replace(r"{{char}}", self.ainame)
-        self.welcome_text = (
-            await myTrans.translate_text(
-                "Simplified Chinese", self.first_message, self.rephrase_template
-            )
-            if istranslated
-            else self.first_message
+        self.welcome_text = self.first_message
+        self.prologue_intro = (
+            self.ai_role.prologue.replace("\n", "<br>")
+            .replace(r"{{user}}", f"<em>{self.username}</em>")
+            .replace(r"{{char}}", f"<em>{self.ainame}</em>")
         )
+        if self.state["language"] != "English":
+            logger.info(f"Translating prologue to {self.state['language']}")
+            await self.send_msg_websocket(
+                {"name": "initialization", "msg": f"Translating prologue to {self.state['language']}..."},
+                self.conversation_id,
+            )
+            self.prologue_intro = await myTrans.translate_text(
+                self.state["language"], self.prologue_intro, self.rephrase_template
+            )
+            await self.send_msg_websocket(
+                {"name": "initialization", "msg": f"Translating first message to {self.state['language']}..."},
+                self.conversation_id,
+            )
+            
+            self.welcome_text = await myTrans.translate_text(
+                self.state["language"], self.first_message, self.rephrase_template
+            )
+            
         self.messages = f"{self.char_desc_system}{self.ainame}: {self.first_message}"
 
         if len(self.chathistory) == 0:
@@ -332,7 +348,7 @@ class ChatRoom_Uncensored:
         file_path = os.path.join(file_path, file_name)
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
-            None, 
+            None,
             self.save_image_sync,
             image_data,
             file_path,
@@ -392,11 +408,7 @@ class ChatRoom_Uncensored:
         )
         if is_save:
             img_path = os.path.join(
-                dir_path,
-                "static",
-                "images",
-                "avatar",
-                self.ai_role_name
+                dir_path, "static", "images", "avatar", self.ai_role_name
             )
             await self.save_image_async(bkImg, img_path, "background.webp")
 
@@ -438,11 +450,7 @@ class ChatRoom_Uncensored:
 
         if is_save:
             img_path = os.path.join(
-                dir_path,
-                "static",
-                "images",
-                "avatar",
-                self.ai_role_name
+                dir_path, "static", "images", "avatar", self.ai_role_name
             )
             await self.save_image_async(avatarImg, img_path, "none.webp")
 
@@ -516,8 +524,10 @@ class ChatRoom_Uncensored:
     async def sentence_completion(self, message: dict):
         chat_history = copy.deepcopy(self.chathistory)
         system_intro = chat_history.pop(0)
-        system_intro = re.sub(re.escape(f"{self.ainame}: {self.first_message}"), '', system_intro)
-        chat_history.insert(0,f"{self.ainame}: {self.first_message}")
+        system_intro = re.sub(
+            re.escape(f"{self.ainame}: {self.first_message}"), "", system_intro
+        )
+        chat_history.insert(0, f"{self.ainame}: {self.first_message}")
         if len(chat_history) >= 5:
             chat_history = chat_history[-5:]  # Only keep the last 5 messages
         chat_history = "\n".join(chat_history)
@@ -553,7 +563,7 @@ class ChatRoom_Uncensored:
     async def server_reply(self, usermsg):
         input_text = (
             await myTrans.translate_text("English", usermsg, self.rephrase_template)
-            if self.state["translate"] is True
+            if self.state["language"] != "English"
             else usermsg
         )
         self.chathistory.append(f"{self.username}: {input_text}")
@@ -597,9 +607,9 @@ class ChatRoom_Uncensored:
 
         result_text_cn = (
             await myTrans.translate_text(
-                "Simplified Chinese", result_text, self.rephrase_template
+                self.state["language"], result_text, self.rephrase_template
             )
-            if self.state["translate"] is True
+            if self.state["language"] != "English"
             else result_text
         )
 
@@ -618,7 +628,7 @@ class ChatRoom_Uncensored:
             logger.info("Error get emotion: ", e)
             emotion_des = "none"
 
-        if self.state['ai_is_live_char'] is True:
+        if self.state["ai_is_live_char"] is True:
             avatarimg_base64 = await self.gen_avatar(
                 tabbyGen=self.my_generate,
                 char_avatar=self.state["char_avatar"],
@@ -681,8 +691,7 @@ class ChatRoom_Uncensored:
 
     # Regeneration reply
     async def regen_msg(self, user_msg):
-        # for i in range(2):
-        #     del self.chathistory[-1]
+
         self.chathistory = self.chathistory[:-2]
         self.my_generate.last_context = self.my_generate.last_context[:-2]
         (

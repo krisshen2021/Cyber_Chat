@@ -26,6 +26,7 @@ class airole:
         self.ai_if_uncensored = role_result["is_Uncensored"]
         self.ai_role_name = role_result["Ai_name"]
         self.story_intro = role_result["json_Story_intro"]
+        self.prologue = role_result["Prologue"]
         role_desc = f"""<Plot_of_the_RolePlay>
 {role_result['Prologue']}
 </Plot_of_the_RolePlay>

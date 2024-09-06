@@ -26,47 +26,94 @@
     const msttser = new msTTS();
     import { CommandInputHandler } from '/static/js/input_control.js';
     import { AudioRecorder } from '/static/js/AudioRecorder.js';
-    import { VolumeKnob, SwitchUI } from '/static/js/ui.js';
+    import { VolumeKnob, SwitchUI, SelectorUI } from '/static/js/ui.js';
     const knobElement = document.getElementById('knob');
     const audioElement = document.getElementById('bg_music');
     const messageBox_switch = document.getElementById('messageBox_switch');
+    const languageSwitch = document.getElementById('language_switch');
+    const modelSwitch = document.getElementById('model_switch');
+    const instrSwitch = document.getElementById('instr_switch');
+    const sdSwitch = document.getElementById('sd_switch');
     const messageBox_switchUI = new SwitchUI({
-        element: messageBox_switch,
-        onColor: '#462256',
-        offColor: '#3d3d3d',
-        width: 40,
-        height: 20,
-        value: true
+      element: messageBox_switch,
+      onColor: '#462256',
+      offColor: '#3d3d3d',
+      width: 40,
+      height: 20,
+      value: true
+    });
+    const languageSwitchUI = new SelectorUI({
+      element: languageSwitch,
+      width: 100,
+      height: 24,
+    });
+    const modelSwitchUI = new SelectorUI({
+      element: modelSwitch,
+      width: 100,
+      height: 24,
+      itemList: [
+        {
+          name: 'Model',
+          value: null
+        }
+      ]
+    });
+    const instrSwitchUI = new SelectorUI({
+      element: instrSwitch,
+      width: 100,
+      height: 24,
+      itemList: [
+        {
+          name: 'instruction',
+          value: null
+        }
+      ]
+    });
+    const sdSwitchUI = new SelectorUI({
+      element: sdSwitch,
+      width: 100,
+      height: 24,
+      itemList: [
+        {
+          name: 'SD model',
+          value: null
+        }
+      ]
+    });
+    languageSwitchUI.setItem('{{language}}');
+    console.log('Current language:', $(languageSwitch).attr('data-value'));
+    $(languageSwitch).on('change', (event, value) => {
+      console.log('Current language:', $(languageSwitch).attr('data-value'));
     });
     $(messageBox_switch).on('change', (event, value) => {
-        if (value && !$('#comicMode').is(':checked')) {
-            $('#message_box').css('display', 'flex');
-            $('#holder_box').css('height', '50vh');
-            updateScroll();
-        } else {
-            $('#message_box').css('display', 'none');
-            $('#holder_box').css('height', 'min-content');
-            updateScroll();
-        }
-        console.log('Current messageBox_switch:', value);
+      if (value && !$('#comicMode').is(':checked')) {
+        $('#message_box').css('display', 'flex');
+        $('#holder_box').css('height', '50vh');
+        updateScroll();
+      } else {
+        $('#message_box').css('display', 'none');
+        $('#holder_box').css('height', 'min-content');
+        updateScroll();
+      }
+      console.log('Current messageBox_switch:', value);
     });
     const volumeKnob = new VolumeKnob({
-        element: knobElement,
-        minValue: 0,
-        maxValue: 1,
-        stepValue: 0.01,
-        width: 20,
-        height: 20,
-        backgroundImage: '', // 或者使用 base64 URI
-        backgroundColor: '#462256',
-        knobHandlerColor: '#ffffff',
-        audioElement: audioElement,
-        initialVolume: 0.5
+      element: knobElement,
+      minValue: 0,
+      maxValue: 1,
+      stepValue: 0.01,
+      width: 20,
+      height: 20,
+      backgroundImage: '', // 或者使用 base64 URI
+      backgroundColor: '#462256',
+      knobHandlerColor: '#ffffff',
+      audioElement: audioElement,
+      initialVolume: 0.5
     });
 
     // 监听值变化
     $(knobElement).on('change', (event, value) => {
-        console.log('Current volume:', value);
+      console.log('Current volume:', value);
     });
     marked.use({
       mangle: false,
@@ -84,7 +131,7 @@
     var credits = '{{credits}}';
     var ai_role_name = '{{ai_role_name}}';
     var ainame = '{{ainame}}';
-    var Prologue = `{{Prologue | safe}}`;
+    var Prologue = ''; //`{{Prologue | safe}}`;
     var ai_is_uncensored = '{{is_uncensored}}';
     var ai_is_live_char = JSON.parse('{{ is_live_char | tojson }}');
     var conid = '{{clientID}}';
@@ -852,14 +899,13 @@
         conid: conid,
         windowRatio: windowSize.ratio,
         isembbed: statechk.embswitcher,
-        istranslated: statechk.transswitcher,
+        language: languageSwitchUI.getValue(),
       };
       ws.send(wsData('restart', querydata));
     }
 
     function checkSendState() {
       let embswitcher;
-      let transswitcher;
       let imageswitcher;
       if (typeof embeddingswitcher != 'undefined') {
         if (embeddingswitcher.checked) {
@@ -868,20 +914,14 @@
           embswitcher = 'no';
         }
       }
-      if (translateSwitcher.checked) {
-        transswitcher = true;
-      } else {
-        transswitcher = false;
-      }
       if (dynimageSwitcher.checked) {
         imageswitcher = true;
       } else {
         imageswitcher = false;
       }
       console.log(embswitcher);
-      console.log(transswitcher);
       console.log(imageswitcher);
-      return { embswitcher, transswitcher, imageswitcher };
+      return { embswitcher, imageswitcher };
     }
 
     function regenReply() {
@@ -895,9 +935,9 @@
           message: userLastMsg,
           conid: conid,
           isembbed: statechk.embswitcher,
-          istranslated: statechk.transswitcher,
           windowRatio: windowSize.ratio,
           iscreatedynimage: statechk.imageswitcher,
+          language: languageSwitchUI.getValue(),
         };
         ws.send(wsData('regen_msg', querydata));
       }
@@ -934,55 +974,51 @@
       toggleInputs(false);
     }
     function changeModel(model_list, model) {
-        if (model_list.length > 0) {
-          console.log(model_list);
-          $('#model_selector').empty();
-          $.each(model_list, function (index, value) {
-            var option = $('<option>').text(value).val(value);
-            if (value === model) {
-              option.attr('selected', 'selected');
-            }
-            $('#model_selector').append(option);
+      if (model_list.length > 0) {
+        console.log(model_list);
+        const modelSwitchItemList = [];
+        $.each(model_list, function (index, value) {
+          modelSwitchItemList.push({
+            name: value,
+            value: value,
           });
-          $('#model_selector').change(function () {
-            var modelSelected = $(this).val();
-            if (modelSelected !== 'None') {
-              var querydata = {
-                model: modelSelected,
-                conid: conid,
-              };
-              ws.send(wsData('change_model', querydata));
-              toggleInputs(false);
-            }
-          });
-        }
+        });
+        modelSwitchUI.updateListItems(modelSwitchItemList);
+        modelSwitchUI.setItem(model);
+        $(modelSwitch).on('change', (event, value) => {
+          console.log('Current model:', $(modelSwitch).attr('data-value'));
+          var querydata = {
+            model: $(modelSwitch).attr('data-value'),
+            conid: conid,
+          };
+          ws.send(wsData('change_model', querydata));
+          toggleInputs(false);
+        });
+
+      }
     }
 
     function changeInstr(instruct_list) {
       if (instruct_list !== undefined) {
         if (instruct_list.length > 0) {
           console.log(instruct_list);
-          $('#instr_selector').empty();
-          $('#instr_selector').append(
-            $('<option>').text('Instructions').val('None'),
-          );
-          $('#instr_selector').append(
-            $('<option>').text('----------').val('None'),
-          );
+          const instructSwitchItemList = [];
           $.each(instruct_list, function (index, value) {
-            var option = $('<option>').text(value).val(value);
-            $('#instr_selector').append(option);
+            instructSwitchItemList.push({
+              name: value,
+              value: value,
+            });
           });
-          $('#instr_selector').change(function () {
-            var instrSelected = $(this).val();
-            if (instrSelected !== 'None') {
-              var querydata = {
-                instruction: instrSelected,
-                conid: conid,
-              };
-              ws.send(wsData('change_instruction', querydata));
-              toggleInputs(false);
-            }
+          instrSwitchUI.updateListItems(instructSwitchItemList);
+          // instrSwitchUI.setItem(instrSelected);
+          $(instrSwitch).on('change', (event, value) => {
+            console.log('Current Instruction:', $(instrSwitch).attr('data-value'));
+            var querydata = {
+              instruction: $(instrSwitch).attr('data-value'),
+              conid: conid,
+            };
+            ws.send(wsData('change_instruction', querydata));
+            toggleInputs(false);
           });
         }
       }
@@ -992,27 +1028,23 @@
       if (SD_model_list !== undefined) {
         if (SD_model_list.length > 0) {
           console.log(SD_model_list);
-          $('#sd_selector').empty();
-          $('#sd_selector').append(
-            $('<option>').text('SD Models').val('None'),
-          );
-          $('#sd_selector').append(
-            $('<option>').text('----------').val('None'),
-          );
+          const sdSwitchItemList = [];
           $.each(SD_model_list, function (index, value) {
-            var option = $('<option>').text(value).val(value);
-            $('#sd_selector').append(option);
+            sdSwitchItemList.push({
+              name: value,
+              value: value,
+            });
           });
-          $('#sd_selector').change(function () {
-            var sdSelected = $(this).val();
-            if (sdSelected !== 'None') {
-              var querydata = {
-                SD_Model: sdSelected,
-                conid: conid,
-              };
-              ws.send(wsData('change_SD_Model', querydata));
-              toggleInputs(false);
-            }
+          sdSwitchUI.updateListItems(sdSwitchItemList);
+          // sdSwitchUI.setItem(sdSelected);
+          $(sdSwitch).on('change', (event, value) => {
+            console.log('Current SD Model:', $(sdSwitch).attr('data-value'));
+            var querydata = {
+              SD_Model: $(sdSwitch).attr('data-value'),
+              conid: conid,
+            };
+            ws.send(wsData('change_SD_Model', querydata));
+            toggleInputs(false);
           });
         }
       }
@@ -1078,7 +1110,8 @@
             .find('.overlay-content')
             .find('.loadingText')
             .html(msg['msg']);
-          $('.loadingText_Percentage').html(' : 0%')
+          // $('.loadingText_Percentage').html(' : 0%')
+          $('.loadingText_Percentage').html('')
           gsap.from($('#overLayer').find('.overlay-content'), {
             duration: 1,
             scale: 0.7,
@@ -1092,7 +1125,8 @@
             .find('.overlay-content')
             .find('.loadingText')
             .html('');
-          $('.loadingText_Percentage').html(' : 0%')
+          // $('.loadingText_Percentage').html(' : 0%')
+          $('.loadingText_Percentage').html('')
           $('#holder_box').fadeIn(500);
           $('#holder_box').css('display', 'flex');
           if ($('#comicMode').is(':checked')) {
@@ -1176,7 +1210,7 @@
             // streamingBuffer.push(msgText);
             let streamText = streamingBuffer.join('');
             $lastmsg.html("<p class='stream_text'>" + streamText + '</p>');
-            $lastmsg.find('p').append("<span class='stream_text_char'>"+msgText+"</span>");
+            $lastmsg.find('p').append("<span class='stream_text_char'>" + msgText + "</span>");
             $lastmsg.find(".stream_text_char").css({
               "opacity": "1"
             });
@@ -1184,7 +1218,7 @@
             $lastmsg_comic.html(
               "<p class='stream_text'>" + streamText + '</p>',
             );
-            $lastmsg_comic.find('p').append("<span class='stream_text_char'>"+msgText+"</span>");
+            $lastmsg_comic.find('p').append("<span class='stream_text_char'>" + msgText + "</span>");
             $lastmsg_comic.find(".stream_text_char").css({
               "opacity": "1"
             });
@@ -1240,16 +1274,16 @@
             });
           },
         });
-        
+
       }
     }
 
     /* Message proccesing for server-end : server_reply_done: true, msg from: 'server'*/
     function msg_proc(msg) {
       let message = msg.data['message'];
-      if (msg.data['avatar'] != undefined){
+      if (msg.data['avatar'] != undefined) {
         ai_avatar = msg.data['avatar'];
-      }else{
+      } else {
         ai_avatar = ai_avatar_path;
       }
       if (msg.data['user_looks'] != undefined) {
@@ -1285,6 +1319,10 @@
           $('#bg_music')[0].pause();
         }
       }
+      if (msg.data['prologue'] != undefined) {
+        Prologue = msg.data['prologue'];
+        console.log(Prologue);
+      }
       let voice_text = msg.data['voice_text'];
       let speaker = msg.data['speaker'];
       let speak_tone = msg.data['speak_tone'];
@@ -1294,14 +1332,14 @@
       let model = msg.data['model'];
       if (model_list != undefined) {
         changeModel(model_list, model);
-      }  
+      }
       let using_remoteapi = msg.data["using_remoteapi"];
-      if (using_remoteapi != true){
+      if (using_remoteapi != true) {
         let instruct_list = msg.data['instruct_list'];
         changeInstr(instruct_list);
-        $('#instr_selector').show();
-      }else{
-        $('#instr_selector').hide();
+        $(instrSwitch).parent().show();
+      } else {
+        $(instrSwitch).parent().hide();
       }
       let SD_model_list = msg.data['SD_model_list'];
       changeSDModel(SD_model_list);
@@ -1345,9 +1383,9 @@
         command_flag: command_flag,
         conid: conid,
         isembbed: statechk.embswitcher,
-        istranslated: statechk.transswitcher,
         windowRatio: windowSize.ratio,
         iscreatedynimage: statechk.imageswitcher,
+        language: languageSwitchUI.getValue(),
       };
       ws.send(wsData('send_user_msg', querydata));
       // $('#messageToSend').val('');
@@ -1378,7 +1416,7 @@
           conid: clientID,
           ai_is_uncensored: ai_is_uncensored,
           ai_is_live_char: ai_is_live_char,
-          istranslated: statechk.transswitcher,
+          language: languageSwitchUI.getValue(),
           windowRatio: windowSize.ratio,
         };
         ws.send(wsData('initialize_room', querydata));
@@ -1564,12 +1602,12 @@
       $('#exitchat').click(exitChat);
       $('#comicMode').change(dispModeSwitch);
       $('#ai_intro .prologue_button').on('click', function () {
-        $('#intro_prologue_area .intro_prologue').fadeToggle(500);
+        $('#intro_prologue_area .intro_prologue').fadeToggle(500).html(Prologue);
       });
       $('#intro_prologue_area .intro_prologue').on('click', function () {
         $(this).fadeOut(100);
       });
-      $('#intro_prologue_area .intro_prologue').html(Prologue);
+
       $('#voiceswitcher').change(switchVoiceController);
       toggleInputs(false);
       // Auto resize comic layout
@@ -1872,22 +1910,30 @@
           <input type="checkbox" id="comicMode" />
           <span class="smallFonts">Comic Mode</span>
         </div>
-        <div>
-          <input type="checkbox" id="translateSwitcher" />
-          <span class="smallFonts">EN/CN</span>
+        <div class="UI_flex_row">
+          <div id="language_switch"></div>
         </div>
-        <select id="model_selector" class="topSelect" name="chatParam">
-          <option value="No Select">Models Selector</option>
-        </select>
-        <select id="instr_selector" class="topSelect" name="instrParam">
-          <option value="No Select">instru Selector</option>
-        </select>
-        <select id="sd_selector" class="topSelect" name="instrParam">
-          <option value="No Select">SD Selector</option>
-        </select>
+        <div class="UI_flex_row">
+          <div id="model_switch"></div>
+        </div>
+        <div class="UI_flex_row">
+          <div id="instr_switch"></div>
+        </div>
+        <div class="UI_flex_row">
+          <div id="sd_switch"></div>
+        </div>
         <div class="UI_flex_row">
           <div>
-            <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke=""><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M13.75 2C13.75 1.58579 13.4142 1.25 13 1.25C12.5858 1.25 12.25 1.58579 12.25 2V14.5359C11.4003 13.7384 10.2572 13.25 9 13.25C6.37665 13.25 4.25 15.3766 4.25 18C4.25 20.6234 6.37665 22.75 9 22.75C11.6234 22.75 13.75 20.6234 13.75 18V6.243C14.9875 7.77225 16.8795 8.75 19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25C16.1005 7.25 13.75 4.8995 13.75 2Z" fill="#ffffff"></path> </g></svg>
+            <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+              stroke="">
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M13.75 2C13.75 1.58579 13.4142 1.25 13 1.25C12.5858 1.25 12.25 1.58579 12.25 2V14.5359C11.4003 13.7384 10.2572 13.25 9 13.25C6.37665 13.25 4.25 15.3766 4.25 18C4.25 20.6234 6.37665 22.75 9 22.75C11.6234 22.75 13.75 20.6234 13.75 18V6.243C14.9875 7.77225 16.8795 8.75 19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25C16.1005 7.25 13.75 4.8995 13.75 2Z"
+                  fill="#ffffff"></path>
+              </g>
+            </svg>
           </div>
           <div id="knob" class="knob"></div>
         </div>
