@@ -1012,7 +1012,13 @@
         const modelSwitchItemList = [];
         $.each(model_list, function (index, value) {
           //if value includes"/", get the text after "/"
-          let name = value.split('/')[1];
+          let name = 'None'
+          if (value.includes('/')) {
+            name = value.split('/')[1];
+          } else {
+            name = value;
+          }
+          console.log(`name: ${name}, value: ${value}`);
           modelSwitchItemList.push({
             name: name,
             value: value,
