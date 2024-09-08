@@ -351,6 +351,7 @@ export class SelectorUI {
             'box-shadow': '0 0 10px 0 rgba(0, 0, 0, 0.5)',
             'scrollbar-width': 'thin',
             'scrollbar-color': '#361c4c transparent',
+            'z-index': '1',
         })
 
         this.itemList.forEach(item => {
