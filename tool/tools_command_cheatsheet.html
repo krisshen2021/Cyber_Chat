@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Cheatsheet</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="oai_config.js"></script>
+    <script src="cheatsheets.js"></script>
+    <script src="lang.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #1E1E2E;
+            color: #CDD6F4;
+        }
+
+        .sticker {
+            background-color: #F9E2AF;
+            color: #1E1E2E;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin: 0.25rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .sticker:hover {
+            background-color: #FAB387;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-item {
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .menu-item:hover {
+            background-color: #89B4FA;
+            color: #1E1E2E;
+        }
+
+        nav {
+            width: max-content;
+            background-color: #313244;
+        }
+
+        .subcategory-tab {
+            background-color: #F38BA8;
+            color: #1E1E2E;
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80vw;
+            height: 60vh;
+            background-color: #1f1d27;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: #2c2937;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            padding: 5px;
+            border: 1px solid #4a4a4a;
+            background-color: #1E1E2E;
+            color: #CDD6F4;
+            border-radius: 3px;
+        }
+
+        .chat-input button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: #4a4a4a;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .message pre {
+            background-color: #2c2937;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .message code {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .message p {
+            margin-bottom: 10px;
+        }
+
+        .message ul,
+        .message ol {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" class="min-h-screen flex flex-col">
+        <header class="bg-[#89B4FA] text-[#1E1E2E] py-4 px-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">🐱{{ command_type }} {{local_language.command_cheatsheet}}</h1>
+            <div class="flex items-center gap-2">
+                <span class="text-md font-bold">{{local_language.select_cheatsheet}}</span>
+                <select @change="selectCheatsheet($event.target.value)" :value="selectedCheatsheetIndex"
+                    class="w-max-content p-1 text-[#1E1E2E] rounded-md">
+                    <option v-for="(cheatsheet, index) in cheatsheetsList" :key="index" :value="index">
+                        {{ cheatsheet.name }}
+                    </option>
+                </select>
+                <select v-model="local_language" class="w-max-content p-1 text-[#1E1E2E] rounded-md">
+                    <option v-for="(value, key) in translationList" :key="key" :value="value">
+                        {{ key }}
+                    </option>
+                </select>
+            </div>
+        </header>
+        <div class="flex flex-grow">
+            <nav class="w-max-content p-4 hidden md:block">
+                <ul class="flex flex-col gap-2">
+                    <li v-for="category in categories" :key="category" @click="selectCategory(category)"
+                        class="menu-item rounded-md"
+                        :class="{ 'bg-[#89B4FA] text-[#1E1E2E]': selectedCategory === category }">
+                        {{ category }}
+                    </li>
+                </ul>
+                <div class="mt-4 flex flex-col gap-2">
+                    <h3 class="font-bold mb-2">{{local_language.chat_config}}</h3>
+                    <span>{{local_language.select_oai_model}}</span>
+                    <select v-model="selectedOAIConfig" class="w-full p-1 text-[#1E1E2E] rounded-md">
+                        <option v-for="config in oaiConfigs" :key="config.model" :value="config">
+                            {{ config.model }}
+                        </option>
+                    </select>
+                    <span>{{local_language.select_oai_language}}</span>
+                    <select v-model="command_language" class="w-full p-1 text-[#1E1E2E] rounded-md">
+                        <option v-for="language in command_language_list" :key="language" :value="language">
+                            {{ language }}
+                        </option>
+                    </select>
+                </div>
+            </nav>
+            <main class="flex-grow bg-[#1E1E2E] p-6">
+                <div class="flex flex-wrap">
+                    <div v-for="subcategory in subcategories" :key="subcategory" @click="selectSubcategory(subcategory)"
+                        class="sticker">
+                        {{ subcategory }}
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h2 class="text-xl font-bold mb-4 text-[#F38BA8]">{{ selectedSubcategory }}</h2>
+                    <ul>
+                        <li v-for="item in selectedItems" :key="item.key" class="mb-2">
+                            <span class="font-bold text-[#A6E3A1] cursor-pointer" @click="openChat(item.key)">{{
+                                item.key }}</span>: {{ item.description }}
+                        </li>
+                    </ul>
+                </div>
+                <div v-if="selectedCategory === 'Configuration'" class="mt-6">
+                    <h3 class="text-lg font-bold mb-2 text-[#F9E2AF]">Configuration File Example</h3>
+                    <pre class="bg-[#313244] p-4 rounded-lg overflow-x-auto text-[#CDD6F4]">
+# ~/.gitconfig
+[user]
+    name = Your Name
+    email = your.email@example.com
+[alias]
+    co = checkout
+    br = branch
+    ci = commit
+    st = status
+# ... more configuration options ...
+                    </pre>
+                </div>
+            </main>
+        </div>
+        <div v-if="showChat" class="chat-window">
+            <div class="chat-header">
+                {{local_language.chat_about}}: {{ chatCommand }}
+                <button @click="closeChat" class="float-right">&times;</button>
+            </div>
+            <div class="chat-messages" ref="chatMessagesRef">
+                <div v-for="(message, index) in safeChatMessages" :key="index" class="message">
+                    <strong v-if="message.role === 'user' && index !== 1">{{local_language.you}}:</strong>
+                    <strong v-else-if="message.role === 'assistant'">{{local_language.ai_assistant}}:</strong>
+                    <span v-if="message.role === 'user' && index !== 1">{{ message.content }}</span>
+                    <span v-else-if="message.role === 'assistant'" v-html="markdownToHtml(message.content)"></span>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input v-model="userMessage" @keyup.enter="sendMessage" :placeholder="local_language.type_your_message">
+                <button @click="sendMessage">{{local_language.send}}</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { ref, computed, nextTick, watch, onMounted } = Vue
+        const { marked } = window
+
+        const app = Vue.createApp({
+            setup() {
+                // Variables
+                const cheatsheetsList = ref([])
+                const selectedCheatsheetIndex = ref(0)
+                const command_type = ref('')
+                const command_language_list = ref(['English', 'Simplified Chinese', 'Japanese', 'French', 'German', 'Korean'])
+                const command_language = ref(command_language_list.value[0])
+                const selectedCategory = ref('')
+                const selectedSubcategory = ref('')
+                const oaiConfigs = ref(oai_configs || [])
+                const selectedOAIConfig = ref(null)
+                const chatMessages = ref([])
+                const userMessage = ref('')
+                const chatMessagesRef = ref(null)
+                const chatCommand = ref('')
+                const showChat = ref(false)
+                const abortController = ref(null)
+                const translationList = ref(translation)
+                const local_language = ref(translationList.value['English'])
+
+                // Computed properties
+                const systemPrompt = computed(() =>
+                    command_type.value
+                        ? `You are a helpful expert that explains ${command_type.value} commands, you like to use emojis, and you like to use a lot of them. you always like to provide concise explanations with examples in ${command_language.value}, never start your response with "Sure thing" or "Here is the explanation for the command"`
+                        : ''
+                )
+
+                const userPrompt = computed(() =>
+                    command_type.value
+                        ? `Please explain the ${command_type.value} command: `
+                        : ''
+                )
+
+                const selectedCheatsheet = computed(() => cheatsheetsList.value[selectedCheatsheetIndex.value] || {})
+
+                const categories = computed(() => {
+                    return selectedCheatsheet.value.content?.map(item => item.category) || []
+                })
+
+                const subcategories = computed(() => {
+                    const category = selectedCheatsheet.value.content?.find(item => item.category === selectedCategory.value)
+                    return category?.subcategories.map(sub => sub.name) || []
+                })
+
+                const selectedItems = computed(() => {
+                    const category = selectedCheatsheet.value.content?.find(item => item.category === selectedCategory.value)
+                    const subcategory = category?.subcategories.find(sub => sub.name === selectedSubcategory.value)
+                    return subcategory?.commands || []
+                })
+
+                const safeChatMessages = computed(() => {
+                    return Array.isArray(chatMessages.value) ? chatMessages.value : []
+                })
+
+                // Watch effects
+                watch(() => cheatsheets, (newCheatsheets) => {
+                    if (newCheatsheets && newCheatsheets.length > 0) {
+                        cheatsheetsList.value = newCheatsheets
+                        command_type.value = newCheatsheets[0].name
+                    }
+                }, { immediate: true })
+
+                watch(categories, (newCategories) => {
+                    if (newCategories.length > 0 && !newCategories.includes(selectedCategory.value)) {
+                        selectedCategory.value = newCategories[0]
+                    }
+                }, { immediate: true })
+
+                watch(subcategories, (newSubcategories) => {
+                    if (newSubcategories.length > 0 && !newSubcategories.includes(selectedSubcategory.value)) {
+                        selectedSubcategory.value = newSubcategories[0]
+                    }
+                }, { immediate: true })
+
+                watch(chatMessages, (newVal, oldVal) => {
+                    console.log('chatMessages changed:', { oldVal, newVal })
+                    if (newVal === null) {
+                        chatMessages.value = []
+                        console.warn('chatMessages was set to null, resetting to empty array')
+                    }
+                }, { deep: true })
+
+                watch(() => selectedCheatsheetIndex.value, (newIndex) => {
+                    if (cheatsheetsList.value && cheatsheetsList.value.length > newIndex) {
+                        document.title = `${cheatsheetsList.value[newIndex].name} Command Cheatsheet`
+                    }
+                }, { immediate: true })
+
+                // Functions
+                function selectCheatsheet(index) {
+                    selectedCheatsheetIndex.value = index
+                    command_type.value = cheatsheetsList.value[index].name
+                }
+
+                function selectCategory(category) {
+                    selectedCategory.value = category
+                    selectedSubcategory.value = subcategories.value[0]
+                }
+
+                function selectSubcategory(subcategory) {
+                    selectedSubcategory.value = subcategory
+                }
+
+                function openChat(command) {
+                    if (abortController.value && !abortController.value.signal.aborted) {
+                        console.log('Aborting previous chat')
+                        abortController.value.abort()
+                    }
+                    abortController.value = new AbortController()
+                    chatMessages.value = []
+                    chatCommand.value = command
+                    showChat.value = true
+                    console.log('Chat opened for command:', command)
+
+                    // Add system role message
+                    addMessage('system', systemPrompt.value)
+                    addMessage('user', userPrompt.value + chatCommand.value)
+                    sendToAI()
+                }
+
+                function closeChat() {
+                    showChat.value = false
+                    chatMessages.value = []
+                    if (abortController.value) {
+                        abortController.value.abort()
+                        abortController.value = null
+                    }
+                    console.log('Chat closed, stream aborted, and history cleared')
+                }
+
+                const scrollToBottom = () => {
+                    nextTick(() => {
+                        if (chatMessagesRef.value) {
+                            chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+                        }
+                    })
+                }
+
+                const sendMessage = () => {
+                    if (userMessage.value.trim()) {
+                        addMessage('user', userMessage.value)
+                        sendToAI()
+                        userMessage.value = ''
+                        scrollToBottom()
+                    }
+                }
+
+                async function sendToAI() {
+                    if (!apiBase.value || !apiKey.value || !apiModel.value) {
+                        alert('Please configure the API base address, API key, and model in the OAI Config section.')
+                        return
+                    }
+
+                    let assistantMessage = { role: 'assistant', content: '' }
+                    addMessage('assistant', assistantMessage.content)
+
+                    try {
+                        console.log('Sending request to API...')
+
+                        const messagesToSend = safeChatMessages.value.map(msg => ({ role: msg.role, content: msg.content }))
+                        messagesToSend.pop()
+                        console.log('Messages to send:', messagesToSend)
+
+                        // 确保 abortController.value 存在
+                        if (!abortController.value) {
+                            console.warn('AbortController not initialized. Creating a new one.')
+                            abortController.value = new AbortController()
+                        }
+
+                        const response = await fetch(`${apiBase.value}/chat/completions`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'Authorization': `Bearer ${apiKey.value}`
+                            },
+                            body: JSON.stringify({
+                                model: apiModel.value,
+                                messages: messagesToSend,
+                                temperature: 0.85,
+                                stream: true
+                            }),
+                            signal: abortController.value.signal
+                        })
+                        console.log('Response received:', response)
+
+                        if (!response.ok) {
+                            const errorData = await response.json()
+                            throw new Error(errorData.message || 'Unknown error occurred')
+                        }
+
+                        const reader = response.body.getReader()
+                        const decoder = new TextDecoder()
+
+                        while (true) {
+                            const { done, value } = await reader.read()
+                            if (done) break
+
+                            const chunk = decoder.decode(value)
+                            console.log('Received chunk:', chunk)
+
+                            const lines = chunk.split('\n')
+                            const parsedLines = lines
+                                .map(line => line.replace(/^data: /, '').trim())
+                                .filter(line => line !== '' && line !== '[DONE]')
+                                .map(line => {
+                                    try {
+                                        return JSON.parse(line)
+                                    } catch (error) {
+                                        console.error('Error parsing JSON:', error)
+                                        return null
+                                    }
+                                })
+                                .filter(line => line !== null)
+
+                            for (const parsedLine of parsedLines) {
+                                if (parsedLine.choices && parsedLine.choices.length > 0) {
+                                    const { delta } = parsedLine.choices[0]
+                                    if (delta && delta.content) {
+                                        assistantMessage.content += delta.content
+                                        // Update the last message in the array
+                                        chatMessages.value = chatMessages.value.map((msg, index) =>
+                                            index === chatMessages.value.length - 1 ? { ...msg, content: assistantMessage.content } : msg
+                                        )
+                                        // Scroll to bottom after each update
+                                        scrollToBottom()
+                                    }
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        if (error.name === 'AbortError') {
+                            console.log('Request was aborted')
+                        } else {
+                            console.error('Error:', error)
+                            assistantMessage.content = `Sorry, there was an error processing your request: ${error.message}`
+                            chatMessages.value = chatMessages.value.map((msg, index) =>
+                                index === chatMessages.value.length - 1 ? { ...msg, content: assistantMessage.content } : msg
+                            )
+                        }
+                    } finally {
+                        console.log('Final chat messages:', chatMessages.value)
+                        scrollToBottom()
+                    }
+                }
+
+                function addMessage(role, content) {
+                    chatMessages.value = [...safeChatMessages.value, { role, content }]
+                    console.log('Message added:', { role, content }, 'Current messages:', chatMessages.value)
+                }
+
+                function markdownToHtml(content) {
+                    return marked.parse(content)
+                }
+
+                onMounted(() => {
+                    if (cheatsheets && cheatsheets.length > 0) {
+                        cheatsheetsList.value = cheatsheets
+                        command_type.value = cheatsheets[0].name
+                    }
+                    if (oaiConfigs.value.length > 0) {
+                        selectedOAIConfig.value = oaiConfigs.value[0]
+                    }
+                })
+
+                // Replace apiBase, apiKey, and apiModel with computed properties
+                const apiBase = computed(() => selectedOAIConfig.value?.api_base || '')
+                const apiKey = computed(() => selectedOAIConfig.value?.api_key || '')
+                const apiModel = computed(() => selectedOAIConfig.value?.model || '')
+
+                return {
+                    // Variables
+                    categories,
+                    selectedCategory,
+                    selectedSubcategory,
+                    subcategories,
+                    selectedItems,
+                    oaiConfigs,
+                    selectedOAIConfig,
+                    apiBase,
+                    apiKey,
+                    apiModel,
+                    safeChatMessages,
+                    userMessage,
+                    chatMessagesRef,
+                    chatCommand,
+                    showChat,
+                    systemPrompt,
+                    userPrompt,
+                    cheatsheetsList,
+                    selectedCheatsheetIndex,
+                    command_type,
+                    command_language,
+                    command_language_list,
+                    abortController,
+                    translationList,
+                    local_language,
+
+                    // Functions
+                    selectCategory,
+                    selectSubcategory,
+                    openChat,
+                    closeChat,
+                    sendMessage,
+                    sendToAI,
+                    markdownToHtml,
+                    selectCheatsheet,
+                }
+            }
+        })
+
+        const vm = app.mount('#app')
+    </script>
+    <script>
+        console.log(vm.categories)
+    </script>
+</body>
+
+</html>
