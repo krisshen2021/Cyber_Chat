@@ -151,8 +151,9 @@
                         {{ cheatsheet.name }}
                     </option>
                 </select>
-                <select v-model="local_language" class="w-max-content p-1 text-[#1E1E2E] rounded-md">
-                    <option v-for="(value, key) in translationList" :key="key" :value="value">
+                <select v-model="local_language" class="w-max-content p-1 text-[#1E1E2E] rounded-md"
+                    @change="handleLanguageChange($event)">
+                    <option v-for="(value, key) in translationList" :key="key" :value="value" :data-language="key">
                         {{ key }}
                     </option>
                 </select>
@@ -246,8 +247,6 @@
                 const cheatsheetsList = ref([])
                 const selectedCheatsheetIndex = ref(0)
                 const command_type = ref('')
-                const command_language_list = ref(['English', 'Simplified Chinese', 'Japanese', 'French', 'German', 'Korean'])
-                const command_language = ref(command_language_list.value[0])
                 const selectedCategory = ref('')
                 const selectedSubcategory = ref('')
                 const oaiConfigs = ref(oai_configs || [])
@@ -260,8 +259,16 @@
                 const abortController = ref(null)
                 const translationList = ref(translation)
                 const local_language = ref(translationList.value['English'])
+                const local_language_key = ref('English')
+                const translatedCheatsheetData = ref(null)
+                const currentCheatsheetData = ref(null)
 
                 // Computed properties
+                const command_language_list = computed(()=>{
+                    //get the keys of the translationList to a list
+                    return Object.keys(translationList.value);
+                })
+                const command_language = ref(local_language_key.value)
                 const systemPrompt = computed(() =>
                     command_type.value
                         ? `You are a helpful expert that explains ${command_type.value} commands, you like to use emojis, and you like to use a lot of them. you always like to provide concise explanations with examples in ${command_language.value}, never start your response with "Sure thing" or "Here is the explanation for the command"`
@@ -275,20 +282,90 @@
                 )
 
                 const selectedCheatsheet = computed(() => cheatsheetsList.value[selectedCheatsheetIndex.value] || {})
+                const translatedCheatsheet = computed(async () => {
+                    const original = selectedCheatsheet.value
+                    if (!original || !original.content) return {}
+                    const createTranslationPrompt = (jsonData, targetLang) => {
+                        const jsonString = JSON.stringify(jsonData, null, 2)
+                        return `Please translate the following cheatsheet JSON into ${targetLang}. Specifically, translate:
+1. The "category" field of each category
+2. The "name" field of each subcategory
+3. The "description" field of each command
+
+Please maintain the original JSON structure and keep the "key" fields unchanged. Output the translated JSON in the same format as the original.
+
+Here's the JSON to translate:
+
+${jsonString}
+
+After translation, please provide only the updated JSON with translations`
+                    }
+                    const translate = async (jsonData, targetLang) => {
+                        const prompt = createTranslationPrompt(jsonData, targetLang);
+                        console.log('API model:', apiModel.value)
+                        try {
+                            const response = await fetch(`${apiBase.value}/chat/completions`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${apiKey.value}` },
+                                body: JSON.stringify({
+                                    model: apiModel.value,
+                                    messages: [{ role: 'user', content: prompt }],
+                                    temperature: 0.7,
+                                    stream: false
+                                })
+                            });
+                            if (!response.ok) {
+                                throw new Error('Translation API request failed');
+                            }
+                            const result = await response.json();
+                            // 假设 API 返回的是翻译后的 JSON 字符串
+                            let translatedContent = result.choices[0].message.content;
+
+                            // 移除 ```json 和 ``` 标记
+                            translatedContent = translatedContent.replace(/^```(json)?\s*\n/i, '').replace(/\n```\s*$/i, '');
+
+                            // 解析清理后的 JSON 字符串
+                            return JSON.parse(translatedContent);
+                        } catch (error) {
+                            console.error('Translation error:', error);
+                            return jsonData; // 如果翻译失败，返回原始数据
+                        }
+                    }
+
+                    // 执行翻译
+                    const translated = await translate(original, local_language_key.value);
+                    return translated;
+
+                })
 
                 const categories = computed(() => {
-                    return selectedCheatsheet.value.content?.map(item => item.category) || []
+                    if (currentCheatsheetData.value) {
+                        return currentCheatsheetData.value.content?.map(item => item.category) || []
+                    } else {
+                        return selectedCheatsheet.value.content?.map(item => item.category) || []
+                    }
                 })
 
                 const subcategories = computed(() => {
-                    const category = selectedCheatsheet.value.content?.find(item => item.category === selectedCategory.value)
-                    return category?.subcategories.map(sub => sub.name) || []
+                    if (currentCheatsheetData.value) {
+                        const category = currentCheatsheetData.value.content?.find(item => item.category === selectedCategory.value)
+                        return category?.subcategories.map(sub => sub.name) || []
+                    } else {
+                        const category = selectedCheatsheet.value.content?.find(item => item.category === selectedCategory.value)
+                        return category?.subcategories.map(sub => sub.name) || []
+                    }
                 })
 
                 const selectedItems = computed(() => {
-                    const category = selectedCheatsheet.value.content?.find(item => item.category === selectedCategory.value)
-                    const subcategory = category?.subcategories.find(sub => sub.name === selectedSubcategory.value)
-                    return subcategory?.commands || []
+                    if (currentCheatsheetData.value) {
+                        const category = currentCheatsheetData.value.content?.find(item => item.category === selectedCategory.value)
+                        const subcategory = category?.subcategories.find(sub => sub.name === selectedSubcategory.value)
+                        return subcategory?.commands || []
+                    } else {
+                        const category = selectedCheatsheet.value.content?.find(item => item.category === selectedCategory.value)
+                        const subcategory = category?.subcategories.find(sub => sub.name === selectedSubcategory.value)
+                        return subcategory?.commands || []
+                    }
                 })
 
                 const safeChatMessages = computed(() => {
@@ -296,6 +373,9 @@
                 })
 
                 // Watch effects
+                watch(local_language_key, (newLanguage) => {
+                    command_language.value = newLanguage
+                })
                 watch(() => cheatsheets, (newCheatsheets) => {
                     if (newCheatsheets && newCheatsheets.length > 0) {
                         cheatsheetsList.value = newCheatsheets
@@ -316,7 +396,7 @@
                 }, { immediate: true })
 
                 watch(chatMessages, (newVal, oldVal) => {
-                    console.log('chatMessages changed:', { oldVal, newVal })
+                    //console.log('chatMessages changed:', { oldVal, newVal })
                     if (newVal === null) {
                         chatMessages.value = []
                         console.warn('chatMessages was set to null, resetting to empty array')
@@ -330,9 +410,10 @@
                 }, { immediate: true })
 
                 // Functions
-                function selectCheatsheet(index) {
+                async function selectCheatsheet(index) {
                     selectedCheatsheetIndex.value = index
                     command_type.value = cheatsheetsList.value[index].name
+                    await updateTranslatedCheatsheet()
                 }
 
                 function selectCategory(category) {
@@ -425,7 +506,7 @@
                             }),
                             signal: abortController.value.signal
                         })
-                        console.log('Response received:', response)
+                        //console.log('Response received:', response)
 
                         if (!response.ok) {
                             const errorData = await response.json()
@@ -440,7 +521,7 @@
                             if (done) break
 
                             const chunk = decoder.decode(value)
-                            console.log('Received chunk:', chunk)
+                            //console.log('Received chunk:', chunk)
 
                             const lines = chunk.split('\n')
                             const parsedLines = lines
@@ -495,11 +576,29 @@
                 function markdownToHtml(content) {
                     return marked.parse(content)
                 }
+                async function updateTranslatedCheatsheet() {
+                    if (local_language_key.value === 'English') {
+                        currentCheatsheetData.value = selectedCheatsheet.value
+                    } else {
+                        const translated = await translatedCheatsheet.value
+                        currentCheatsheetData.value = translated
+                    }
+                }
 
-                onMounted(() => {
+                function handleLanguageChange(event) {
+                    const selectedOption = event.target.selectedOptions[0];
+                    const selectedLanguage = selectedOption.getAttribute('data-language');
+                    if (selectedLanguage) {
+                        local_language_key.value = selectedLanguage
+                        updateTranslatedCheatsheet()
+                    }
+                }
+
+                onMounted(async () => {
                     if (cheatsheets && cheatsheets.length > 0) {
                         cheatsheetsList.value = cheatsheets
                         command_type.value = cheatsheets[0].name
+
                     }
                     if (oaiConfigs.value.length > 0) {
                         selectedOAIConfig.value = oaiConfigs.value[0]
@@ -538,7 +637,7 @@
                     abortController,
                     translationList,
                     local_language,
-
+                    local_language_key,
                     // Functions
                     selectCategory,
                     selectSubcategory,
@@ -548,14 +647,12 @@
                     sendToAI,
                     markdownToHtml,
                     selectCheatsheet,
+                    handleLanguageChange,
                 }
             }
         })
 
         const vm = app.mount('#app')
-    </script>
-    <script>
-        console.log(vm.categories)
     </script>
 </body>
 
