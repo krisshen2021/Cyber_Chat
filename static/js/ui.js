@@ -80,6 +80,7 @@ export class VolumeKnob {
         this.knobHandlerColor = options.knobHandlerColor || '#ffffff';
         this.audioElement = options.audioElement;
         this.initialVolume = options.initialVolume !== undefined ? options.initialVolume : 0.5;
+        this.initialMuted = options.initialMuted !== undefined ? options.initialMuted : true;
         this.isDragging = false;
         this.startAngle = 0;
         this.mouseLocation = [0, 0];
@@ -121,6 +122,19 @@ export class VolumeKnob {
 
         if (this.audioElement) {
             this.audioElement.volume = this.initialVolume;
+            if (this.initialMuted) {
+                this.audioElement.pause();
+                this.element.css({
+                    'background-color': 'rgba(111, 111, 111, 0.5)',
+                    'transition': 'background-color 0.5s ease-in-out'
+                });
+            }else{
+                this.audioElement.play();
+                this.element.css({
+                    'background-color': this.backgroundColor,
+                    'transition': 'background-color 0.5s ease-in-out'
+                });
+            }
             this.value = this.audioElement.volume;
             this.angle = this.valueToAngle(this.value);
         } else {
@@ -281,18 +295,6 @@ export class SelectorUI {
                 {
                     name: 'Italiano',
                     value: 'Italian'
-                },
-                {
-                    name: 'Русский',
-                    value: 'Russian'
-                },
-                {
-                    name: 'Türkçe',
-                    value: 'Turkish'
-                },
-                {
-                    name: 'Polski',
-                    value: 'Polish'
                 },
             ];
         }

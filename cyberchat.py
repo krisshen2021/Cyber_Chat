@@ -9,6 +9,7 @@ from modules.global_sets_async import (
     logger,
     config_data,
     prompt_params,
+    language_data
 )
 import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy
 from datetime import datetime
@@ -23,7 +24,8 @@ from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 from modules.payload_state import sd_payload, completions_data
 from modules.AiRoleOperator import AiRoleOperator as ARO
 from modules.ANSI_tool import ansiColor
-
+from openai import AsyncOpenAI
+from typing import Optional
 sd_payload = sd_payload.copy()
 config_data = config_data.copy()
 completions_data = completions_data.copy()
@@ -31,7 +33,9 @@ templates_path = os.path.join(project_root, "templates")
 static_path = os.path.join(project_root, "static")
 templates = Jinja2Templates(directory=templates_path)
 database.create_table()
-
+languageClient = AsyncOpenAI(api_key="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",base_url="https://api.groq.com/openai/v1",timeout=120)
+siteLanguageData = language_data.copy()
+localeLanguage = "English"
 
 def clear_screen():
     if os.name == "nt":  # Windows
@@ -137,7 +141,26 @@ async def admin_login(login_data: dict):
 
 # Role selection page
 @app.get("/")
-async def initpage(request: Request):
+@app.get("/{localeLanguage}")
+async def initpage(request: Request, localeLanguage: Optional[str] = None):
+    language_data = await getGlobalConfig("language_data")
+    if localeLanguage is None or localeLanguage == "English":
+        localeLanguage = "English"
+        translated_language_data = language_data
+    else:
+        language_data_jsonstring = json.dumps(language_data, indent=4)
+        logger.info("Language switched to: " + localeLanguage)
+        # create a prompt for translate the values in language data jsonstring to the language that user selected
+        prompt = "Translate all the values in the following json string to " + localeLanguage + ": " + language_data_jsonstring + "\n\nThe final output will ONLY be a json string with the same structure as the input json string, but with all the values translated to the "+ localeLanguage + " language, no other text or comment is needed."
+        result = await languageClient.chat.completions.create(
+            model="gemma2-9b-it",
+            messages=[{"role": "user", "content": prompt}],
+            stream=False,
+            temperature=0.55
+        )
+        # remove '```json' and '```' from the result
+        translated_language_data = json.loads(result.choices[0].message.content.replace("```json\n", "").replace("\n```", ""))
+        logger.info(translated_language_data)
     cookid_server = uuid.uuid1()
     ai_role_list = []
     roleconf = await getGlobalConfig("roleconf")
@@ -150,6 +173,8 @@ async def initpage(request: Request):
         "timestamp": timestamp,
         "ai_role_list": ai_role_list,
         "cookid_server": cookid_server,
+        "localeLanguage": localeLanguage,
+        "language_Data": translated_language_data,
     }
     return non_cache_response("role_selector_websocket.html", context)
 
@@ -676,9 +701,9 @@ async def preview_avatar(client_info, client_id):
     sd_payload["hr_negative_prompt"] = prompt_params["nagetive_prompt"]
     sd_payload["hr_prompt"] = prompt_str
     sd_payload["prompt"] = prompt_str
-    sd_payload["enable_hr"] = True
+    sd_payload["enable_hr"] = False
     sd_payload["hr_scale"] = 1.25
-    sd_payload["steps"] = 20
+    sd_payload["steps"] = 15
     sd_payload["width"] = 512
     sd_payload["height"] = 512
     # logger.info(sd_payload)
@@ -713,9 +738,9 @@ async def preview_createchar(client_info, client_id):
     sd_payload["hr_negative_prompt"] = prompt_params["nagetive_prompt"]
     sd_payload["hr_prompt"] = prompt_str
     sd_payload["prompt"] = prompt_str
-    sd_payload["enable_hr"] = True
+    sd_payload["enable_hr"] = False
     sd_payload["hr_scale"] = 1.25
-    sd_payload["steps"] = 20
+    sd_payload["steps"] = 15
     sd_payload["width"] = 768
     sd_payload["height"] = 768
     picture_data = await tabby_fastapi.SD_image(payload=sd_payload)
@@ -934,6 +959,24 @@ async def play_bg_music(client_info, client_id):
         client_id,
     )
 
+async def language_switch(client_info, client_id):
+    language = client_info["data"]["language"]
+    language_data = await getGlobalConfig("language_data")
+    language_data_jsonstring = json.dumps(language_data, indent=4)
+    logger.info("Language switched to: " + language)
+    # create a prompt for translate the values in language data jsonstring to the language that user selected
+    prompt = "Translate all the values in the following json string to " + language + ": " + language_data_jsonstring + "\n\nThe final output will ONLY be a json string with the same structure as the input json string, but with all the values translated to the "+ language + " language, no other text or comment is needed."
+    result = await languageClient.chat.completions.create(
+        model="gemma2-9b-it",
+        messages=[{"role": "user", "content": prompt}],
+        stream=False,
+        temperature=0.55
+    )
+    # remove '```json' and '```' from the result
+    translated_language_data = result.choices[0].message.content.replace("```json\n", "").replace("\n```", "")
+    # logger.info("Translated text: " + translated_language_data)
+    data_to_send = {"language": language, "task": "language_switch", "translated_language_data": translated_language_data}
+    await send_datapackage("language_switch_result", data_to_send, client_id)
 
 # ws event handler
 ws_events_dict = {
@@ -959,6 +1002,7 @@ ws_events_dict = {
     "transcribe_audio": transcribe_audio,
     "sentence_completion": sentence_completion,
     "play_bg_music": play_bg_music,
+    "language_switch": language_switch,
 }
 
 

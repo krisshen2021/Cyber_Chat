@@ -141,7 +141,8 @@
       backgroundColor: '#462256',
       knobHandlerColor: '#ffffff',
       audioElement: audioElement,
-      initialVolume: 0.5
+      initialVolume: 0.5,
+      initialMuted: true
     });
 
     // 监听值变化
@@ -266,7 +267,8 @@
 
     function exitRoomSuccess(msg) {
       if (window.confirm(msg.data['message'])) {
-        window.location.href = '/';
+        let localeLanguage = languageSwitchUI.getValue();
+        window.location.href = '/'+localeLanguage;
       } else {
       }
     }
@@ -1326,7 +1328,9 @@
         if (moment != '') {
           if ($('#bg_music')[0].src != `/play_music/${moment}`) {
             $('#bg_music')[0].src = `/play_music/${moment}`;
-            $('#bg_music')[0].play();
+            if (volumeKnob.initialMuted == false) {
+              $('#bg_music')[0].play();
+            }
           }
         } else {
           $('#bg_music')[0].pause();
@@ -1497,17 +1501,17 @@
         sentenceCompletion
       );
       //background music on
-      let playAttempt = setInterval(() => {
-        $("#bg_music")[0]
-          .play()
-          .then(() => {
-            clearInterval(playAttempt);
-          })
-          .catch((error) => {
-            console.log(error);
-            console.log("Unable to play the music, User has not interacted yet.");
-          });
-      }, 2000);
+      // let playAttempt = setInterval(() => {
+      //   $("#bg_music")[0]
+      //     .play()
+      //     .then(() => {
+      //       clearInterval(playAttempt);
+      //     })
+      //     .catch((error) => {
+      //       console.log(error);
+      //       console.log("Unable to play the music, User has not interacted yet.");
+      //     });
+      // }, 2000);
 
       // svg timer progress bar
       let circle = document.querySelector('.progress-ring__circle-progress');

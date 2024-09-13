@@ -1,5 +1,5 @@
 from database.sqliteclass import SQLiteDB
-import os, yaml, asyncio, aiofiles, base64, io
+import os, yaml, asyncio, aiofiles, base64, io, json
 from PIL import Image
 
 # from yeelight import Bulb
@@ -17,7 +17,7 @@ database_path = os.path.join(dir_path, "database", "cyberchat.db")
 prompt_temp_path = os.path.join(dir_path, "config", "prompts", "prompt_template.yaml")
 prompt_param_path = os.path.join(dir_path, "config", "prompts", "prompts.yaml")
 suggestions_path = os.path.join(dir_path, "config", "prompts", "suggestions.yaml")
-roles_path = os.path.join(dir_path, "config", "roles_LLM.json")
+language_path = os.path.join(dir_path, "config", "language", "lang.json")
 
 conn_ws_mgr = ConnectionManager()
 database = SQLiteDB(database_path)
@@ -28,6 +28,7 @@ prompt_params = None
 suggestions_params = None
 config_data = None
 roleconf = None
+language_data = None
 # bulb = None
 
 
@@ -93,6 +94,11 @@ async def load_roles():
     global roleconf
     roleconf = rolelist.copy()
 
+async def load_language():
+    async with aiofiles.open(language_path, mode="r") as f:
+        contents = await f.read()
+    global language_data
+    language_data = json.loads(contents)
 
 # async def conn_bulb(yeelight_url):
 #     global bulb
@@ -118,8 +124,9 @@ async def multitask():
     func_prompt_temp = asyncio.create_task(load_prompts_template())
     func_prompt_param = asyncio.create_task(load_prompts_params())
     func_suggestions = asyncio.create_task(load_suggestions())
+    func_language = asyncio.create_task(load_language())
     # bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
-    await asyncio.gather(roles, func_prompt_temp, func_prompt_param, func_suggestions)
+    await asyncio.gather(roles, func_prompt_temp, func_prompt_param, func_suggestions, func_language)
 
 
 async def initialize():
@@ -148,6 +155,9 @@ async def getGlobalConfig(data: str):
     if data == "suggestions_params":
         await load_suggestions()
         return suggestions_params
+    if data == "language_data":
+        await load_language()
+        return language_data
     # if data == "bulb":
     #     return bulb
 
