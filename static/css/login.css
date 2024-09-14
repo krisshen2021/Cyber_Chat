@@ -244,6 +244,7 @@ body::-webkit-scrollbar {
   background-color: rgba(5, 5, 5, 0.5);
   border-radius: 0.5rem;
   font-size: 1rem;
+  
 }
 
 .roleholder_selected {
@@ -262,13 +263,14 @@ body::-webkit-scrollbar {
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-end;
+  transition: all 0.3s ease;
 
 }
 .info_NSFW{
   width: 25px;
   height: 25px;
   border-radius: 3px;
-  display: none;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -325,7 +327,7 @@ body::-webkit-scrollbar {
   background-color: rgba(0, 0, 0, 0.5);
   display: none;
   opacity: 100;
-  justify-content: space-evenly;
+  justify-content: flex-start;
   align-items: center;
   flex-direction: column;
   backdrop-filter: blur(5px);
@@ -354,7 +356,7 @@ body::-webkit-scrollbar {
   margin-bottom: 3rem;
 }
 #role_intro_form{
-  width:490px;
+  width:500px;
 }
 #login_form {
   width: 300px;
@@ -446,6 +448,7 @@ body::-webkit-scrollbar {
   justify-content: flex-start;
   align-items: flex-start;
   gap: 10px;
+  flex-direction: row;
 }
 
 #role_intro_form .role_intro_img {
@@ -488,6 +491,7 @@ body::-webkit-scrollbar {
   font-weight: 600;
   color:#280149;
   cursor: pointer;
+  align-self: flex-end;
 }
 #role_intro_form .role_intro_button:hover{
   background-color: #ff8000;
@@ -764,6 +768,13 @@ textarea::-webkit-resizer {
     border-radius: 0.4rem;
     box-shadow: 2px 2px 10px 5px rgba(0, 0, 0, 0.7);
     cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  #role_intro_form{
+    width:300px;
+  }
+  #role_intro_form .role_intro_content {
+    flex-direction: column;
   }
 }
 
@@ -771,7 +782,12 @@ textarea::-webkit-resizer {
   body {
     font-size: 1.1rem;
   }
-
+  #role_intro_form{
+    width:380px;
+  }
+  #role_intro_form .role_intro_content {
+    flex-direction: column;
+  }
   .headline {
     padding: 1rem 0px;
     text-shadow: 0px 0px 5px #000000;
@@ -781,7 +797,7 @@ textarea::-webkit-resizer {
 
   .top_buttons {
     padding: 0.3rem 1rem;
-    font-size: 1.2rem;
+    font-size: 1rem;
     border-radius: 2rem;
     background-color: rgba(52, 7, 104, 0.7);
     height: fit-content;
@@ -794,7 +810,7 @@ textarea::-webkit-resizer {
   }
 
   .overlay {
-    justify-content: space-evenly;
+    justify-content: flex-start;
     align-items: center;
     flex-direction: column;
     padding-top: 2rem;
@@ -841,7 +857,7 @@ textarea::-webkit-resizer {
 
   .top_buttons {
     padding: 0.3rem 1rem;
-    font-size: 1.2rem;
+    font-size: 1rem;
     border-radius: 2rem;
     background-color: rgba(52, 7, 104, 0.7);
     height: fit-content;
@@ -854,7 +870,7 @@ textarea::-webkit-resizer {
   }
 
   .overlay {
-    justify-content: space-evenly;
+    justify-content: flex-start;
     align-items: center;
     flex-direction: column;
     padding-top: 2rem;

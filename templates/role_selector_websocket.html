@@ -3,6 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
   <link rel="icon" href="/static/images/favicon.ico" />
   <link rel="stylesheet" type="text/css" href="/static/css/login.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,7 +13,6 @@
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css?family=Philosopher&display=swap" rel="stylesheet" />
 
-  <meta charset="UTF-8" />
   <title></title>
 </head>
 
@@ -80,7 +80,7 @@
         <div class="profile_avatar"></div>
         <div class="username">Username</div>
         <div class="credits">
-          Credits: <span>100</span><svg id="btn_logout" width="24px" height="24px" stroke-width="1.5"
+          ${currentLanguage.Credits}<span>100</span><svg id="btn_logout" width="24px" height="24px" stroke-width="1.5"
             viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
             <path d="M12 12H19M19 12L16 15M19 12L16 9" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"
               stroke-linejoin="round"></path>
@@ -94,17 +94,47 @@
     <div class="headline" v-text="currentLanguage.siteName"></div>
     <div id="logindiv">
       <div class="subtitle">
-        <span v-text="currentLanguage.Choose_Charactor"></span><span class="chatbtn" id="btn_start_chat" v-text="currentLanguage.Start_Chatting">
-          <svg width="24px"
-            height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#280149"
-            stroke-width="1.5" >
+        <span v-text="currentLanguage.Choose_Charactor"></span><span class="chatbtn"
+          id="btn_start_chat">${currentLanguage.Start_Chatting}
+          <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+            color="#280149" stroke-width="1.5">
             <path id="icon_start_chat" fill-rule="evenodd" clip-rule="evenodd"
               d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 13.8563 1.72113 15.6046 2.55076 17.1298L1.76267 21.3627C1.71742 21.6058 1.79485 21.8555 1.96967 22.0303C2.14448 22.2051 2.39422 22.2826 2.63727 22.2373L6.87016 21.4493C8.39536 22.2788 10.1437 22.75 12 22.75C17.937 22.75 22.75 17.937 22.75 12C22.75 6.06293 17.937 1.25 12 1.25ZM17 10.75C16.3097 10.75 15.75 11.3097 15.75 12C15.75 12.6903 16.3097 13.25 17 13.25C17.6903 13.25 18.25 12.6903 18.25 12C18.25 11.3097 17.6903 10.75 17 10.75ZM10.75 12C10.75 11.3097 11.3097 10.75 12 10.75C12.6903 10.75 13.25 11.3097 13.25 12C13.25 12.6903 12.6903 13.25 12 13.25C11.3097 13.25 10.75 12.6903 10.75 12ZM7 10.75C6.30961 10.75 5.75 11.3097 5.75 12C5.75 12.6903 6.30961 13.25 7 13.25C7.69039 13.25 8.25 12.6903 8.25 12C8.25 11.3097 7.69039 10.75 7 10.75Z"
               fill="#280149"></path>
           </svg>
         </span>
       </div>
-      <div class="rolelist"></div>
+      <div class="rolelist">
+        <div class="roleholder" v-for="role in aiRoleList_vue" :key="role.aiRoleId">
+          <div class="avatarbk"
+            :style="{ backgroundImage: `url('../static/images/avatar/${role.aiRoleId}/none.webp?nocache={{timestamp}}')` }"
+            @click="selectRole($event, role)" @mouseover="hoverRole($event)" @mouseleave="hoverRole(null)">
+            <div class="info_NSFW" v-if="role.Data.Match_words_cata=='NSFW'">
+              <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="NSFW_icon"
+                  d="M4.8 1.40006C4.54174 1.05572 4.09211 0.915267 3.68377 1.05138C3.27543 1.1875 3 1.56963 3 2.00006V10.0001C3 10.5523 3.44772 11.0001 4 11.0001C4.55228 11.0001 5 10.5523 5 10.0001V5.00006L9.2 10.6001C9.45826 10.9444 9.90789 11.0849 10.3162 10.9487C10.7246 10.8126 11 10.4305 11 10.0001V2.00006C11 1.44778 10.5523 1.00006 10 1.00006C9.44772 1.00006 9 1.44778 9 2.00006V7.00006L4.8 1.40006Z" />
+                <path class="NSFW_icon"
+                  d="M15 1.00006C13.8954 1.00006 13 1.89549 13 3.00006V5.00006C13 6.10463 13.8954 7.00006 15 7.00006H19V9.00006H14C13.4477 9.00006 13 9.44778 13 10.0001C13 10.5523 13.4477 11.0001 14 11.0001H19C20.1046 11.0001 21 10.1046 21 9.00006V7.00006C21 5.89549 20.1046 5.00006 19 5.00006H15V3.00006H20C20.5523 3.00006 21 2.55235 21 2.00006C21 1.44778 20.5523 1.00006 20 1.00006H15Z" />
+                <path class="NSFW_icon"
+                  d="M3 14.0001C3 13.4478 3.44772 13.0001 4 13.0001H10C10.5523 13.0001 11 13.4478 11 14.0001C11 14.5524 10.5523 15.0001 10 15.0001H5V17.0001H10C10.5523 17.0001 11 17.4478 11 18.0001C11 18.5523 10.5523 19.0001 10 19.0001H5V22.0001C5 22.5523 4.55228 23.0001 4 23.0001C3.44772 23.0001 3 22.5523 3 22.0001V14.0001Z" />
+                <path class="NSFW_icon"
+                  d="M15 14.0001C15 13.4478 14.5523 13.0001 14 13.0001C13.4477 13.0001 13 13.4478 13 14.0001V22.0001C13 22.4495 13.2999 22.8438 13.7331 22.9638C14.1662 23.0838 14.6262 22.9 14.8575 22.5146L17 18.9437L19.1425 22.5146C19.3738 22.9 19.8338 23.0838 20.2669 22.9638C20.7001 22.8438 21 22.4495 21 22.0001V14.0001C21 13.4478 20.5523 13.0001 20 13.0001C19.4477 13.0001 19 13.4478 19 14.0001V18.3897L17.8575 16.4856C17.6768 16.1844 17.3513 16.0001 17 16.0001C16.6487 16.0001 16.3232 16.1844 16.1425 16.4856L15 18.3897V14.0001Z" />
+              </svg>
+            </div>
+          </div>
+          <div class="role_info_bar">
+            <div class="ainame_span" v-text="role.Data.ai_name"></div>
+            <div class="info_button" @click="showRoleInfo($event,role)">
+              <svg width="25px" height="25px" viewBox="0 0 20 20" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+                <path class="svg_info" ill-rule="evenodd" clip-rule="evenodd"
+                  d="M10 18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10C18 14.4183 14.4183 18 10 18ZM10 8.92857C9.44772 8.92857 9 9.37629 9 9.92857V13.9286C9 14.4809 9.44772 14.9286 10 14.9286C10.5523 14.9286 11 14.4809 11 13.9286V9.92857C11 9.37629 10.5523 8.92857 10 8.92857ZM10 7.5C10.5523 7.5 11 7.05228 11 6.5C11 5.94772 10.5523 5.5 10 5.5C9.44772 5.5 9 5.94772 9 6.5C9 7.05228 9.44772 7.5 10 7.5Z" />
+              </svg>
+            </div>
+          </div>
+          <!--<input type="radio" class="roleRadios" id="ainame" name="ai_role_name" value="rolename in list"
+            data-uncensored="censoredmarker" data-story_name="storynamemarker" data-intro_text="introtextmarker" />-->
+        </div>
+      </div>
     </div>
     <div class="Main_footer">Muffin 2024</div>
     <div id="overlay" class="overlay">
@@ -260,7 +290,7 @@
                 stroke-linejoin="round"></path>
             </svg>
             <span class="form_hint"></span></label>
-          <input type="password" id="login_password" name="password" />
+          <input type="password" id="login_password" name="password" @keyup.enter="vue_login" />
           <button type="button" class="submit_btn" id="btn_login_submit">
             ${currentLanguage.Login}
           </button>
@@ -605,10 +635,6 @@
         </div>
         <div class="main_body">
           <div class="role_intro_content">
-            <div class="role_intro_textwrapper">
-              <div class="role_intro_intro_text">StoryIntro</div>
-              <div class="role_intro_button" v-text="currentLanguage.Start_Your_Journey"></div>
-            </div>
             <div class="role_intro_img">
               <div class="info_NSFW">
                 <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -623,11 +649,16 @@
                 </svg>
               </div>
             </div>
+            <div class="role_intro_textwrapper">
+              <div class="role_intro_intro_text">StoryIntro</div>
+              <div class="role_intro_button" v-text="currentLanguage.Start_Your_Journey" @click="startChating"></div>
+            </div>
+
           </div>
         </div>
       </div>
     </div>
-    <div id="roleholder_template" style="display: none">
+    <div id="roleholder_template" style="display: none"><!--
       <div class="roleholder">
         <div class="avatarbk">
           <div class="info_NSFW">
@@ -654,7 +685,7 @@
         </div>
         <input type="radio" class="roleRadios" id="ainame" name="ai_role_name" value="rolename in list"
           data-uncensored="censoredmarker" data-story_name="storynamemarker" data-intro_text="introtextmarker" />
-      </div>
+      </div>-->
     </div>
     <div id="bg_music_player" style="display: none;">
       <audio id="bg_music" src="/play_music/Relaxing_Moment" loop></audio>
@@ -666,13 +697,14 @@
   <script src="/static/js/gsap.min.js"></script>
   <script src="/static/js/jquery-3.6.0.min.js"></script>
   <!-- Vue -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="/static/js/vue.global.js"></script>
   <script>
     const { ref, computed, nextTick, watch, onMounted } = Vue
     const app = Vue.createApp({
       delimiters: ['${', '}'],
       setup() {
-        const siteName = ref('Socrates\' Phaedrus')
+        const aiRoleList_vue = ref(JSON.parse('{{ ai_role_list | tojson | safe }}'))
+        console.log(aiRoleList_vue.value)
         const languageData = ref(JSON.parse('{{ language_Data | tojson | safe }}'))
         console.log(languageData.value)
         const currentLanguage = computed(() => {
@@ -681,10 +713,84 @@
         watch(currentLanguage, (newVal, oldVal) => {
           document.title = newVal.siteName
         }, { immediate: true })
+        const vue_login = () => {
+          login()
+        }
+        const hoverRole = (event) => {
+          if (event) {
+            const hoveredElement = event.target;
+            hoveredElement.style.backgroundSize = '140%';
+          } else {
+            // This is for the mouseleave event
+            // Reset any changes made on hover
+            const roleElements = document.querySelectorAll('.avatarbk');
+            roleElements.forEach(el => {
+              el.style.backgroundSize = '100%';
+            });
+          }
+        }
+        const setWindowVars = (role) => {
+          window.ai_role_name = role.aiRoleId;
+          window.ainame = role.Data.ai_name;
+          window.is_uncensored = role.Data.if_uncensored;
+          window.story_name = role.Data.json_Story_intro.story_name;
+          window.intro_text = role.Data.json_Story_intro.intro_text;
+        }
+        const selectRole = (event, role) => {
+          let select_el;
+          if(event){
+            select_el = event.target
+          }else if(event == null){
+            const default_role = document.querySelector('.roleholder:first-child')
+            select_el = default_role.querySelector('.avatarbk')
+          }
+          const roleElements = document.querySelectorAll('.avatarbk');
+          roleElements.forEach(el => {
+            el.style.boxShadow = '2px 2px 10px 5px rgba(0, 0, 0, 0.7)'
+          });
+          select_el.style.boxShadow = '0px 0px 25px 5px rgba(127, 3, 155, 0.7)'
+          setWindowVars(role)
+        }
+        const showRoleInfo = (event, role) => {
+          const infoButton = event.target
+          const avatarbkNode = infoButton.closest('.roleholder').querySelector('.avatarbk')
+          const roleElements = document.querySelectorAll('.avatarbk');
+          roleElements.forEach(el => {
+            el.style.boxShadow = '2px 2px 10px 5px rgba(0, 0, 0, 0.7)'
+          });
+          avatarbkNode.style.boxShadow = '0px 0px 25px 5px rgba(127, 3, 155, 0.7)'
+          const roleInfoForm = document.getElementById('role_intro_form')
+          roleInfoForm.querySelector('.role_intro_story_name').innerHTML = `<span class="storyname_in_introblock">${role.Data.json_Story_intro.story_name}</span>`
+          roleInfoForm.querySelector('.role_intro_intro_text').innerHTML = role.Data.json_Story_intro.intro_text.replaceAll('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${role.Data.ai_name}</span>`)
+          roleInfoForm.querySelector('.role_intro_img').style.backgroundImage = avatarbkNode.style.backgroundImage
+          window.toggle_forms('role_intro_form')
+          setWindowVars(role)
 
+        }
+        const startChating = () => {
+          window.start_chat()
+        }
+        onMounted(() => {
+            Vue.nextTick(() => {
+                gsap.from(".roleholder", {
+                  duration: 0.2,
+                  opacity: 0,
+                  scale: 0.6,
+                  ease: "back",
+                  stagger: 0.1,
+                });
+                selectRole(null, aiRoleList_vue.value[0])
+            });
+        });
         return {
           currentLanguage,
-          languageData
+          languageData,
+          aiRoleList_vue,
+          vue_login,
+          hoverRole,
+          selectRole,
+          showRoleInfo,
+          startChating
         }
       }
     })
@@ -693,7 +799,7 @@
   <script type="text/javascript" charset="utf-8">
     //load roles
     var aiRoleList = JSON.parse('{{ ai_role_list | tojson | safe }}');
-    console.log(aiRoleList);
+    // console.log(aiRoleList);
     var ainame;
     var ai_role_name;
     var is_uncensored;
@@ -1391,16 +1497,16 @@
       console.log(translated_language_data);
       // Parse the translated language data
       let parsedData = JSON.parse(translated_language_data);
-      
+
       // Update the languageData ref in Vue
       vm.languageData = parsedData;
-      
+
       // Force Vue to re-render
       vm.$forceUpdate();
-      
+
       // Update the language switch UI
       // $('#language_switch').attr('data-value', parsedData.language);
-      
+
       console.log("Language data updated successfully");
     }
 
@@ -1506,79 +1612,7 @@
     });
 
     //role list constructor
-    $.each(aiRoleList, function (index, item) {
-      let roleContent = $("#roleholder_template").find(".roleholder").clone(true);
-      roleContent.find(".avatarbk").css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.webp?nocache=' + timestamp + ')')
-        .on('mouseover', function () {
-          gsap.to($(this), { duration: 0.3, backgroundSize: "130%", ease: "back", });
-        })
-        .on('mouseout', function () {
-          gsap.to($(this), { duration: 0.3, backgroundSize: "100%" });
-        })
-        .on('click', function () {
-          $(this).closest(".roleholder").find(".roleRadios")
-            .prop('checked', true)
-            .trigger('change');
-          $(".roleholder").removeClass("roleholder_selected");
-          $(this).closest(".roleholder").addClass("roleholder_selected");
-        });
-      if (item.Data.Match_words_cata == "NSFW") {
-        roleContent.find(".info_NSFW").css('display', 'flex');
-      }
-      roleContent.find(".roleRadios")
-        .attr('id', item.Data.ai_name)
-        .data("uncensored", item.Data.if_uncensored)
-        .data("story_name", item.Data.json_Story_intro.story_name)
-        .data("intro_text", item.Data.json_Story_intro.intro_text)
-        .val(item.aiRoleId)
-        .on('change', function () {
-          ai_role_name = $(this).val();
-          ainame = $(this).attr("id");
-          is_uncensored = $(this).data("uncensored");
-          story_name = $(this).data("story_name");
-          intro_text = $(this).data("intro_text");
-          let roleinf = JSON.stringify({ ai_role_name, ainame, is_uncensored, story_name, intro_text });
-          console.log("current role selected: " + roleinf);
-        });
-      roleContent.find(".info_button").on('click', function () {
-        roleContent.find(".avatarbk").trigger('click');
-        roleContent.find(".roleRadios").trigger('change');
-        $("#role_intro_form").find('.role_intro_story_name').html(`<span class="storyname_in_introblock">" ${item.Data.json_Story_intro.story_name} "</span>`);
-        $("#role_intro_form").find('.role_intro_intro_text').html((item.Data.json_Story_intro.intro_text).replaceAll('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${item.Data.ai_name}</span>`));
-        $("#role_intro_form").find('.role_intro_img').css('background-image', 'url(../static/images/avatar/' + item.aiRoleId + '/none.webp?nocache=' + timestamp + ')');
-        $("#role_intro_form").find('.role_intro_button').on('click', function () {
-          start_chat();
-        });
-        if (item.Data.Match_words_cata == "NSFW") {
-          $("#role_intro_form").find('.info_NSFW').css('display', 'flex');
-        } else {
-          $("#role_intro_form").find('.info_NSFW').css('display', 'none');
-        }
-        toggle_forms("role_intro_form");
-      });
-      roleContent.find(".ainame_span").html(item.Data.ai_name);
-      $("#logindiv").find(".rolelist").append(roleContent);
-    });
-    $(".avatarbk").eq(0).trigger('click');
-    gsap.from(".headline", {
-      duration: 1,
-      opacity: 0,
-      scale: 0.3,
-      ease: "back",
-    });
-    gsap.from("#logindiv", {
-      duration: 1.2,
-      opacity: 0,
-      scale: 0.5,
-      ease: "back",
-    });
-    gsap.from(".roleholder", {
-      duration: 0.5,
-      opacity: 0,
-      scale: 0.4,
-      ease: "back",
-      stagger: 0.2,
-    });
+
 
     //button event functions
 
@@ -1851,7 +1885,10 @@
       console.log(`Attempting to reconnect... (Attempt: ${retryCount})`);
       connectWebSocket();
     }
-    connectWebSocket();
+    $(document).ready(function () {
+      connectWebSocket();
+    });
+
   </script>
   <!-- create UI-->
   <script type="module">
@@ -1900,7 +1937,7 @@
       //   task: "language_switch",
       // };
       // ws.send(wsData("language_switch", querydata));
-      window.location.href = '/'+value;
+      window.location.href = '/' + value;
     });
   </script>
   <!-- End of Script Block -->
