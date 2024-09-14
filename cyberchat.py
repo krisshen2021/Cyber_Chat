@@ -156,11 +156,11 @@ async def initpage(request: Request, localeLanguage: Optional[str] = None):
             model="gemma2-9b-it",
             messages=[{"role": "user", "content": prompt}],
             stream=False,
-            temperature=0.55
+            temperature=0.7
         )
         # remove '```json' and '```' from the result
         translated_language_data = json.loads(result.choices[0].message.content.replace("```json\n", "").replace("\n```", ""))
-        logger.info(translated_language_data)
+        # logger.info(translated_language_data)
     cookid_server = uuid.uuid1()
     ai_role_list = []
     roleconf = await getGlobalConfig("roleconf")
@@ -187,8 +187,10 @@ async def enter_room(
 ):
     context = form_data.model_dump()
     suggestions = await getGlobalConfig("suggestions_params")
-    language_Data = await getGlobalConfig("language_data")
-    context["language_Data"] = language_Data
+    # language_Data = await getGlobalConfig("language_data")
+    # context["language_Data"] = language_Data
+    context["language_Data"] = json5.loads(context["language_Data"])
+    logger.info(context["language_Data"])
     context["suggestions"] = suggestions
     # ai_role_data = database.get_airole(context["ai_role_name"])
     # username = context["username"]
@@ -965,7 +967,7 @@ async def language_switch(client_info, client_id):
         model="gemma2-9b-it",
         messages=[{"role": "user", "content": prompt}],
         stream=False,
-        temperature=0.55
+        temperature=0.7
     )
     # remove '```json' and '```' from the result
     translated_language_data = result.choices[0].message.content.replace("```json\n", "").replace("\n```", "")

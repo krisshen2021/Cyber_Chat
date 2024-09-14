@@ -248,6 +248,7 @@
       delimiters: ['${', '}'],
       setup() {
         const languageData = ref(JSON.parse('{{ language_Data | tojson | safe }}'))
+        console.log('languageData:', languageData.value)
         const currentLanguage = computed(() => {
           return languageData.value.ChatRoomPage
         })
@@ -1700,15 +1701,15 @@
           windowRatio: windowSize.ratio,
         };
         ws.send(wsData('initialize_room', querydata));
-        function setUILanguage(localeLanguage) {
-          if (localeLanguage != 'English') {
-            let querydata = {
-              language: localeLanguage,
-            };
-            ws.send(wsData('language_switch', querydata));
-          }
-        }
-        setUILanguage($(languageSwitch).attr('data-value'));
+        // function setUILanguage(localeLanguage) {
+        //   if (localeLanguage != 'English') {
+        //     let querydata = {
+        //       language: localeLanguage,
+        //     };
+        //     ws.send(wsData('language_switch', querydata));
+        //   }
+        // }
+        // setUILanguage($(languageSwitch).attr('data-value'));
       } else {
         /* reconnect to server */
         let querydata = {

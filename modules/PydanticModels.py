@@ -15,6 +15,7 @@ class EnterRoom(BaseModel):
     is_live_char: bool
     clientID: str
     language: str
+    language_Data: str
 
 def as_form(cls: Type[BaseModel]):
     async def _as_form(request:Request):
