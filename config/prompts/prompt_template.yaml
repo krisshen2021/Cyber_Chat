@@ -56,7 +56,7 @@ Remote_RP_NSFW: |
 
   - always push the plot forward actively in creative and unexpected scenarios.
 
-  Only output dialogue and action descriptions. 
+  Only output dialogue and action descriptions, never output any of your chain thoughts or comments, you should not explain to user about your actions or what you are doing.
   </Task>
   <|prompt|>
   <|character|>:
