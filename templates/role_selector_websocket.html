@@ -708,7 +708,7 @@
         const languageData = ref(JSON.parse('{{ language_Data | tojson | safe }}'))
         console.log(languageData.value)
         const currentLanguage = computed(() => {
-          return languageData.value.Resources
+          return languageData.value.IndexPage
         })
         watch(currentLanguage, (newVal, oldVal) => {
           document.title = newVal.siteName

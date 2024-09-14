@@ -14,267 +14,14 @@
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css?family=Philosopher&display=swap" rel="stylesheet" />
   <title>{{ainame}}</title>
-</head>
-<!--HTML BODY CODE-->
-
-<body>
-  <div class="flexPage" id="chatroom">
-    <div class="comic-area">
-      <div id="char-wrapper" class="border-wrapper wrapper-char-fullscreen">
-        <div id="char-bgpic" class="char_bg_fullscreen"></div>
-      </div>
-      <div id="user-wrapper" class="border-wrapper wrapper-user-fullscreen">
-        <div id="user-bgpic" class="user_bg"></div>
-      </div>
-      <div id="char-dynpic-wrapper" class="border-wrapper wrapper-char-dynpic-fullscreen">
-        <div id="char-dynpic" class="char_dynmicpic_bg"></div>
-      </div>
-      <div class="comic_msg_holder_char" id="comic-msg-holder-char">
-        <div class="comic_msgbox_arrow_char"></div>
-        <div id="msg_box_comic_char" class="comic_msgbox"></div>
-        <div id="voiceController_comic" class="voiceController">
-          Play Voice
-        </div>
-        <div class="msg-drag-handle">
-          <svg width="18px" height="18px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none"
-            stroke="#ffffff" stroke-width="3.5">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <line x1="32" y1="8" x2="32" y2="56"></line>
-              <line x1="56" y1="32" x2="8" y2="32"></line>
-              <polyline points="40 16 32 8 24 16"></polyline>
-              <polyline points="24 48 32 56 40 48"></polyline>
-              <polyline points="48 40 56 32 48 24"></polyline>
-              <polyline points="16 24 8 32 16 40"></polyline>
-            </g>
-          </svg>
-        </div>
-      </div>
-      <div class="comic_msg_holder_user" id="comic-msg-holder-user">
-        <div class="comic_msgbox_arrow_user"></div>
-        <div id="msg_box_comic_user" class="comic_msgbox"></div>
-        <div class="msg-drag-handle">
-          <svg width="18px" height="18px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none"
-            stroke="#ffffff" stroke-width="3.5">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <line x1="32" y1="8" x2="32" y2="56"></line>
-              <line x1="56" y1="32" x2="8" y2="32"></line>
-              <polyline points="40 16 32 8 24 16"></polyline>
-              <polyline points="24 48 32 56 40 48"></polyline>
-              <polyline points="48 40 56 32 48 24"></polyline>
-              <polyline points="16 24 8 32 16 40"></polyline>
-            </g>
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div id="setTings" class="chatSetting">
-      <div class="chatSetUpBtn">
-        <svg width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
-          xmlns="http://www.w3.org/2000/svg" color="#ffffff">
-          <path
-            d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
-            stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-          <path
-            d="M19.6224 10.3954L18.5247 7.7448L20 6L18 4L16.2647 5.48295L13.5578 4.36974L12.9353 2H10.981L10.3491 4.40113L7.70441 5.51596L6 4L4 6L5.45337 7.78885L4.3725 10.4463L2 11V13L4.40111 13.6555L5.51575 16.2997L4 18L6 20L7.79116 18.5403L10.397 19.6123L11 22H13L13.6045 19.6132L16.2551 18.5155C16.6969 18.8313 18 20 18 20L20 18L18.5159 16.2494L19.6139 13.598L21.9999 12.9772L22 11L19.6224 10.3954Z"
-            stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-        </svg>
-      </div>
-      <div id="settingOption" class="settingOpt">
-        <div>
-          <input type="checkbox" id="comicMode" />
-          <span class="smallFonts" v-text="currentLanguage.Comic_Mode"></span>
-        </div>
-        <div class="UI_flex_row">
-          <div id="language_switch"></div>
-        </div>
-        <div class="UI_flex_row">
-          <div id="model_switch"></div>
-        </div>
-        <div class="UI_flex_row">
-          <div id="instr_switch"></div>
-        </div>
-        <div class="UI_flex_row">
-          <div id="sd_switch"></div>
-        </div>
-        <div class="UI_flex_row">
-          <div>
-            <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-              stroke="">
-              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-              <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-              <g id="SVGRepo_iconCarrier">
-                <path
-                  d="M13.75 2C13.75 1.58579 13.4142 1.25 13 1.25C12.5858 1.25 12.25 1.58579 12.25 2V14.5359C11.4003 13.7384 10.2572 13.25 9 13.25C6.37665 13.25 4.25 15.3766 4.25 18C4.25 20.6234 6.37665 22.75 9 22.75C11.6234 22.75 13.75 20.6234 13.75 18V6.243C14.9875 7.77225 16.8795 8.75 19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25C16.1005 7.25 13.75 4.8995 13.75 2Z"
-                  fill="#ffffff"></path>
-              </g>
-            </svg>
-          </div>
-          <div id="knob" class="knob"></div>
-        </div>
-      </div>
-
-    </div>
-    <div id="ai_intro">
-      <div class="ai_name">{{ainame}}</div>
-      <div class="prologue_button">
-        <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M4 19V6.2C4 5.0799 4 4.51984 4.21799 4.09202C4.40973 3.71569 4.71569 3.40973 5.09202 3.21799C5.51984 3 6.0799 3 7.2 3H16.8C17.9201 3 18.4802 3 18.908 3.21799C19.2843 3.40973 19.5903 3.71569 19.782 4.09202C20 4.51984 20 5.0799 20 6.2V17H6C4.89543 17 4 17.8954 4 19ZM4 19C4 20.1046 4.89543 21 6 21H20M9 7H15M9 11H15M19 17V21"
-            stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </div>
-    </div>
-    <div id="intro_prologue_area">
-      <div class="intro_prologue">Prologue Texts</div>
-    </div>
-    <div class="free-space"></div>
-    <div id="holder_box">
-      <div id="drag-handle"></div>
-      <div id="message_box"></div>
-      <div id="inputArea">
-        <div id="chat-history-buttons">
-          <button id="load-chat-history" v-text="currentLanguage.Load_Chat_History"></button>
-          <button id="save-chat-history" v-text="currentLanguage.Save_Chat_History"></button>
-          <button id="sentence-completion" style="display: none;"></button>
-        </div>
-        <div class="messageInputBox">
-          <div class="input_area">
-            <div class="ai_icon"></div>
-            <textarea type="text" id="messageToSend" rows="1"></textarea>
-            <ul id="cmd_dropdownMenu"></ul>
-          </div>
-          <div id="submit" class="msgInput">
-            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-              color="#a25aff" stroke-width="1.5">
-              <g clip-path="url(#clip0_4086_8473)">
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                  d="M1.84647 7.15123C1.54566 7.21608 1.31498 7.45811 1.26464 7.7617C1.2143 8.06528 1.35452 8.36881 1.6183 8.52729L8.13474 12.4421L14.3544 8.08705C14.6938 7.84947 15.1614 7.93193 15.399 8.27123C15.6366 8.61054 15.5541 9.0782 15.2148 9.31578L8.99537 13.6707L10.4455 21.1339C10.5042 21.436 10.7415 21.6715 11.044 21.7281C11.3465 21.7846 11.6528 21.6506 11.8166 21.3901L22.7919 3.93893C22.9526 3.68349 22.9445 3.35665 22.7714 3.10947C22.5983 2.86228 22.294 2.7429 21.999 2.80649L1.84647 7.15123Z"
-                  fill="#a25aff"></path>
-              </g>
-              <defs>
-                <clipPath id="clip0_4086_8473">
-                  <rect width="24" height="24"></rect>
-                </clipPath>
-              </defs>
-            </svg>
-          </div>
-          <div id="recordTimer" class="recordTimer">
-            <svg width="34" height="34">
-              <circle class="progress-ring__circle-progress" stroke="#611997" stroke-width="2" fill="transparent" r="16"
-                cx="17" cy="17" />
-            </svg>
-            <div id="recordButton" class="recordButton">
-              <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                color="#ffffff" stroke-width="1.5">
-                <rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5"
-                  stroke-width="1.5"></rect>
-                <path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff"
-                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                <path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"
-                  stroke-linejoin="round"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div class="messageOptions">
-          <div class="subButtonsGroup">
-            <button id="regenerate" v-text="currentLanguage.Regenerate"></button>
-            <button id="restart" v-text="currentLanguage.Restart"></button>
-            <button id="exitchat" v-text="currentLanguage.Exit"></button>
-          </div>
-          <div class="sub_options">
-            <div id="messageBox_switch_holder">
-              <div id="messageBox_switch"></div>
-              <span class="smallFonts" v-text="currentLanguage.Message_Box"></span>
-            </div>
-            <div>
-              <input id="voiceswitcher" type="checkbox" />
-              <span class="smallFonts" v-text="currentLanguage.Voice_Output"></span>
-            </div>
-            <div>
-              <input id="dynimageSwitcher" type="checkbox" />
-              <span class="smallFonts" v-text="currentLanguage.Dynamic_Image"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="templates_box" style="display: none">
-      <div id="msg_container">
-        <div class="avatar"></div>
-        <div class="message"></div>
-      </div>
-    </div>
-    <div id="bg_music_player" style="display: none;">
-      <audio id="bg_music" loop></audio>
-    </div>
-    <div class="overlay" id="overLayer">
-      <div class="overlay-content">
-        <div class="loadingSvg">
-          <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#FFFFFF">
-            <path
-              d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z">
-              <animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12"
-                repeatCount="indefinite" />
-            </path>
-          </svg>
-        </div>
-        <div class="loadingText"></div>
-        <div class="loadingText_Percentage"></div>
-      </div>
-      <div class="overlay-dynpic">
-        <div id="closePreview">Close Preview</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Script Block -->
   <script src="/static/js/gsap.min.js"></script>
   <script src="/static/js/marked.js"></script>
   <script src="/static/js/jquery-3.6.0.min.js"></script>
   <script src="/static/js/jquery-ui.js"></script>
-  <script src="/static/js/vue.global.js"></script>
+
 
   <!--Core functions-->
   <script type="module" charset="utf-8">
-    //Vue block
-    let commandInputHandler
-    const { ref, computed, nextTick, watch, onMounted } = Vue
-    const app = Vue.createApp({
-      delimiters: ['${', '}'],
-      setup() {
-        const languageData = ref(JSON.parse('{{ language_Data | tojson | safe }}'))
-        const currentLanguage = computed(() => {
-          return languageData.value.ChatRoomPage
-        })
-        watch(currentLanguage, (newVal, oldVal) => {
-          console.log('Current language:', newVal)
-        }, { immediate: true })
-
-        const language_switch_result = (serverData) => {
-          const translated_language_data = JSON.parse(serverData.data.translated_language_data);
-          languageData.value = translated_language_data
-          console.log('translated_language_data:', translated_language_data)
-          console.log('languageData.value:', languageData.value)
-          console.log('languageData.value.ChatRoomPage.Input_Hint:', languageData.value.ChatRoomPage.Input_Hint)
-          commandInputHandler.setDefaultText(languageData.value.ChatRoomPage.Input_Hint)
-          document.getElementById('messageToSend').blur();
-        }
-        onMounted(() => {
-
-        })
-        return {
-          currentLanguage,
-          language_switch_result
-        }
-      }
-    })
-    const vm = app.mount('#chatroom')
-
     import { msTTS } from '/static/js/tts.js';
     const msttser = new msTTS();
     import { CommandInputHandler } from '/static/js/input_control.js';
@@ -368,13 +115,8 @@
     });
     languageSwitchUI.setItem('{{language}}');
     console.log('Current language:', $(languageSwitch).attr('data-value'));
-
     $(languageSwitch).on('change', (event, value) => {
       console.log('Current language:', $(languageSwitch).attr('data-value'));
-      let querydata = {
-        language: value,
-      };
-      ws.send(wsData('language_switch', querydata));
     });
     $(messageBox_switch).on('change', (event, value) => {
       if (value && !$('#comicMode').is(':checked')) {
@@ -526,7 +268,7 @@
     function exitRoomSuccess(msg) {
       if (window.confirm(msg.data['message'])) {
         let localeLanguage = languageSwitchUI.getValue();
-        window.location.href = '/' + localeLanguage;
+        window.location.href = '/'+localeLanguage;
       } else {
       }
     }
@@ -1621,7 +1363,7 @@
       } else {
         $(instrSwitch).parent().hide();
       }
-
+      
 
       toggleInputs(true);
       add_msg({
@@ -1700,15 +1442,6 @@
           windowRatio: windowSize.ratio,
         };
         ws.send(wsData('initialize_room', querydata));
-        function setUILanguage(localeLanguage) {
-          if (localeLanguage != 'English') {
-            let querydata = {
-              language: localeLanguage,
-            };
-            ws.send(wsData('language_switch', querydata));
-          }
-        }
-        setUILanguage($(languageSwitch).attr('data-value'));
       } else {
         /* reconnect to server */
         let querydata = {
@@ -1743,9 +1476,8 @@
     /*Document Ready Actions*/
     $(document).ready(function () {
       //new command function
-      // const defaultText =
-      //   "'/' for commands, 'Tab' for sentence completion, 'Esc' to accept";
-      const defaultText = vm.currentLanguage.Input_Hint;
+      const defaultText =
+        "'/' for commands, 'Tab' for sentence completion, 'Esc' to accept";
       const $msg_inputer = $('#messageToSend');
       const $cmd_dropdownMenu = $('#cmd_dropdownMenu');
       const $ai_icon = $('.ai_icon');
@@ -1758,7 +1490,7 @@
         sugDesc: 'sug_desc',
         highlight_svg: 'highlight_svg'
       };
-      commandInputHandler = new CommandInputHandler(
+      const commandInputHandler = new CommandInputHandler(
         suggestions,
         defaultText,
         $msg_inputer,
@@ -1768,6 +1500,18 @@
         cssClasses,
         sentenceCompletion
       );
+      //background music on
+      // let playAttempt = setInterval(() => {
+      //   $("#bg_music")[0]
+      //     .play()
+      //     .then(() => {
+      //       clearInterval(playAttempt);
+      //     })
+      //     .catch((error) => {
+      //       console.log(error);
+      //       console.log("Unable to play the music, User has not interacted yet.");
+      //     });
+      // }, 2000);
 
       // svg timer progress bar
       let circle = document.querySelector('.progress-ring__circle-progress');
@@ -2089,9 +1833,6 @@
           if (serverData.wsevent_server == 'sentence_completion_result') {
             sentence_completion_result(serverData);
           }
-          if (serverData.wsevent_server == 'language_switch_result') {
-            vm.language_switch_result(serverData);
-          }
         };
         ws.onerror = (e) => {
           console.log('Websocket error observed: ' + e);
@@ -2117,6 +1858,223 @@
     });
 
   </script>
+</head>
+<!--HTML BODY CODE-->
+
+<body>
+  <div class="flexPage">
+    <div class="comic-area">
+      <div id="char-wrapper" class="border-wrapper wrapper-char-fullscreen">
+        <div id="char-bgpic" class="char_bg_fullscreen"></div>
+      </div>
+      <div id="user-wrapper" class="border-wrapper wrapper-user-fullscreen">
+        <div id="user-bgpic" class="user_bg"></div>
+      </div>
+      <div id="char-dynpic-wrapper" class="border-wrapper wrapper-char-dynpic-fullscreen">
+        <div id="char-dynpic" class="char_dynmicpic_bg"></div>
+      </div>
+      <div class="comic_msg_holder_char" id="comic-msg-holder-char">
+        <div class="comic_msgbox_arrow_char"></div>
+        <div id="msg_box_comic_char" class="comic_msgbox"></div>
+        <div id="voiceController_comic" class="voiceController">
+          Play Voice
+        </div>
+        <div class="msg-drag-handle">
+          <svg width="18px" height="18px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none"
+            stroke="#ffffff" stroke-width="3.5">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier">
+              <line x1="32" y1="8" x2="32" y2="56"></line>
+              <line x1="56" y1="32" x2="8" y2="32"></line>
+              <polyline points="40 16 32 8 24 16"></polyline>
+              <polyline points="24 48 32 56 40 48"></polyline>
+              <polyline points="48 40 56 32 48 24"></polyline>
+              <polyline points="16 24 8 32 16 40"></polyline>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="comic_msg_holder_user" id="comic-msg-holder-user">
+        <div class="comic_msgbox_arrow_user"></div>
+        <div id="msg_box_comic_user" class="comic_msgbox"></div>
+        <div class="msg-drag-handle">
+          <svg width="18px" height="18px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none"
+            stroke="#ffffff" stroke-width="3.5">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier">
+              <line x1="32" y1="8" x2="32" y2="56"></line>
+              <line x1="56" y1="32" x2="8" y2="32"></line>
+              <polyline points="40 16 32 8 24 16"></polyline>
+              <polyline points="24 48 32 56 40 48"></polyline>
+              <polyline points="48 40 56 32 48 24"></polyline>
+              <polyline points="16 24 8 32 16 40"></polyline>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div id="setTings" class="chatSetting">
+      <div class="chatSetUpBtn">
+        <svg width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg" color="#ffffff">
+          <path
+            d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+            stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path
+            d="M19.6224 10.3954L18.5247 7.7448L20 6L18 4L16.2647 5.48295L13.5578 4.36974L12.9353 2H10.981L10.3491 4.40113L7.70441 5.51596L6 4L4 6L5.45337 7.78885L4.3725 10.4463L2 11V13L4.40111 13.6555L5.51575 16.2997L4 18L6 20L7.79116 18.5403L10.397 19.6123L11 22H13L13.6045 19.6132L16.2551 18.5155C16.6969 18.8313 18 20 18 20L20 18L18.5159 16.2494L19.6139 13.598L21.9999 12.9772L22 11L19.6224 10.3954Z"
+            stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </div>
+      <div id="settingOption" class="settingOpt">
+        <div>
+          <input type="checkbox" id="comicMode" />
+          <span class="smallFonts">Comic Mode</span>
+        </div>
+        <div class="UI_flex_row">
+          <div id="language_switch"></div>
+        </div>
+        <div class="UI_flex_row">
+          <div id="model_switch"></div>
+        </div>
+        <div class="UI_flex_row">
+          <div id="instr_switch"></div>
+        </div>
+        <div class="UI_flex_row">
+          <div id="sd_switch"></div>
+        </div>
+        <div class="UI_flex_row">
+          <div>
+            <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+              stroke="">
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M13.75 2C13.75 1.58579 13.4142 1.25 13 1.25C12.5858 1.25 12.25 1.58579 12.25 2V14.5359C11.4003 13.7384 10.2572 13.25 9 13.25C6.37665 13.25 4.25 15.3766 4.25 18C4.25 20.6234 6.37665 22.75 9 22.75C11.6234 22.75 13.75 20.6234 13.75 18V6.243C14.9875 7.77225 16.8795 8.75 19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25C16.1005 7.25 13.75 4.8995 13.75 2Z"
+                  fill="#ffffff"></path>
+              </g>
+            </svg>
+          </div>
+          <div id="knob" class="knob"></div>
+        </div>
+      </div>
+
+    </div>
+    <div id="ai_intro">
+      <div class="ai_name">{{ainame}}</div>
+      <div class="prologue_button">
+        <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M4 19V6.2C4 5.0799 4 4.51984 4.21799 4.09202C4.40973 3.71569 4.71569 3.40973 5.09202 3.21799C5.51984 3 6.0799 3 7.2 3H16.8C17.9201 3 18.4802 3 18.908 3.21799C19.2843 3.40973 19.5903 3.71569 19.782 4.09202C20 4.51984 20 5.0799 20 6.2V17H6C4.89543 17 4 17.8954 4 19ZM4 19C4 20.1046 4.89543 21 6 21H20M9 7H15M9 11H15M19 17V21"
+            stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
+    <div id="intro_prologue_area">
+      <div class="intro_prologue">Prologue Texts</div>
+    </div>
+    <div class="free-space"></div>
+    <div id="holder_box">
+      <div id="drag-handle"></div>
+      <div id="message_box"></div>
+      <div id="inputArea">
+        <div id="chat-history-buttons">
+          <button id="load-chat-history">Load chat history</button>
+          <button id="save-chat-history">Save chat history</button>
+          <button id="sentence-completion" style="display: none;">Sentence completion</button>
+        </div>
+        <div class="messageInputBox">
+          <div class="input_area">
+            <div class="ai_icon"></div>
+            <textarea type="text" id="messageToSend" rows="1"></textarea>
+            <ul id="cmd_dropdownMenu"></ul>
+          </div>
+          <div id="submit" class="msgInput">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+              color="#a25aff" stroke-width="1.5">
+              <g clip-path="url(#clip0_4086_8473)">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M1.84647 7.15123C1.54566 7.21608 1.31498 7.45811 1.26464 7.7617C1.2143 8.06528 1.35452 8.36881 1.6183 8.52729L8.13474 12.4421L14.3544 8.08705C14.6938 7.84947 15.1614 7.93193 15.399 8.27123C15.6366 8.61054 15.5541 9.0782 15.2148 9.31578L8.99537 13.6707L10.4455 21.1339C10.5042 21.436 10.7415 21.6715 11.044 21.7281C11.3465 21.7846 11.6528 21.6506 11.8166 21.3901L22.7919 3.93893C22.9526 3.68349 22.9445 3.35665 22.7714 3.10947C22.5983 2.86228 22.294 2.7429 21.999 2.80649L1.84647 7.15123Z"
+                  fill="#a25aff"></path>
+              </g>
+              <defs>
+                <clipPath id="clip0_4086_8473">
+                  <rect width="24" height="24"></rect>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <div id="recordTimer" class="recordTimer">
+            <svg width="34" height="34">
+              <circle class="progress-ring__circle-progress" stroke="#611997" stroke-width="2" fill="transparent" r="16"
+                cx="17" cy="17" />
+            </svg>
+            <div id="recordButton" class="recordButton">
+              <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                color="#ffffff" stroke-width="1.5">
+                <rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff" stroke="#ffffff" stroke-width="1.5"
+                  stroke-width="1.5"></rect>
+                <path d="M5 10V11C5 14.866 8.13401 18 12 18V18V18C15.866 18 19 14.866 19 11V10" stroke="#ffffff"
+                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M12 18V22M12 22H9M12 22H15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="messageOptions">
+          <div class="subButtonsGroup">
+            <button id="regenerate">Regen</button>
+            <button id="restart">Restart</button>
+            <button id="exitchat">Exit</button>
+          </div>
+          <div class="sub_options">
+            <div id="messageBox_switch_holder">
+              <div id="messageBox_switch"></div>
+              <span class="smallFonts">Message Box</span>
+            </div>
+            <div>
+              <input id="voiceswitcher" type="checkbox" />
+              <span class="smallFonts">Voice Output</span>
+            </div>
+            <div>
+              <input id="dynimageSwitcher" type="checkbox" />
+              <span class="smallFonts">Dynamic Image</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="templates_box" style="display: none">
+      <div id="msg_container">
+        <div class="avatar"></div>
+        <div class="message"></div>
+      </div>
+    </div>
+    <div id="bg_music_player" style="display: none;">
+      <audio id="bg_music" loop></audio>
+    </div>
+    <div class="overlay" id="overLayer">
+      <div class="overlay-content">
+        <div class="loadingSvg">
+          <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#FFFFFF">
+            <path
+              d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z">
+              <animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12"
+                repeatCount="indefinite" />
+            </path>
+          </svg>
+        </div>
+        <div class="loadingText"></div>
+        <div class="loadingText_Percentage"></div>
+      </div>
+      <div class="overlay-dynpic">
+        <div id="closePreview">Close Preview</div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

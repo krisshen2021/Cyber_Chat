@@ -1,5 +1,5 @@
 {
-    "Resources": {
+    "IndexPage": {
         "siteName": "Fantasy of Socrates",
         "Choose_Charactor": "Choose Charactor",
         "Start_Chatting": "Start Chatting",
@@ -49,5 +49,17 @@
         "Preview_Character_Looks": "Preview Character Looks",
         "Preview_Character": "Preview Character",
         "Save_Character": "Save Character"
+    },
+    "ChatRoomPage": {
+        "Comic_Mode": "Comic Mode",
+        "Load_Chat_History": "Load Chat History",
+        "Save_Chat_History": "Save Chat History",
+        "Regenerate": "Regenerate",
+        "Restart": "Restart Chat",
+        "Exit": "Exit",
+        "Message_Box": "Message Box",
+        "Voice_Output": "Voice Output",
+        "Dynamic_Image": "Dynamic Image",
+        "Input_Hint": "'/' for commands, 'Tab' for completion, 'Esc' to accept"
     }
 }

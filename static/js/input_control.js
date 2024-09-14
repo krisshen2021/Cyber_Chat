@@ -194,6 +194,27 @@ export class CommandInputHandler {
 
     }
 
+    setDefaultText(text) {
+        this.defaultText = text;
+        this.$msg_inputer.val(this.defaultText);
+        this.$msg_inputer.val(this.defaultText).removeClass(this.cssClasses.inputText);
+        //remove focus and blur event
+        this.$msg_inputer.off("focus");
+        this.$msg_inputer.off("blur");
+        //rebind focus and blur event
+        this.$msg_inputer.on("focus", () => {
+            if (this.$msg_inputer.val() === this.defaultText) {
+                this.$msg_inputer.val("").addClass(this.cssClasses.inputText);
+            }
+        });
+
+        this.$msg_inputer.on("blur", () => {
+            if (this.$msg_inputer.val() === "") {
+                this.$msg_inputer.val(this.defaultText).removeClass(this.cssClasses.inputText);
+            }
+        });
+    }
+
     resetAll() {
         this.selectedItemIndex = -1;
         this.$cmd_dropdownMenu.hide();
