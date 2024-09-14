@@ -22,3 +22,4 @@ uvicorn
 cohere
 boto3
 mutagen
+json5

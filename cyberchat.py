@@ -11,7 +11,7 @@ from modules.global_sets_async import (
     prompt_params,
     language_data
 )
-import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy
+import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy, json5
 from datetime import datetime
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import Response, StreamingResponse
@@ -977,6 +977,31 @@ async def language_switch(client_info, client_id):
     # logger.info("Translated text: " + translated_language_data)
     data_to_send = {"language": language, "task": "language_switch", "translated_language_data": translated_language_data}
     await send_datapackage("language_switch_result", data_to_send, client_id)
+    
+async def translate_story_intro(client_info, client_id):
+    story_name = client_info["data"]["story_name"]
+    intro_text = client_info["data"]["intro_text"]
+    aiRoleId = client_info["data"]["aiRoleId"]
+    language = client_info["data"]["language"]
+    json_to_translate = {
+        "story_name": story_name,
+        "intro_text": intro_text
+    }
+    json_to_translate = json.dumps(json_to_translate, indent=4)
+    prompt = f"Translate the values in the following json to {language} language with natural expression:\n{json_to_translate}\n\nOnly output the json string with same structure as the input json string, do not translate the text of '{{{{char}}}}', no other text or comment is needed."
+    result = await languageClient.chat.completions.create(
+        model="gemma2-9b-it",
+        messages=[{"role": "user", "content": prompt}],
+        stream=False,
+        temperature=0.7
+    )
+    translated_json_data = result.choices[0].message.content.replace("```json\n", "").replace("\n```", "")
+    fixed_json_data = json5.loads(translated_json_data)
+    logger.info(fixed_json_data)
+    fixed_json_data = json.dumps(fixed_json_data, indent=4)
+    data_to_send = {"translated_story_intro_data": fixed_json_data, "task": "translate_story_intro", "aiRoleId": aiRoleId}
+    await send_datapackage("translate_story_intro_result", data_to_send, client_id)
+    
 
 # ws event handler
 ws_events_dict = {
@@ -1003,6 +1028,7 @@ ws_events_dict = {
     "sentence_completion": sentence_completion,
     "play_bg_music": play_bg_music,
     "language_switch": language_switch,
+    "translate_story_intro": translate_story_intro,
 }
 
 

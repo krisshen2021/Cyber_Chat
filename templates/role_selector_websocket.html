@@ -721,8 +721,6 @@
             const hoveredElement = event.target;
             hoveredElement.style.backgroundSize = '140%';
           } else {
-            // This is for the mouseleave event
-            // Reset any changes made on hover
             const roleElements = document.querySelectorAll('.avatarbk');
             roleElements.forEach(el => {
               el.style.backgroundSize = '100%';
@@ -738,9 +736,9 @@
         }
         const selectRole = (event, role) => {
           let select_el;
-          if(event){
+          if (event) {
             select_el = event.target
-          }else if(event == null){
+          } else if (event == null) {
             const default_role = document.querySelector('.roleholder:first-child')
             select_el = default_role.querySelector('.avatarbk')
           }
@@ -751,8 +749,18 @@
           select_el.style.boxShadow = '0px 0px 25px 5px rgba(127, 3, 155, 0.7)'
           setWindowVars(role)
         }
+        const updateStoryIntro = (translated_story_intro_data, aiRoleId) => {
+          // find the aiRoleId in the aiRoleList_vue
+          const role = aiRoleList_vue.value.find(role => role.aiRoleId === aiRoleId)
+          role.Data.json_Story_intro.story_name = translated_story_intro_data.story_name
+          role.Data.json_Story_intro.intro_text = translated_story_intro_data.intro_text
+          role.if_story_intro_translated = true
+          console.log(role)
+          update_story_intro_translated(role)
+        }
         const showRoleInfo = (event, role) => {
           const infoButton = event.target
+          const currentLanguage = document.getElementById('language_switch').getAttribute('data-value');
           const avatarbkNode = infoButton.closest('.roleholder').querySelector('.avatarbk')
           const roleElements = document.querySelectorAll('.avatarbk');
           roleElements.forEach(el => {
@@ -760,27 +768,52 @@
           });
           avatarbkNode.style.boxShadow = '0px 0px 25px 5px rgba(127, 3, 155, 0.7)'
           const roleInfoForm = document.getElementById('role_intro_form')
-          roleInfoForm.querySelector('.role_intro_story_name').innerHTML = `<span class="storyname_in_introblock">${role.Data.json_Story_intro.story_name}</span>`
-          roleInfoForm.querySelector('.role_intro_intro_text').innerHTML = role.Data.json_Story_intro.intro_text.replaceAll('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${role.Data.ai_name}</span>`)
+          if (currentLanguage != 'English' && role.if_story_intro_translated == null) {
+            let querydata = {
+              'story_name': role.Data.json_Story_intro.story_name,
+              'intro_text': role.Data.json_Story_intro.intro_text,
+              'language': currentLanguage,
+              'aiRoleId': role.aiRoleId
+            }
+            ws.send(wsData('translate_story_intro', querydata))
+            roleInfoForm.querySelector('.role_intro_story_name').innerHTML = `<span class="storyname_in_introblock">${role.Data.json_Story_intro.story_name}(translating...)</span>`
+            roleInfoForm.querySelector('.role_intro_intro_text').innerHTML = role.Data.json_Story_intro.intro_text.replaceAll('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${role.Data.ai_name}</span>`) + "(translating...)"
+
+          } else {
+            roleInfoForm.querySelector('.role_intro_story_name').innerHTML = `<span class="storyname_in_introblock">${role.Data.json_Story_intro.story_name}</span>`
+            roleInfoForm.querySelector('.role_intro_intro_text').innerHTML = role.Data.json_Story_intro.intro_text.replaceAll('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${role.Data.ai_name}</span>`)
+
+          }
+
           roleInfoForm.querySelector('.role_intro_img').style.backgroundImage = avatarbkNode.style.backgroundImage
+          if(role.Data.Match_words_cata !== "NSFW"){
+            roleInfoForm.querySelector('.info_NSFW').style.display = 'none'
+          }else{
+            roleInfoForm.querySelector('.info_NSFW').style.display = 'flex'
+          }
           window.toggle_forms('role_intro_form')
           setWindowVars(role)
 
+        }
+        const update_story_intro_translated = (role) => {
+          const roleInfoForm_updated = document.getElementById('role_intro_form')
+          roleInfoForm_updated.querySelector('.role_intro_story_name').innerHTML = `<span class="storyname_in_introblock">${role.Data.json_Story_intro.story_name}</span>`
+          roleInfoForm_updated.querySelector('.role_intro_intro_text').innerHTML = role.Data.json_Story_intro.intro_text.replaceAll('{% raw %}{{char}}{% endraw %}', `<span class="ainame_in_introtext">${role.Data.ai_name}</span>`)
         }
         const startChating = () => {
           window.start_chat()
         }
         onMounted(() => {
-            Vue.nextTick(() => {
-                gsap.from(".roleholder", {
-                  duration: 0.2,
-                  opacity: 0,
-                  scale: 0.6,
-                  ease: "back",
-                  stagger: 0.1,
-                });
-                selectRole(null, aiRoleList_vue.value[0])
+          Vue.nextTick(() => {
+            gsap.from(".roleholder", {
+              duration: 0.2,
+              opacity: 0,
+              scale: 0.6,
+              ease: "back",
+              stagger: 0.1,
             });
+            selectRole(null, aiRoleList_vue.value[0])
+          });
         });
         return {
           currentLanguage,
@@ -790,7 +823,9 @@
           hoverRole,
           selectRole,
           showRoleInfo,
-          startChating
+          startChating,
+          updateStoryIntro,
+          update_story_intro_translated
         }
       }
     })
@@ -1509,7 +1544,15 @@
 
       console.log("Language data updated successfully");
     }
+    function storyIntroUpdate(serverData) {
+      let translated_story_intro_data = serverData.data["translated_story_intro_data"];
+      let aiRoleId = serverData.data["aiRoleId"];
+      console.log(translated_story_intro_data);
+      // Parse the translated story intro data
+      let parsedData = JSON.parse(translated_story_intro_data);
+      vm.updateStoryIntro(parsedData, aiRoleId);
 
+    }
     function start_chat() {
       console.log($('#language_switch').attr('data-value'));
       if (login_status) {
@@ -1861,6 +1904,9 @@
             break;
           case "language_switch_result":
             languageSwitchUpdate(serverData);
+            break;
+          case "translate_story_intro_result":
+            storyIntroUpdate(serverData);
             break;
         }
 

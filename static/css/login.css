@@ -492,10 +492,12 @@ body::-webkit-scrollbar {
   color:#280149;
   cursor: pointer;
   align-self: flex-end;
+  transition: all 0.8s ease;
 }
 #role_intro_form .role_intro_button:hover{
   background-color: #ff8000;
   color: #280149;
+  box-shadow: 0px 0px 10px 0px rgba(255, 255, 255, 0.5);
 }
 
 #signup_form .info_row,
