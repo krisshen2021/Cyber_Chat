@@ -17,6 +17,7 @@ export class SwitchUI {
             'border-radius': this.height / 2 + 'px',
             'cursor': 'pointer',
             'position': 'relative',
+            'box-shadow': '0 0 3px 0 rgba(0, 0, 0, 0.5)',
             'overflow': 'hidden'
         });
 
@@ -34,12 +35,12 @@ export class SwitchUI {
 
         if (this.isOn) {
             this.element.css({
-                'background-color': this.onColor,
+                'background': this.onColor,
             });
             this.roundButton.css('left', 'calc(100% - ' + this.height * 0.9 + 'px)');
         } else {
             this.element.css({
-                'background-color': this.offColor,
+                'background': this.offColor,
             });
             this.roundButton.css('left', this.height * 0.1 + 'px');
         }
@@ -51,19 +52,27 @@ export class SwitchUI {
     }
     toggle() {
         this.isOn = !this.isOn;
+        this.updateUI();
+        this.element.trigger('change', [this.isOn]);
+    }
+    updateUI() {
         if (this.isOn) {
-            this.element.css('background-color', this.onColor);
+            this.element.css('background', this.onColor);
             this.roundButton.css('left', 'calc(100% - ' + this.height * 0.9 + 'px)');
             this.element.attr('data-value', this.isOn);
         } else {
-            this.element.css('background-color', this.offColor);
+            this.element.css('background', this.offColor);
             this.roundButton.css('left', this.height * 0.1 + 'px');
             this.element.attr('data-value', this.isOn);
         }
-        this.element.trigger('change', [this.isOn]);
     }
     getValue() {
         return this.isOn;
+    }
+    setValue(value) {
+        this.isOn = value;
+        this.updateUI();
+        this.element.trigger('change', [this.isOn]);
     }
 }
 

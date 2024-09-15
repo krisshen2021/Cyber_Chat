@@ -52,8 +52,8 @@
     },
     "ChatRoomPage": {
         "Comic_Mode": "Comic Mode",
-        "Load_Chat_History": "Load Chat History",
-        "Save_Chat_History": "Save Chat History",
+        "Load_Chat_History": "Load Chat",
+        "Save_Chat_History": "Save Chat",
         "Regenerate": "Regenerate",
         "Restart": "Restart Chat",
         "Exit": "Exit",

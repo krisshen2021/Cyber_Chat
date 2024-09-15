@@ -84,8 +84,9 @@
         </svg>
       </div>
       <div id="settingOption" class="settingOpt">
-        <div>
-          <input type="checkbox" id="comicMode" />
+        <div class="switchUI_holder">
+          <input type="checkbox" id="comicMode" style="display: none;" />
+          <div id="comicMode_switch"></div>
           <span class="smallFonts" v-text="currentLanguage.Comic_Mode"></span>
         </div>
         <div class="UI_flex_row">
@@ -136,11 +137,6 @@
       <div id="drag-handle"></div>
       <div id="message_box"></div>
       <div id="inputArea">
-        <div id="chat-history-buttons">
-          <button id="load-chat-history" v-text="currentLanguage.Load_Chat_History"></button>
-          <button id="save-chat-history" v-text="currentLanguage.Save_Chat_History"></button>
-          <button id="sentence-completion" style="display: none;"></button>
-        </div>
         <div class="messageInputBox">
           <div class="input_area">
             <div class="ai_icon"></div>
@@ -181,22 +177,28 @@
           </div>
         </div>
         <div class="messageOptions">
-          <div class="subButtonsGroup">
-            <button id="regenerate" v-text="currentLanguage.Regenerate"></button>
-            <button id="restart" v-text="currentLanguage.Restart"></button>
-            <button id="exitchat" v-text="currentLanguage.Exit"></button>
+          <div class="ButtonsGroup">
+            <button id="regenerate" v-text="currentLanguage.Regenerate" class="ButtonUI"></button>
+            <button id="restart" v-text="currentLanguage.Restart" class="ButtonUI"></button>
+            <button id="exitchat" v-text="currentLanguage.Exit" class="ButtonUI"></button>
+            <div id="chat-history-buttons" class="ButtonsGroup">
+              <button id="load-chat-history" v-text="currentLanguage.Load_Chat_History"
+                class="ButtonUI smallFonts"></button>
+              <button id="save-chat-history" v-text="currentLanguage.Save_Chat_History"
+                class="ButtonUI smallFonts"></button>
+            </div>
           </div>
           <div class="sub_options">
-            <div id="messageBox_switch_holder">
+            <div class="switchUI_holder">
               <div id="messageBox_switch"></div>
               <span class="smallFonts" v-text="currentLanguage.Message_Box"></span>
             </div>
-            <div>
-              <input id="voiceswitcher" type="checkbox" />
+            <div class="switchUI_holder">
+              <div id="voice_switch"></div>
               <span class="smallFonts" v-text="currentLanguage.Voice_Output"></span>
             </div>
-            <div>
-              <input id="dynimageSwitcher" type="checkbox" />
+            <div class="switchUI_holder">
+              <div id="dynimage_switch"></div>
               <span class="smallFonts" v-text="currentLanguage.Dynamic_Image"></span>
             </div>
           </div>
@@ -283,19 +285,50 @@
     import { VolumeKnob, SwitchUI, SelectorUI } from '/static/js/ui.js';
     const knobElement = document.getElementById('knob');
     const audioElement = document.getElementById('bg_music');
+    const comicMode_switch = document.getElementById('comicMode_switch');
     const messageBox_switch = document.getElementById('messageBox_switch');
+    const voiceswitcher = document.getElementById('voice_switch');
+    const dynimageSwitcher = document.getElementById('dynimage_switch');
     const languageSwitch = document.getElementById('language_switch');
     const modelSwitch = document.getElementById('model_switch');
     const instrSwitch = document.getElementById('instr_switch');
     const sdSwitch = document.getElementById('sd_switch');
+    const switchUI_onColor = 'linear-gradient(45deg, rgba(52, 7, 104, 0.8), rgba(106, 36, 117, 0.8))';
+    const switchUI_offColor = '#3d3d3d';
+    const comicMode_switchUI = new SwitchUI({
+      element: comicMode_switch,
+      onColor: switchUI_onColor,
+      offColor: switchUI_offColor,
+      width: 40,
+      height: 20,
+      value: false
+    });
     const messageBox_switchUI = new SwitchUI({
       element: messageBox_switch,
-      onColor: '#462256',
-      offColor: '#3d3d3d',
+      onColor: switchUI_onColor,
+      offColor: switchUI_offColor,
       width: 40,
       height: 20,
       value: true
     });
+    const voiceswitcherUI = new SwitchUI({
+      element: voiceswitcher,
+      onColor: switchUI_onColor,
+      offColor: switchUI_offColor,
+      width: 40,
+      height: 20,
+      value: false
+    });
+    const dynimageSwitcherUI = new SwitchUI({
+      element: dynimageSwitcher,
+      onColor: switchUI_onColor,
+      offColor: switchUI_offColor,
+      width: 40,
+      height: 20,
+      value: false
+    });
+
+
     const languageSwitchUI = new SelectorUI({
       element: languageSwitch,
       width: 100,
@@ -367,6 +400,7 @@
       ws.send(wsData('change_instruction', querydata));
       toggleInputs(false);
     });
+
     languageSwitchUI.setItem('{{language}}');
     console.log('Current language:', $(languageSwitch).attr('data-value'));
 
@@ -377,17 +411,62 @@
       };
       ws.send(wsData('language_switch', querydata));
     });
+
     $(messageBox_switch).on('change', (event, value) => {
-      if (value && !$('#comicMode').is(':checked')) {
+      if (value && !comicMode_switchUI.getValue()) {
         $('#message_box').css('display', 'flex');
-        $('#holder_box').css('height', '50vh');
+        $('#holder_box').css('height', '70vh');
+        $('#holder_box').css('justify-content', 'space-between');
         updateScroll();
       } else {
+        let message_box_height = $('#message_box').height();
+        //the height of the holder_box is it's original height minus the height of the message_box
+        $('#holder_box').css('height', $('#holder_box').height() - message_box_height + 'px');
+        $('#holder_box').css('justify-content', 'flex-end');
         $('#message_box').css('display', 'none');
-        $('#holder_box').css('height', 'min-content');
         updateScroll();
       }
       console.log('Current messageBox_switch:', value);
+    });
+
+    $(comicMode_switch).on('change', (event, value) => {
+      console.log('Current comicMode_switch:', value);
+      if (!value) {
+        $(messageBox_switch).css('pointer-events', 'auto');
+        $(messageBox_switch).css('opacity', '1');
+        $(messageBox_switch).next('span').css('opacity', '1');
+        messageBox_switchUI.setValue(true);
+      } else if (value) {
+        $(messageBox_switch).css('pointer-events', 'none');
+        $(messageBox_switch).css('opacity', '0.2');
+        $(messageBox_switch).next('span').css('opacity', '0.2');
+        if (messageBox_switchUI.getValue()) {
+          messageBox_switchUI.setValue(false);
+        }
+      }
+      dispModeSwitch();
+    });
+
+    $(voiceswitcher).on('change', (event, value) => {
+      console.log('Current voice_switch:', value);
+      switchVoiceController();
+    });
+    $(dynimageSwitcher).on('change', (event, value) => {
+      console.log('Current dynimage_switch:', value);
+      const all_dynamicPicBox = document.querySelectorAll('.dynamicPicBox');
+      if (all_dynamicPicBox.length === 0) {
+        return;
+      } else {
+        if (value) {
+          all_dynamicPicBox.forEach(dynamicPicBox_element => {
+            dynamicPicBox_element.style.display = 'block';
+          });
+        } else {
+          all_dynamicPicBox.forEach(dynamicPicBox_element => {
+            dynamicPicBox_element.style.display = 'none';
+          });
+        }
+      }
     });
     const volumeKnob = new VolumeKnob({
       element: knobElement,
@@ -404,7 +483,6 @@
       initialMuted: true
     });
 
-    // 监听值变化
     $(knobElement).on('change', (event, value) => {
       console.log('Current volume:', value);
     });
@@ -412,6 +490,7 @@
       mangle: false,
       headerIds: false,
     });
+
     var ws = Object;
     const clientID = '{{clientID}}';
     const timestamp = '{{ timestamp }}';
@@ -424,7 +503,7 @@
     var credits = '{{credits}}';
     var ai_role_name = '{{ai_role_name}}';
     var ainame = '{{ainame}}';
-    var Prologue = ''; //`{{Prologue | safe}}`;
+    var Prologue = ''; 
     var ai_is_uncensored = '{{is_uncensored}}';
     var ai_is_live_char = JSON.parse('{{ is_live_char | tojson }}');
     var conid = '{{clientID}}';
@@ -592,11 +671,8 @@
     }
 
     function dispModeSwitch() {
-      if ($('#comicMode').is(':checked')) {
+      if (comicMode_switchUI.getValue()) {
         $('#messageBox_switch_holder').css('display', 'none');
-        holdbox_origin_height = $('#holder_box').height();
-        $('#message_box').css('display', 'none');
-        $('#holder_box').css('height', 'auto');
         $('#holder_box').css('--z-index', -1);
         resizeComicLayout();
         gsap.from($('#char-wrapper'), {
@@ -631,11 +707,7 @@
           .addClass('wrapper-user-fullscreen');
         $('.comic_msg_holder_char').fadeOut(200);
         $('.comic_msg_holder_user').fadeOut(200);
-        $('#holder_box').height(holdbox_origin_height);
         $('#holder_box').css('--z-index', 1);
-        $('#message_box').css('display', 'flex');
-        let msgNormalScrollHeight = $('#message_box').prop('scrollHeight');
-        $('#message_box').scrollTop(msgNormalScrollHeight);
       }
     }
 
@@ -818,10 +890,8 @@
       let newScrollHeightComic = $('#msg_box_comic_char').prop(
         'scrollHeight',
       );
-      // let newScrollMsgComic = $(".message-comic").prop("scrollHeight");
       $('#message_box').scrollTop(newScrollHeight);
       $('#msg_box_comic_char').scrollTop(newScrollHeightComic);
-      // $(".message-comic").scrollTop(newScrollMsgComic);
     }
 
     //code block copy function
@@ -976,7 +1046,7 @@
           $('#msg_box_comic_char').append($msgDivServer);
         }
         if (from == 'client') {
-          if ($('#comicMode').is(':checked')) {
+          if (comicMode_switchUI.getValue()) {
             $('.comic_msg_holder_user').css('display', 'flex');
           }
           $('#msg_box_comic_user').empty();
@@ -1051,7 +1121,7 @@
           let charDynamicBgImgURL = "url('" + dynamic_pictures + "')";
           $('#char-dynpic').css('background-image', charDynamicBgImgURL);
           $('#char-dynpic-wrapper').css('display', 'flex');
-          if ($('#comicMode').is(':checked')) {
+          if (comicMode_switchUI.getValue()) {
             gsap.from($('#char-dynpic-wrapper'), {
               duration: 0.5,
               scale: 0.4,
@@ -1063,7 +1133,7 @@
         }
 
         //Update voice data for both normal mode and comic mode
-        let voiceChecked = $('#voiceswitcher').is(':checked');
+        let voiceChecked = voiceswitcherUI.getValue();
         if (voiceChecked && voice_text != '') {
           let langcode = extractLanguageCode(speaker);
           let playText = 'Play Voice';
@@ -1150,7 +1220,6 @@
             }
             voicePlayer.preload = 'metadata';
             $lastMsg.find('.message').append(voicePlayer).append($controls);
-            // voice_text = '.....\n....' + voice_text;
             let querydata = {
               text: voice_text,
               speaker_wav: speaker,
@@ -1173,7 +1242,6 @@
 
     function resetChat() {
       toggleInputs(false);
-      let statechk = checkSendState();
       var windowSize = getWindowSize();
       userLastMsg = '';
       ai_avatar = '';
@@ -1192,45 +1260,22 @@
         ai_role_name: ai_role_name,
         conid: conid,
         windowRatio: windowSize.ratio,
-        isembbed: statechk.embswitcher,
         language: languageSwitchUI.getValue(),
       };
       ws.send(wsData('restart', querydata));
     }
 
-    function checkSendState() {
-      let embswitcher;
-      let imageswitcher;
-      if (typeof embeddingswitcher != 'undefined') {
-        if (embeddingswitcher.checked) {
-          embswitcher = 'yes';
-        } else {
-          embswitcher = 'no';
-        }
-      }
-      if (dynimageSwitcher.checked) {
-        imageswitcher = true;
-      } else {
-        imageswitcher = false;
-      }
-      console.log(embswitcher);
-      console.log(imageswitcher);
-      return { embswitcher, imageswitcher };
-    }
-
     function regenReply() {
       if (userLastMsg != '') {
         toggleInputs(false);
-        let statechk = checkSendState();
         console.log(userLastMsg);
         let windowSize = getWindowSize();
         $('#message_box').find('.msg-container-clone').last().remove();
         var querydata = {
           message: userLastMsg,
           conid: conid,
-          isembbed: statechk.embswitcher,
           windowRatio: windowSize.ratio,
-          iscreatedynimage: statechk.imageswitcher,
+          iscreatedynimage: dynimageSwitcherUI.getValue(),
           language: languageSwitchUI.getValue(),
         };
         ws.send(wsData('regen_msg', querydata));
@@ -1252,6 +1297,7 @@
       ws.send(wsData('save_chat_history', querydata));
       toggleInputs(false);
     }
+
     function sentenceCompletion() {
       let textBeforeCursor = $('#messageToSend').val().substring(
         0,
@@ -1267,9 +1313,10 @@
       ws.send(wsData('sentence_completion', querydata));
       toggleInputs(false);
     }
+
     function changeModel(model_list, model) {
       if (model_list.length > 0) {
-        console.log(model_list);
+        // console.log(model_list);
         const modelSwitchItemList = [];
         $.each(model_list, function (index, value) {
           //if value includes"/", get the text after "/"
@@ -1279,7 +1326,7 @@
           } else {
             name = value;
           }
-          console.log(`name: ${name}, value: ${value}`);
+          // console.log(`name: ${name}, value: ${value}`);
           modelSwitchItemList.push({
             name: name,
             value: value,
@@ -1332,6 +1379,7 @@
         alert('Model Load Failed');
       }
     }
+
     function instruct_changed(msg) {
       var msg = msg.data['message'];
       if (msg == 'Success') {
@@ -1349,9 +1397,11 @@
         alert('SD Model change Failed');
       }
     }
+
     function delay(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
+
     async function processLoadedHistory(loaded_history) {
       for (let msgitem of loaded_history) {
         if (msgitem.role == 'user') {
@@ -1372,6 +1422,8 @@
         await delay(350);
       }
     }
+
+
     /* Server status process handler */
     function ProcessServerStatus(msgData) {
       let msg = msgData.data['message'];
@@ -1403,7 +1455,7 @@
           $('.loadingText_Percentage').html('')
           $('#holder_box').fadeIn(500);
           $('#holder_box').css('display', 'flex');
-          if ($('#comicMode').is(':checked')) {
+          if (comicMode_switchUI.getValue()) {
             $('.comic_msg_holder_char').css('display', 'flex');
           }
         }
@@ -1415,7 +1467,6 @@
           } else if (msg.msg.task_flag.startsWith('generate_live')) {
             if (msg.msg.task_flag == 'generate_live-DynamicPicture') {
               let percentage_str = String(msg.msg.percentage) + '%'
-              // console.log('DynamicPicture : '+String(msg.msg.percentage)+'%')   
               let $lastmsg = $('#message_box')
                 .find('.msg-container-clone')
                 .last()
@@ -1481,7 +1532,6 @@
             .last()
             .find('.message-comic');
           if (msgText != '[DONE]') {
-            // streamingBuffer.push(msgText);
             let streamText = streamingBuffer.join('');
             $lastmsg.html("<p class='stream_text'>" + streamText + '</p>');
             $lastmsg.find('p').append("<span class='stream_text_char'>" + msgText + "</span>");
@@ -1508,6 +1558,7 @@
           updateScroll();
         }
       }
+
       if (msg['name'] == 'chat_history_op') {
         if (msg['msg']['operation'] == 'save') {
           if (msg['msg']['result'] == 'Success') {
@@ -1535,7 +1586,6 @@
       }
       if (msg['name'] == 'live-ChatBackgroud') {
         let imgBase64URI = msg['imgBase64URI'];
-        // $("#char-bgpic").css("background-image", "url('" + imgBase64URI + "')");
         let char_bg_holder = $("#char-bgpic");
         gsap.to(char_bg_holder, {
           duration: 0.3,
@@ -1575,11 +1625,12 @@
       }
       if (msg.data['iscreatedynimage'] != undefined) {
         if (msg.data['iscreatedynimage'] == true) {
-          $('#dynimageSwitcher').prop('checked', true);
+          dynimageSwitcherUI.setValue(true);
         } else {
-          $('#dynimageSwitcher').css('display', 'none');
-          $('#dynimageSwitcher').prop('checked', false);
-          $('#dynimageSwitcher').next('span').css('display', 'none');
+          dynimageSwitcherUI.setValue(false);
+          $(dynimageSwitcher).css('pointer-events', 'none');
+          $(dynimageSwitcher).css('opacity', '0.2');
+          $(dynimageSwitcher).next('span').css('opacity', '0.2');
         }
       }
       if (msg.data['bg_music'] != undefined) {
@@ -1597,7 +1648,7 @@
       }
       if (msg.data['prologue'] != undefined) {
         Prologue = msg.data['prologue'];
-        console.log(Prologue);
+        // console.log(Prologue);
       }
       let voice_text = msg.data['voice_text'];
       let speaker = msg.data['speaker'];
@@ -1623,8 +1674,8 @@
         $(instrSwitch).parent().hide();
       }
 
-
       toggleInputs(true);
+
       add_msg({
         message_input: message,
         avatar_url: ai_avatar,
@@ -1642,7 +1693,6 @@
     /* Send msg to server : msg from 'client' */
     function sendmsgtoserver(msg_to_send, command_flag, prompt_flag) {
       toggleInputs(false);
-      let statechk = checkSendState();
       let windowSize = getWindowSize();
       let usermsg;
       let user_appearMsg;
@@ -1663,14 +1713,11 @@
         message: usermsg,
         command_flag: command_flag,
         conid: conid,
-        isembbed: statechk.embswitcher,
         windowRatio: windowSize.ratio,
-        iscreatedynimage: statechk.imageswitcher,
+        iscreatedynimage: dynimageSwitcherUI.getValue(),
         language: languageSwitchUI.getValue(),
       };
       ws.send(wsData('send_user_msg', querydata));
-      // $('#messageToSend').val('');
-      // autoExpand($('#messageToSend')[0]);
     }
 
     function autoExpand(textarea) {
@@ -1682,7 +1729,7 @@
     //Server Connected
     function Server_Connected() {
       if (initialstate) {
-        let statechk = checkSendState();
+        comicMode_switchUI.setValue(false);
         $('#message_box').empty();
         $('.comic_msgbox').empty();
         $('#comicMode').prop('checked', false).trigger('change');
@@ -1701,15 +1748,6 @@
           windowRatio: windowSize.ratio,
         };
         ws.send(wsData('initialize_room', querydata));
-        // function setUILanguage(localeLanguage) {
-        //   if (localeLanguage != 'English') {
-        //     let querydata = {
-        //       language: localeLanguage,
-        //     };
-        //     ws.send(wsData('language_switch', querydata));
-        //   }
-        // }
-        // setUILanguage($(languageSwitch).attr('data-value'));
       } else {
         /* reconnect to server */
         let querydata = {
@@ -1733,7 +1771,7 @@
       };
     }
     function switchVoiceController() {
-      let vs_check = $('#voiceswitcher').is(':checked');
+      let vs_check = voiceswitcherUI.getValue();
       if (vs_check && $('.voicePlayer').length > 0) {
         $('.voiceController').css('display', 'flex');
       } else {
@@ -1743,9 +1781,6 @@
 
     /*Document Ready Actions*/
     $(document).ready(function () {
-      //new command function
-      // const defaultText =
-      //   "'/' for commands, 'Tab' for sentence completion, 'Esc' to accept";
       const defaultText = vm.currentLanguage.Input_Hint;
       const $msg_inputer = $('#messageToSend');
       const $cmd_dropdownMenu = $('#cmd_dropdownMenu');
@@ -1759,6 +1794,7 @@
         sugDesc: 'sug_desc',
         highlight_svg: 'highlight_svg'
       };
+
       commandInputHandler = new CommandInputHandler(
         suggestions,
         defaultText,
@@ -1836,12 +1872,10 @@
       async function sendAudioData() {
         micstate = false;
         let data = await audioRecorder.stopRecording();
-        console.log(data);
         let reader = new FileReader();
         reader.readAsDataURL(data);
         reader.onloadend = function () {
           let base64data = reader.result;
-          // console.log(base64data);
           let querydata = {
             conid: clientID,
             audio_data: base64data,
@@ -1875,19 +1909,15 @@
       });
       $('#load-chat-history').click(loadChatHistory);
       $('#save-chat-history').click(saveChatHistory);
-      $('#sentence-completion').click(sentenceCompletion);
       $('#restart').click(resetChat);
       $('#regenerate').click(regenReply);
       $('#exitchat').click(exitChat);
-      $('#comicMode').change(dispModeSwitch);
       $('#ai_intro .prologue_button').on('click', function () {
         $('#intro_prologue_area .intro_prologue').fadeToggle(500).html(Prologue);
       });
       $('#intro_prologue_area .intro_prologue').on('click', function () {
         $(this).fadeOut(100);
       });
-
-      $('#voiceswitcher').change(switchVoiceController);
       toggleInputs(false);
       // Auto resize comic layout
       $('.comic_msg_holder_char').draggable({
@@ -1897,7 +1927,7 @@
         handle: '.msg-drag-handle',
       });
       var handleResize = debounce(function () {
-        if ($('#comicMode').is(':checked')) {
+        if (comicMode_switchUI.getValue()) {
           var width = $(window).width();
           var height = $(window).height();
           if (width > height) {

@@ -1944,10 +1944,12 @@
     const audioElement = document.getElementById('bg_music');
     const liveCharSwitch = document.getElementById('live_char_switch');
     const languageSwitch = document.getElementById('language_switch');
+    const switchUI_onColor = 'linear-gradient(45deg, rgba(52, 7, 104, 0.8), rgba(106, 36, 117, 0.8))';
+    const switchUI_offColor = '#3d3d3d';
     const liveCharSwitchUI = new SwitchUI({
       element: liveCharSwitch,
-      onColor: '#462256',
-      offColor: '#3d3d3d',
+      onColor: switchUI_onColor,
+      offColor: switchUI_offColor,
       width: 40,
       height: 20,
       value: false

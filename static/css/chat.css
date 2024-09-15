@@ -417,6 +417,7 @@ body {
   z-index: 4;
   display: none;
   position: relative;
+  transition: height 0.3s;
 }
 
 #drag-handle {
@@ -604,19 +605,6 @@ body {
   gap: 1rem;
 }
 
-#submit,
-#regenerate,
-#restart,
-#exitchat {
-  border-radius: 30px;
-  border: 0px;
-  padding: 0 20px;
-  background: rgba(52, 7, 104, 0.7);
-  color: antiquewhite;
-  height: 40px;
-  font-weight: 500;
-}
-
 #submit {
   padding: 0px;
   min-height: 3rem;
@@ -629,8 +617,14 @@ body {
   background-color: #000000;
   color:#a25aff;
   align-self: flex-end;
+  transition: all 0.3s ease;
+  box-shadow: 0px 0px 10px rgba(99, 24, 116, 0.7);
 }
-
+#submit:hover{
+  background-color: #ffffff;
+  box-shadow: 0px 0px 20px rgba(171, 171, 171, 0.7);
+  cursor: pointer;
+}
 #submit .msgInput {
   align-self: flex-end;
 }
@@ -651,34 +645,60 @@ body {
 
 }
 #chat-history-buttons {
-  align-self: flex-end;
+  margin-left: auto;
+  margin-right: 0px;
+  width: fit-content;
 }
-
-#load-chat-history,
-#save-chat-history,
-#sentence-completion {
-  border-radius: 15px;
+.ButtonUI{
+  border-radius: 10000px;
   border: 0px;
-  padding: 0 20px;
-  background: rgba(52, 7, 104, 0.7);
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgb(52, 7, 104), rgb(63, 21, 70));
   color: antiquewhite;
-  height: 28px;
-  font-weight: 300;
+  font-weight: bold;
+  font-size: 0.8rem;
+  width: fit-content;
+  height: fit-content;
+  min-width: 2rem;
+  min-height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.5s ease;
+  white-space: nowrap;
+  box-shadow: 0px 0px 8px rgba(41, 12, 48, 0.7);
+  user-select: none;
+}
+.ButtonUI.smallFonts{
   font-size: 0.6rem;
 }
-
-#submit:hover{
-  background-color: #ffffff;
+.ButtonUI:hover{
+  background: rgb(254, 113, 11);
+  box-shadow: 0px 0px 15px rgba(255, 152, 78, 0.7);
   cursor: pointer;
 }
-#regenerate:hover,
-#restart:hover,
-#exitchat:hover,
-#load-chat-history:hover,
-#save-chat-history:hover,
-#sentence-completion:hover {
-  background: rgba(255, 127, 36, 0.7);
-  cursor: pointer;
+
+.ButtonsGroup{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  width: 100%;
+}
+.switchUI_holder{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  margin: 0 5px;
+}
+.switchUI_holder .smallFonts{
+  text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7); 
+  font-weight: bold;
+  font-size: 0.8rem;
+  user-select: none;
 }
 
 .codePre {
@@ -1098,25 +1118,22 @@ input[type='checkbox']:hover {
   .messageOptions {
     gap: 0.5rem;
   }
-
-  #submit,
-  #regenerate,
-  #restart,
-  #exitchat {
-    padding: 0 0.8rem 0 0.8rem;
-    height: 1.5rem;
-    font-size: 0.8rem;
-  }
-
-  #submit {
-    padding: 0px;
-    min-height: 3rem;
-    min-width: 3rem;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .ButtonUI{
     font-size: 0.7rem;
+  }
+  .ButtonUI.smallFonts{
+    font-size: 0.5rem;
+  }
+  .ButtonsGroup{
+    justify-content: flex-start;
+  }
+  
+  #chat-history-buttons {
+    display: none;
+  }
+  
+  .switchUI_holder .smallFonts{
+    font-size: 0.6rem;
   }
 
   .border-wrapper {
@@ -1257,25 +1274,17 @@ input[type='checkbox']:hover {
     gap: 0.5rem;
   }
 
-  #submit,
-  #regenerate,
-  #restart,
-  #exitchat {
-    padding: 0 0.8rem 0 0.8rem;
-    height: 1.5rem;
-    font-size: 1rem;
-  }
-
-  #submit {
-    padding: 0px;
-    min-height: 3rem;
-    min-width: 3rem;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .ButtonUI{
     font-size: 0.7rem;
   }
+  .ButtonUI.smallFonts{
+    font-size: 0.5rem;
+  }
+  
+  .switchUI_holder .smallFonts{
+    font-size: 0.6rem;
+  }
+
 
   .border-wrapper {
     padding: 5px;
