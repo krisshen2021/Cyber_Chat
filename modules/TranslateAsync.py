@@ -12,7 +12,7 @@ def create_syspath():
 create_syspath()
 
 import re, json
-from modules.global_sets_async import getGlobalConfig, logger
+from modules.global_sets_async import getGlobalConfig, logger, languageClient
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi as tabby
 
 
@@ -51,11 +51,11 @@ async def convert_text(text):
 
 async def translate_ai_driven(translater_prompt, target, prompt_template):
     system_prompt = (
-        f"You are a professional language translator, Base on the given json list, translate the texts to {target}, "
-        + "1. Maintain astriks(*), '<em>', '<br>' tags in the texts, never replace/translate/remove them, \n "
-        + "2. Do NOT translate any proper names, especially character names. Keep them in their original form.\n"
-        + "3. Refine each translated text to make it more conversational and natural in the target language,\n"
-        + "4. Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
+        f"You are a professional language translator, Base on the given json list, translate the texts to {target}, \n"
+        + "- Maintain astriks(*) in the texts, do not translate them.\n"
+        + "- Do NOT translate any proper names, especially character names. Keep them in their original form, \nfor example, '<em>Mary</em>' is a proper name, the translation should keep '<em>Mary</em>'.\n"
+        + "- Refine each translated text to make it more conversational and natural in the target language,\n"
+        + "- Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
         + 'Finally, return a VALIAD and compliant json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], Output the josn list only, do not output any other text or json code block marks.'
     )
     user_prompt = (
@@ -74,9 +74,23 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         "top_p": 0.7,
         "stream": False,
     }
-    # logger.info(f"Translate prompt: {prompt}")
+    # logger.info(f"Translate prompt: {translater_prompt}")
     try:
-        result = await tabby.pure_inference(payloads=payloads)
+        # result = await tabby.pure_inference(payloads=payloads)
+        # logger.info(f"Translate result: {result}")
+        result = await languageClient.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            stream=False,
+            temperature=0.5,
+            top_p=0.7,
+            presence_penalty=1.1,
+            frequency_penalty=1.1
+        )
+        result = result.choices[0].message.content
         # logger.info(f"Translate result: {result}")
         result = await convert_text(result)
         # 提取方括号中的内容
@@ -101,7 +115,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
 
             # 重建完整的 JSON 字符串
             rebuilt_json = f"[{processed_content}]"
-            logger.info(f"Translate rebuilt_json: {rebuilt_json}")
+            # logger.info(f"Translate rebuilt_json: {rebuilt_json}")
 
             try:
                 parsed_result = json.loads(rebuilt_json)

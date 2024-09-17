@@ -1,7 +1,7 @@
 from modules.global_sets_async import (
     database,
     prompt_params,
-    sentiment_anlyzer,
+    # sentiment_anlyzer,
     getGlobalConfig,
     convert_to_webpbase64,
     logger,
@@ -84,7 +84,7 @@ class ChatRoom_Uncensored:
         self._model = None
         self.bg_music = None
         self.ttskey = os.environ.get("SPEECH_KEY")
-        self.sentiment_anlyzer = sentiment_anlyzer
+        # self.sentiment_anlyzer = sentiment_anlyzer
         self.dynamic_picture = ""
         self.state = copy.deepcopy(room_state)
         self.ai_role = airole(
@@ -480,14 +480,15 @@ class ChatRoom_Uncensored:
                 payloads=payloads
             )
         else:
-            emotion_des = await self.sentiment_anlyzer.get_sentiment(input_msg)
-            positive_emotions = ["joy", "surprise", "love", "fun"]
-            negative_emotions = ["sadness", "anger", "fear", "disgust"]
-            emotion_des = (
-                str(emotion_des)
-                .replace("POSITIVE", random.choice(positive_emotions))
-                .replace("NEGATIVE", random.choice(negative_emotions))
-            )
+            # emotion_des = await self.sentiment_anlyzer.get_sentiment(input_msg)
+            # positive_emotions = ["joy", "surprise", "love", "fun"]
+            # negative_emotions = ["sadness", "anger", "fear", "disgust"]
+            # emotion_des = (
+            #     str(emotion_des)
+            #     .replace("POSITIVE", random.choice(positive_emotions))
+            #     .replace("NEGATIVE", random.choice(negative_emotions))
+            # )
+            return "normal"
         return emotion_des
 
     async def scenario_moment_detector(self, input_msg: str):

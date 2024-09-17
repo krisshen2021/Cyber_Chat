@@ -4,7 +4,7 @@ api_key: 0764ee6f39280e8b485e9a18668f6a62
 openai_api_chat_base: http://127.0.0.1:5010/v1
 local_tabby_server_base: http://localhost:5555/v1
 using_remoteapi: true
-remoteapi_endpoint: cohere       #openairouter,cohere, mistral, claude, xiaoai
+remoteapi_endpoint: openairouter #openairouter,cohere, mistral, claude, xiaoai
 
 ### SD settings
 SDAPI_url: http://192.168.5.104:7860

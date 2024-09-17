@@ -1,24 +1,30 @@
 from database.sqliteclass import SQLiteDB
 import os, yaml, asyncio, aiofiles, base64, io, json
+from dotenv import load_dotenv
 from PIL import Image
-
+from openai import AsyncOpenAI
 # from yeelight import Bulb
 from pathlib import Path
 from modules.ConnectionManager import ConnectionManager
 from httpx import Timeout
 from modules.colorlogger import logger
-from modules.sentiment import SentiAna
+# from modules.sentiment import SentiAna
+
 
 timeout = Timeout(60.0)
-sentiment_anlyzer = SentiAna
+# sentiment_anlyzer = SentiAna
 dir_path = Path(__file__).parents[1]
+env_path = os.path.join(dir_path,"server", ".env")
+load_dotenv(env_path)
 config_path = os.path.join(dir_path, "config", "config.yml")
 database_path = os.path.join(dir_path, "database", "cyberchat.db")
 prompt_temp_path = os.path.join(dir_path, "config", "prompts", "prompt_template.yaml")
 prompt_param_path = os.path.join(dir_path, "config", "prompts", "prompts.yaml")
 suggestions_path = os.path.join(dir_path, "config", "prompts", "suggestions.yaml")
 language_path = os.path.join(dir_path, "config", "language", "lang.json")
-
+groq_api_key= os.getenv("groq_api_key", default="None")
+logger.info(f"groq_api_key: {groq_api_key}")
+languageClient = AsyncOpenAI(api_key=groq_api_key,base_url="https://api.groq.com/openai/v1",timeout=120)
 conn_ws_mgr = ConnectionManager()
 database = SQLiteDB(database_path)
 chatRoomList = {}

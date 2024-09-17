@@ -9,7 +9,8 @@ from modules.global_sets_async import (
     logger,
     config_data,
     prompt_params,
-    language_data
+    language_data,
+    languageClient
 )
 import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy, json5
 from datetime import datetime
@@ -33,9 +34,9 @@ templates_path = os.path.join(project_root, "templates")
 static_path = os.path.join(project_root, "static")
 templates = Jinja2Templates(directory=templates_path)
 database.create_table()
-languageClient = AsyncOpenAI(api_key="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",base_url="https://api.groq.com/openai/v1",timeout=120)
 siteLanguageData = language_data.copy()
 localeLanguage = "English"
+translate_model = "gemma2-9b-it"
 
 def clear_screen():
     if os.name == "nt":  # Windows
@@ -964,7 +965,7 @@ async def language_switch(client_info, client_id):
     # create a prompt for translate the values in language data jsonstring to the language that user selected
     prompt = "Translate all the values in the following json string to " + language + ": " + language_data_jsonstring + "\n\nThe final output will ONLY be a json string with the same structure as the input json string, but with all the values translated to the "+ language + " language, no other text or comment is needed."
     result = await languageClient.chat.completions.create(
-        model="gemma2-9b-it",
+        model=translate_model,
         messages=[{"role": "user", "content": prompt}],
         stream=False,
         temperature=0.7
@@ -987,7 +988,7 @@ async def translate_story_intro(client_info, client_id):
     json_to_translate = json.dumps(json_to_translate, indent=4)
     prompt = f"Translate the values in the following json to {language} language with natural expression:\n{json_to_translate}\n\nOnly output the json string with same structure as the input json string, do not translate the text of '{{{{char}}}}', no other text or comment is needed."
     result = await languageClient.chat.completions.create(
-        model="gemma2-9b-it",
+        model=translate_model,
         messages=[{"role": "user", "content": prompt}],
         stream=False,
         temperature=0.7
