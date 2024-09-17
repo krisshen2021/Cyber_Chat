@@ -67,13 +67,14 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         prompt = prompt_template.replace("<|system_prompt|>", system_prompt).replace(
             "<|user_prompt|>", user_prompt
         )
-    payloads = {
-        "prompt": prompt,
-        "max_tokens": 2000,
-        "temperature": 0.1,
-        "top_p": 0.7,
-        "stream": False,
-    }
+    # Use internal api
+    # payloads = {
+    #     "prompt": prompt,
+    #     "max_tokens": 2000,
+    #     "temperature": 0.1,
+    #     "top_p": 0.7,
+    #     "stream": False,
+    # }
     # logger.info(f"Translate prompt: {translater_prompt}")
     try:
         # result = await tabby.pure_inference(payloads=payloads)
