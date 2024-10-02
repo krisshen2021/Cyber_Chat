@@ -52,11 +52,11 @@ async def convert_text(text):
 async def translate_ai_driven(translater_prompt, target, prompt_template):
     system_prompt = (
         f"You are a professional language translator, Base on the given json list, translate the texts to {target}, \n"
-        + "- Maintain astriks(*) in the texts, do not translate them.\n"
-        + "- Do NOT translate any proper names, especially character names. Keep them in their original form, \nfor example, '<em>Mary</em>' is a proper name, the translation should keep '<em>Mary</em>'.\n"
-        + "- Refine each translated text to make it more conversational and natural in the target language,\n"
-        + "- Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
-        + 'Finally, return a VALIAD and compliant json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], Output the josn list only, do not output any other text or json code block marks.'
+        + r"- Maintain astriks(*) in the texts, do not translate them.\n"
+        + r"- Do NOT translate '{{char}}' and '{{user}}',\n"
+        + r"- Do NOT translate any proper names in text, especially character names, for example, 'David' should be 'David',\n"
+        + r"- Use very casual, everyday spoken language. Imagine you're talking to a friend,\n"
+        + r'Finally, return a VALIAD and compliant json list with the same structure, the json list structure is: [{"index": original_index_number, "text": "translated_text"}], Output the josn list only, do not output any other text or json code block marks.'
     )
     user_prompt = (
         f"The given json list is: \n{translater_prompt}\n, the result will be:"
@@ -80,16 +80,13 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         # result = await tabby.pure_inference(payloads=payloads)
         # logger.info(f"Translate result: {result}")
         result = await languageClient.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="gemma2-9b-it",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
             stream=False,
             temperature=0.5,
-            top_p=0.7,
-            presence_penalty=1.1,
-            frequency_penalty=1.1
         )
         result = result.choices[0].message.content
         # logger.info(f"Translate result: {result}")

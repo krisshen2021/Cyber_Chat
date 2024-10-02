@@ -309,8 +309,8 @@ class ChatRoom_Uncensored:
         self.welcome_text = self.first_message
         self.prologue_intro = (
             self.ai_role.prologue.replace("\n", "<br>")
-            .replace(r"{{user}}", f"<em>{self.username}</em>")
-            .replace(r"{{char}}", f"<em>{self.ainame}</em>")
+            .replace(r"{{user}}", f"{self.username}")
+            .replace(r"{{char}}", f"{self.ainame}")
         )
         if self.state["language"] != "English":
             logger.info(f"Translating prologue to {self.state['language']}")

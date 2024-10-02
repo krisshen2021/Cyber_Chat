@@ -278,6 +278,7 @@
     })
     const vm = app.mount('#chatroom')
 
+//set up UI components
     import { msTTS } from '/static/js/tts.js';
     const msttser = new msTTS();
     import { CommandInputHandler } from '/static/js/input_control.js';
@@ -490,7 +491,7 @@
       mangle: false,
       headerIds: false,
     });
-
+//set up global variables
     var ws = Object;
     const clientID = '{{clientID}}';
     const timestamp = '{{ timestamp }}';
@@ -1648,7 +1649,12 @@
       }
       if (msg.data['prologue'] != undefined) {
         Prologue = msg.data['prologue'];
-        // console.log(Prologue);
+        console.log(Prologue);
+        Prologue = Prologue.replaceAll("*", "");
+        Prologue = Prologue.replaceAll("{% raw %}{{char}}{% endraw %}", "<em>" + ainame + "</em>");
+        Prologue = Prologue.replaceAll("{% raw %}{{user}}{% endraw %}", "<em>" + username + "</em>");
+        Prologue = Prologue.replaceAll(ainame, "<em>" + ainame + "</em>");
+        Prologue = Prologue.replaceAll(username, "<em>" + username + "</em>");
       }
       let voice_text = msg.data['voice_text'];
       let speaker = msg.data['speaker'];
