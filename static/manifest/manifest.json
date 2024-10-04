@@ -1,0 +1,21 @@
+{
+    "name": "CyberChat",
+    "short_name": "CyberChat",
+    "description": "Cyber Chat for all your fantasy needs",
+    "start_url": "/",
+    "display": "standalone",
+    "icons": [
+      {
+        "src": "/static/images/icon.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ],
+    "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://cyberchat.muffin-labs.com/static/manifest/manifest.json",
+      "id": "com.cyberchat.app"
+    }
+  ]
+  }

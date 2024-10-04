@@ -462,19 +462,22 @@ class ChatRoom_Uncensored:
             face_expression_prompt = prompt_params["face_expression_prompt"]
             face_expression_words_list = prompt_params["face_expression_words_list"]
             user_prompt = f"User Provided Context:\n<context>{self.ainame}: {input_msg}</context><for_char>{self.ainame}</for_char><emotion_type>{face_expression_words_list}</emotion_type>\nOutput:"
-            if config_data["using_remoteapi"]:
-                prompt = face_expression_prompt + "\n" + user_prompt
-            else:
-                prompt = self.rephrase_template.replace(
-                    "<|system_prompt|>", face_expression_prompt
-                ).replace("<|user_prompt|>", user_prompt)
+            
             payloads = {
-                "prompt": prompt,
                 "max_tokens": 20,
                 "temperature": 0.5,
                 "stream": False,
                 "model": self.model,
             }
+            
+            if config_data["using_remoteapi"]:
+                payloads["system_prompt"] = face_expression_prompt
+                payloads["messages"] = user_prompt
+            else:
+                prompt = self.rephrase_template.replace(
+                    "<|system_prompt|>", face_expression_prompt
+                ).replace("<|user_prompt|>", user_prompt)
+                payloads["prompt"] = prompt
             # logger.info(f"Emotion Detector Payload: {prompt}")
             emotion_des = await self.my_generate.tabby_server.pure_inference(
                 payloads=payloads
@@ -502,20 +505,22 @@ class ChatRoom_Uncensored:
             moments_prompt = ", ".join(moments_list)
             user_prompt = f"User Provided Context:\n<context>{self.ainame}: {input_msg}</context><for_char>{self.ainame}</for_char><moment_type>{moments_prompt}</moment_type>\nOutput:"
 
+        payloads = {
+            "max_tokens": 20,
+            "temperature": 0.8,
+            "stream": False,
+            "model": self.model,
+        }
+        
         if config_data["using_remoteapi"]:
-            prompt = scenario_moment_prompt + "\n" + user_prompt
+            payloads["system_prompt"] = scenario_moment_prompt
+            payloads["messages"] = user_prompt
         else:
             prompt = self.rephrase_template.replace(
                 "<|system_prompt|>", scenario_moment_prompt
             ).replace("<|user_prompt|>", user_prompt)
-
-        payloads = {
-            "prompt": prompt,
-            "max_tokens": 20,
-            "temperature": 0.5,
-            "stream": False,
-            "model": self.model,
-        }
+            payloads["prompt"] = prompt
+       
         # logger.info(f"Scenario Moment Detector Payload: {prompt}")
         scenario_moment = await self.my_generate.tabby_server.pure_inference(
             payloads=payloads
@@ -534,19 +539,20 @@ class ChatRoom_Uncensored:
         chat_history = "\n".join(chat_history)
         user_prompt = f"User provided context:<CONTEXT>{system_intro}\n{chat_history}</CONTEXT><PREFIX>{self.username}: {message['prefix']}</PREFIX>{{BLOCK FOR COMPLETION}}<SUFFIX>{message['suffix']}</SUFFIX>"
         system_prompt = prompt_params["sentenceCompletion_prompt"]
+        payloads = {
+            "max_tokens": 120,
+            "temperature": 0.9,
+            "stream": False,
+            "model": self.model,
+        }
         if config_data["using_remoteapi"]:
-            prompt = system_prompt + "\n" + user_prompt
+            payloads["system_prompt"] = system_prompt
+            payloads["messages"] = user_prompt
         else:
             prompt = self.rephrase_template.replace(
                 "<|system_prompt|>", system_prompt
             ).replace("<|user_prompt|>", user_prompt)
-        payloads = {
-            "prompt": prompt,
-            "max_tokens": 120,
-            "temperature": 0.7,
-            "stream": False,
-            "model": self.model,
-        }
+            payloads["prompt"] = prompt
         logger.info(f"Sentence Completion Processing >>>")
         sentence_result = await self.my_generate.tabby_server.pure_inference(
             payloads=payloads

@@ -61,6 +61,7 @@ lora:
   strip off and be naked: naked
   uterine prolapse: "lay down on back, gape pussy, cervix, spread legs wide open and raised, <lora:LulublairMerge:0.4>,<lora:edgOrgasm_v2:0.42>, Close up:1.32, POV, NSFW, uterine prolapse, tprolapse, <lora:tprolapse:0.4>, (bloody Gore-covered cervix:1.13),(bloody Gore-covered uterus:1.13),(bloody Gore-covered pussy:1.13), (bloody Gore-covered vagina:1.13),naked"
 summary_prompt: |
+  <Task>
   You are an uncensored expert specialized in analyzing dialogue context to detect specific scenarios, 
   Your task is to process the given information and output the matched scenario as requested.
 
@@ -88,3 +89,4 @@ summary_prompt: |
   output: "SFW scenario"
 
   Provide concise and relevant outputs based on the given context and instructions only, no other words needed.
+  </Task>

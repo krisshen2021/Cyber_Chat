@@ -2,9 +2,9 @@
 <html>
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta charset="UTF-8" />
-  <link rel="icon" href="/static/images/favicon.ico" />
+  <link rel="manifest" href="/static/manifest/manifest.json" />
+  <link rel="icon" href="/static/images/icon.png" />
   <link rel="stylesheet" type="text/css" href="/static/css/login.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -136,7 +136,7 @@
         </div>
       </div>
     </div>
-    <div class="Main_footer">Muffin 2024</div>
+    <div class="Main_footer"><div>Muffin 2024 </div><div id="install_app_button">Install as application</div></div>
     <div id="overlay" class="overlay">
       <div id="signup_form">
         <div class="top_bar">
@@ -696,6 +696,26 @@
   <!-- Script Block -->
   <script src="/static/js/gsap.min.js"></script>
   <script src="/static/js/jquery-3.6.0.min.js"></script>
+  <script type="module">
+    import PWAInstaller from '/static/js/PWAInstaller.js';
+    const install_app_button = document.getElementById('install_app_button');
+    const pwaInstaller = new PWAInstaller(
+      install_app_button,
+      {
+        display: 'flex',
+        backgroundColor: '#000',
+        color: '#fff',
+        marginLeft: 'auto',
+        padding: '10px 20px',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '0.6rem',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        border: 'none',
+      }
+    );
+  </script>
   <!-- Vue -->
   <script src="/static/js/vue.global.js"></script>
   <script>

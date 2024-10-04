@@ -75,7 +75,7 @@ class CoreGenerator:
     ):
         self.send_msg_websocket = send_msg_websocket
         self.state = state
-        self.pattern_task = re.compile(r"<Task>.*?</Task>", re.DOTALL)
+        self.pattern_task = re.compile(r"<Task>(.*?)</Task>", re.DOTALL)
         self.pattern_plot = re.compile(
             r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL
         )
@@ -117,6 +117,7 @@ class CoreGenerator:
         temperature=None,
         stream: bool = False,
         max_tokens=None,
+        using_remoteapi: bool = None,
     ):
         comp_data = copy.deepcopy(self.completions_data)
         comp_data.update(
@@ -125,7 +126,6 @@ class CoreGenerator:
                     self.state["temperature"] if temperature is None else temperature
                 ),
                 "stream": stream,
-                "prompt": system_prompt,
                 "stop": self.state["custom_stop_string"],
                 "max_tokens": (
                     self.state["max_tokens"] if max_tokens is None else max_tokens
@@ -144,6 +144,26 @@ class CoreGenerator:
                 "smoothing_factor": self.state["smoothing_factor"],
             }
         )
+        if using_remoteapi is True:
+            match = self.pattern_task.search(system_prompt)
+            if match:
+                system_task_prompt = match.group(1).strip()
+                messages = self.pattern_task.sub('', system_prompt).strip()
+                logger.info(f"system_task_prompt: {system_task_prompt}")
+                logger.info(f"messages: {messages}")
+            else:
+                system_task_prompt = None
+                messages = system_prompt
+            comp_data["system_prompt"] = system_task_prompt
+            comp_data["messages"] = messages
+            if "prompt" in comp_data:
+                del comp_data["prompt"]
+        else:
+            comp_data["prompt"] = system_prompt
+            if "system_prompt" in comp_data:
+                del comp_data["system_prompt"]
+            if "messages" in comp_data:
+                del comp_data["messages"]
         return comp_data
 
     # Get LLM response
@@ -158,7 +178,12 @@ class CoreGenerator:
         if using_remoteapi is None:
             config_data = await getGlobalConfig("config_data")
             using_remoteapi = config_data["using_remoteapi"]
-        payloads = self.update_completion_data(system_prompt, temperature, stream)
+        payloads = self.update_completion_data(
+            system_prompt=system_prompt,
+            temperature=temperature,
+            stream=stream,
+            using_remoteapi=using_remoteapi,
+        )
         if using_remoteapi is not True:
             response = await self.tabby_server.inference(
                 payloads=payloads, apiurl=apiurl
@@ -323,7 +348,7 @@ class CoreGenerator:
                 r"<|system_prompt|>", sysprompt
             ).replace(r"<|user_prompt|>", userprompt)
             payloads = self.update_completion_data(
-                system_prompt, temperature, stream, max_tokens
+                system_prompt= system_prompt, temperature = temperature, stream=stream, max_tokens=max_tokens, using_remoteapi=using_remoteapi
             )
             bg_result = await self.tabby_server.inference(payloads=payloads)
             task = asyncio.create_task(self.create_live_bgbase64(bg_result))
@@ -448,7 +473,7 @@ class CoreGenerator:
             first_sentence = match.group(1).strip()
         else:
             first_sentence = ""
-            
+
         # Here is generate streaming chat response from LLM
         response_text = await self.get_chat_response(
             system_prompt=system_prompt, stream=True, temperature=0.9
@@ -477,7 +502,8 @@ class CoreGenerator:
                 system_prompt=self.summary_prompt, user_msg=user_msg
             )
             logger.info(f"Rephrased Result of scenario detection: \n[ {response} ]")
-
+            if response is None:
+                response = "Normal"
             is_word_triggered, match_result = contains_vocabulary(
                 response, self.resultslist
             )

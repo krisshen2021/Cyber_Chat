@@ -146,7 +146,6 @@ class tabby_fastapi:
         if apiurl is None:
             apiurl = self.url
         url = apiurl + "/remoteapi/" + config_data["remoteapi_endpoint"]
-        data["messages"] = data.pop("prompt")
         data["model"] = self.model
         if data["stream"] is True:
             async with httpx.AsyncClient(timeout=timeout) as client:
@@ -568,7 +567,8 @@ class tabby_fastapi:
                 + "/remoteapi/"
                 + config_data["remoteapi_endpoint"]
             )
-            data["messages"] = data.pop("prompt")
+            if "prompt" in data:
+                del data["prompt"]
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     response = await client.post(url=apiurl, json=data)
@@ -589,6 +589,10 @@ class tabby_fastapi:
                 "Content-Type": "application/json",
             }
             # data.pop("model", None)
+            if "system_prompt" in data:
+                del data["system_prompt"]
+            if "messages" in data:
+                del data["messages"]
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     response = await client.post(url=apiurl, headers=headers, json=data)

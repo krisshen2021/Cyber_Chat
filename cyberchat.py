@@ -25,7 +25,6 @@ from fastapimode.tabby_fastapi_websocket import tabby_fastapi
 from modules.payload_state import sd_payload, completions_data
 from modules.AiRoleOperator import AiRoleOperator as ARO
 from modules.ANSI_tool import ansiColor
-from openai import AsyncOpenAI
 from typing import Optional
 sd_payload = sd_payload.copy()
 config_data = config_data.copy()
@@ -830,11 +829,13 @@ async def createchar_wizard(client_info, client_id):
                 r"<|system_prompt|>", result["sysinstruct"]
             ).replace(r"<|user_prompt|>", result["userinstruct"])
         else:
-            wizard_prompt = result["sysinstruct"] + "\n" + result["userinstruct"]
+            # wizard_prompt = result["sysinstruct"] + "\n" + result["userinstruct"]
+            system_prompt = result["sysinstruct"]
+            messages = result["userinstruct"]
         # logger.info(wizard_prompt)
         temperature = 0.8 if task == "prologue" or task == "firstwords" else 0.5
         smoothing_factor = 0.55 if task == "prologue" or task == "firstwords" else 0.1
-        max_tokens = 300 if task == "prologue" or task == "char_persona" else 150
+        max_tokens = 400 if task == "prologue" or task == "char_persona" or task == "char_outfit" else 150
         presence_penalty = (
             1.25
             if task == "prologue"
@@ -876,9 +877,19 @@ async def createchar_wizard(client_info, client_id):
                 "ban_eos_token": False,
                 "repetition_range": -1,
                 "smoothing_factor": smoothing_factor,
-                "prompt": wizard_prompt,
             }
         )
+        if config_data["using_remoteapi"]:
+            completions_data["system_prompt"] = system_prompt
+            completions_data["messages"] = messages
+            if "prompt" in completions_data:
+                del completions_data["prompt"]
+        else:
+            completions_data["prompt"] = wizard_prompt
+            if "system_prompt" in completions_data:
+                del completions_data["system_prompt"]
+            if "messages" in completions_data:
+                del completions_data["messages"]
         wizard_result = await tabby_fastapi.pure_inference(payloads=completions_data)
         wizard_result = wizard_result.strip()
         # logger.info(wizard_result)
