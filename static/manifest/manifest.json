@@ -1,25 +1,26 @@
 {
-    "name": "CyberChat",
-    "short_name": "CyberChat",
-    "description": "Cyber Chat for all your fantasy needs",
-    "start_url": "https://cyberchat.muffin-labs.com/",
-    "id": "https://cyberchat.muffin-labs.com/",
-    "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#000000",
-    "orientation": "portrait",
-    "icons": [
-      {
-        "src": "/static/images/icon.png",
-        "sizes": "512x512",
-        "type": "image/png"
-      }
-    ],
-    "related_applications": [
+  "name": "CyberChat",
+  "short_name": "CyberChat",
+  "description": "Cyber Chat for all your fantasy needs",
+  "start_url": "https://cyberchat.muffin-labs.com/",
+  "id": "https://cyberchat.muffin-labs.com/",
+  "scope": "https://cyberchat.muffin-labs.com/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
     {
-      "platform": "webapp",
+      "src": "https://cyberchat.muffin-labs.com/static/images/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "chrome_web_store",
       "url": "https://cyberchat.muffin-labs.com/static/manifest/manifest.json",
       "id": "https://cyberchat.muffin-labs.com/"
     }
   ]
-  }
+}
