@@ -37,6 +37,10 @@ class PWAInstaller {
         console.log('瀏覽器不支持 getInstalledRelatedApps');
         this.buttonElement.style.display = 'flex';
       }
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || document.referrer.includes('android-app://')) {
+        console.log('應用程序已經以獨立模式運行');
+        this.buttonElement.style.display = 'none';
+      }
     }
   
   
@@ -45,8 +49,9 @@ class PWAInstaller {
       e.preventDefault();
       // 保存事件以便稍後觸發
       this.deferredPrompt = e;
-      // 顯示安裝按鈕
-      this.buttonElement.style.display = 'flex';
+      if (!this.deferredPrompt) {
+        this.buttonElement.style.display = 'none';
+      }
     }
   
     installApp() {
