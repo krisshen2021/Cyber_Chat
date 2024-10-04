@@ -2,9 +2,8 @@
   "name": "CyberChat",
   "short_name": "CyberChat",
   "description": "Cyber Chat for all your fantasy needs",
-  "start_url": "https://cyberchat.muffin-labs.com/",
-  "id": "https://cyberchat.muffin-labs.com/",
-  "scope": "https://cyberchat.muffin-labs.com/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
@@ -18,9 +17,8 @@
   ],
   "related_applications": [
     {
-      "platform": "chrome_web_store",
-      "url": "https://cyberchat.muffin-labs.com/static/manifest/manifest.json",
-      "id": "https://cyberchat.muffin-labs.com/"
+      "platform": "webapp",
+      "url": "https://cyberchat.muffin-labs.com/static/manifest/manifest.json"
     }
   ]
 }
