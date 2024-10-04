@@ -3,6 +3,7 @@
     "short_name": "CyberChat",
     "description": "Cyber Chat for all your fantasy needs",
     "start_url": "/",
+    "id": "/",
     "display": "standalone",
     "icons": [
       {
@@ -15,7 +16,7 @@
     {
       "platform": "webapp",
       "url": "https://cyberchat.muffin-labs.com/static/manifest/manifest.json",
-      "id": "com.cyberchat.app"
+      "id": "/"
     }
   ]
   }
