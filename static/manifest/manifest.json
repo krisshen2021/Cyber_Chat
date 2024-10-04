@@ -3,7 +3,7 @@
     "short_name": "CyberChat",
     "description": "Cyber Chat for all your fantasy needs",
     "start_url": "/",
-    "id": "/",
+    "id": "https://cyberchat.muffin-labs.com/",
     "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#000000",
@@ -19,7 +19,7 @@
     {
       "platform": "webapp",
       "url": "https://cyberchat.muffin-labs.com/static/manifest/manifest.json",
-      "id": "/"
+      "id": "https://cyberchat.muffin-labs.com/"
     }
   ]
   }
