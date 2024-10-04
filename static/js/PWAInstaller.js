@@ -63,13 +63,14 @@ class PWAInstaller {
         this.deferredPrompt.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
             console.log('用戶接受了安裝提示');
+            // 隱藏安裝按鈕
+            this.buttonElement.style.display = 'none';
           } else {
             console.log('用戶取消了安裝提示');
           }
           // 清除保存的事件
           this.deferredPrompt = null;
-          // 隱藏安裝按鈕
-          this.buttonElement.style.display = 'none';
+          
         });
       }
     }
