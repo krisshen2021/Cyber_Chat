@@ -12,6 +12,14 @@ hr_upscaler: Latent (antialiased)
 sampler_name: LCM
 sd_model_checkpoint: dreamshaper_8LCM
 
+### qdrant settings
+qdrant_server_url: http://192.168.5.179:6333
+qdrant_embedding_model: snowflake/snowflake-arctic-embed-s
+qdrant_oai_api_key: openrouter_api_key
+qdrant_oai_base_url: https://openrouter.ai/api/v1
+qdrant_oai_model: anthropic/claude-3.5-sonnet
+qdrant_collection_name: cyberchat_memory
+
 ### server settings
 debug_mode: true
 server_address: 0.0.0.0

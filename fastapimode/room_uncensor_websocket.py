@@ -6,8 +6,9 @@ from modules.global_sets_async import (
     convert_to_webpbase64,
     logger,
     config_data,
+    init_memory,
 )
-import os, random, re, io, base64, copy, markdown, asyncio, httpx, copy
+import os, re, io, base64, copy, markdown, asyncio, httpx, copy
 from fastapimode.airole_creator_uncensor_websocket import airole
 from modules.TranslateAsync import AsyncTranslator
 from fastapimode.Generator_websocket import CoreGenerator
@@ -54,8 +55,8 @@ def create_userfaceprompt(facelooks: dict):
 class ChatRoom_Uncensored:
     def __init__(
         self,
-        user_sys_name: str = None,
-        ai_role_name: str = None,
+        user_uid: str = None,
+        char_uid: str = None,
         username: str = None,
         usergender: str = None,
         user_facelooks: dict = None,
@@ -64,8 +65,8 @@ class ChatRoom_Uncensored:
         send_msg_websocket: callable = None,
     ) -> None:
         self.send_msg_websocket = send_msg_websocket
-        self.user_sys_name = user_sys_name
-        self.ai_role_name = ai_role_name
+        self.user_uid = user_uid
+        self.char_uid = char_uid
         self.username = username
         self.usergender = usergender
         self.user_facelooks = create_userfaceprompt(user_facelooks)
@@ -88,7 +89,8 @@ class ChatRoom_Uncensored:
         self.dynamic_picture = ""
         self.state = copy.deepcopy(room_state)
         self.ai_role = airole(
-            roleselector=self.ai_role_name,
+            char_uid=self.char_uid,
+            user_uid=self.user_uid,
             username=self.username,
             usergender=self.usergender,
         )
@@ -118,7 +120,13 @@ class ChatRoom_Uncensored:
 
     async def serialize_data(self):
         # ai role data
-        await self.ai_role.async_init()
+        await self.ai_role.async_init(
+            ai_is_memory_mode=(
+                self.state["ai_is_memory_mode"]
+                if "ai_is_memory_mode" in self.state
+                else False
+            )
+        )
         # prepare state data
         await self.preparation()
         # Other stats value data
@@ -147,9 +155,12 @@ class ChatRoom_Uncensored:
     async def start_stats(self):
         self.chathistory.clear()
         self.messages = ""
-        self.state["user_name"] = self.username
-        self.state["char_name"] = self.ai_role.ai_role_name
+
         self.ainame = self.ai_role.ai_role_name
+        self.state["user_name"] = self.username
+        self.state["char_name"] = self.ainame
+        self.state["user_uid"] = self.user_uid
+        self.state["char_uid"] = self.char_uid
         await self.create_role_desc_msg()
         self.ai_lastword = ""
         self.G_ai_text = self.welcome_text
@@ -315,21 +326,27 @@ class ChatRoom_Uncensored:
         if self.state["language"] != "English":
             logger.info(f"Translating prologue to {self.state['language']}")
             await self.send_msg_websocket(
-                {"name": "initialization", "msg": f"Translating prologue to {self.state['language']}..."},
+                {
+                    "name": "initialization",
+                    "msg": f"Translating prologue to {self.state['language']}...",
+                },
                 self.conversation_id,
             )
             self.prologue_intro = await myTrans.translate_text(
                 self.state["language"], self.prologue_intro, self.rephrase_template
             )
             await self.send_msg_websocket(
-                {"name": "initialization", "msg": f"Translating first message to {self.state['language']}..."},
+                {
+                    "name": "initialization",
+                    "msg": f"Translating first message to {self.state['language']}...",
+                },
                 self.conversation_id,
             )
-            
+
             self.welcome_text = await myTrans.translate_text(
                 self.state["language"], self.first_message, self.rephrase_template
             )
-            
+
         self.messages = f"{self.char_desc_system}{self.ainame}: {self.first_message}"
 
         if len(self.chathistory) == 0:
@@ -408,7 +425,7 @@ class ChatRoom_Uncensored:
         )
         if is_save:
             img_path = os.path.join(
-                dir_path, "static", "images", "avatar", self.ai_role_name
+                dir_path, "static", "images", "avatar", self.char_uid
             )
             await self.save_image_async(bkImg, img_path, "background.webp")
 
@@ -450,7 +467,7 @@ class ChatRoom_Uncensored:
 
         if is_save:
             img_path = os.path.join(
-                dir_path, "static", "images", "avatar", self.ai_role_name
+                dir_path, "static", "images", "avatar", self.char_uid
             )
             await self.save_image_async(avatarImg, img_path, "none.webp")
 
@@ -462,14 +479,14 @@ class ChatRoom_Uncensored:
             face_expression_prompt = prompt_params["face_expression_prompt"]
             face_expression_words_list = prompt_params["face_expression_words_list"]
             user_prompt = f"User Provided Context:\n<context>{self.ainame}: {input_msg}</context><for_char>{self.ainame}</for_char><emotion_type>{face_expression_words_list}</emotion_type>\nOutput:"
-            
+
             payloads = {
                 "max_tokens": 20,
                 "temperature": 0.5,
                 "stream": False,
                 "model": self.model,
             }
-            
+
             if config_data["using_remoteapi"]:
                 payloads["system_prompt"] = face_expression_prompt
                 payloads["messages"] = user_prompt
@@ -511,7 +528,7 @@ class ChatRoom_Uncensored:
             "stream": False,
             "model": self.model,
         }
-        
+
         if config_data["using_remoteapi"]:
             payloads["system_prompt"] = scenario_moment_prompt
             payloads["messages"] = user_prompt
@@ -520,7 +537,7 @@ class ChatRoom_Uncensored:
                 "<|system_prompt|>", scenario_moment_prompt
             ).replace("<|user_prompt|>", user_prompt)
             payloads["prompt"] = prompt
-       
+
         # logger.info(f"Scenario Moment Detector Payload: {prompt}")
         scenario_moment = await self.my_generate.tabby_server.pure_inference(
             payloads=payloads
@@ -740,8 +757,8 @@ class ChatRoom_Uncensored:
                     chatitem_dict = {"role": chatitem[0], "msg": chatitem[1]}
                     chat_record.append(chatitem_dict)
                 save_result = database.save_chat_records(
-                    username=self.user_sys_name,
-                    character=self.ai_role_name,
+                    username=self.user_uid,
+                    character=self.char_uid,
                     chat_data=chat_record,
                 )
                 return save_result
@@ -750,7 +767,7 @@ class ChatRoom_Uncensored:
 
         if operation == "load":
             user_chat_history = database.get_chat_records(
-                username=self.user_sys_name, character=self.ai_role_name
+                username=self.user_uid, character=self.char_uid
             )
             if user_chat_history:
                 self.chathistory[:] = self.chathistory[:1]
@@ -781,6 +798,6 @@ class ChatRoom_Uncensored:
                 return False
         if operation == "delete":
             delete_result = database.delete_chat_records(
-                username=self.user_sys_name, character=self.ai_role_name
+                username=self.user_uid, character=self.char_uid
             )
             return delete_result

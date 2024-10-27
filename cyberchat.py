@@ -10,7 +10,7 @@ from modules.global_sets_async import (
     config_data,
     prompt_params,
     language_data,
-    languageClient
+    languageClient,
 )
 import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy, json5
 from datetime import datetime
@@ -187,14 +187,8 @@ async def enter_room(
 ):
     context = form_data.model_dump()
     suggestions = await getGlobalConfig("suggestions_params")
-    # language_Data = await getGlobalConfig("language_data")
-    # context["language_Data"] = language_Data
     context["language_Data"] = json5.loads(context["language_Data"])
-    logger.info(context["language_Data"])
     context["suggestions"] = suggestions
-    # ai_role_data = database.get_airole(context["ai_role_name"])
-    # username = context["username"]
-    # ainame = context["ainame"]
     context["request"] = request
     timestamp = generate_timestamp()
     context["timestamp"] = timestamp
@@ -360,31 +354,33 @@ async def client_edit_profile(client_info, client_id):
 async def initialize_room(client_msg, client_id):
     using_remoteapi = config_data["using_remoteapi"]
     username = client_msg["data"]["username"]
-    user_sys_name = client_msg["data"]["user_sys_name"]
+    user_uid = client_msg["data"]["user_sys_name"]
     usergender = client_msg["data"]["usergender"]
     user_facelooks = client_msg["data"]["user_facelooks"]
-    ai_role_name = client_msg["data"]["ai_role_name"]
+    char_uid = client_msg["data"]["ai_role_name"]
     ai_is_uncensored = client_msg["data"]["ai_is_uncensored"]
     ai_is_live_char = client_msg["data"]["ai_is_live_char"]
+    ai_is_memory_mode = client_msg["data"]["ai_is_memory_mode"]
     language = client_msg["data"]["language"]
     windowRatio = round(float(client_msg["data"]["windowRatio"]), 2)
     userCurrentRoom = conn_ws_mgr.get_room(client_id)
     if userCurrentRoom:
         userCurrentRoom.conversation_id = client_id
-        userCurrentRoom.ai_role_name = ai_role_name
+        userCurrentRoom.char_uid = char_uid
         userCurrentRoom.username = username
-        userCurrentRoom.user_sys_name = user_sys_name
+        userCurrentRoom.user_uid = user_uid
         userCurrentRoom.usergender = usergender
         userCurrentRoom.user_facelooks = user_facelooks
         userCurrentRoom.state["ai_is_live_char"] = ai_is_live_char
+        userCurrentRoom.state["ai_is_memory_mode"] = ai_is_memory_mode
         userCurrentRoom.windowRatio = windowRatio
         userCurrentRoom.state["language"] = language
     else:
         conn_ws_mgr.set_room(
             client_id,
             ChatRoom_Uncensored(
-                user_sys_name=user_sys_name,
-                ai_role_name=ai_role_name,
+                user_uid=user_uid,
+                char_uid=char_uid,
                 username=username,
                 usergender=usergender,
                 user_facelooks=user_facelooks,
@@ -393,9 +389,10 @@ async def initialize_room(client_msg, client_id):
                 send_msg_websocket=send_status,
             ),
         )
-        logger.info(f"Cyber Chat Room created for: {ai_role_name} & {username}")
+        logger.info(f"Cyber Chat Room created for: {char_uid} & {username}")
         userCurrentRoom = conn_ws_mgr.get_room(client_id)
         userCurrentRoom.state["ai_is_live_char"] = ai_is_live_char
+        userCurrentRoom.state["ai_is_memory_mode"] = ai_is_memory_mode
         userCurrentRoom.state["language"] = language
     if not userCurrentRoom.initialization_start:
         await userCurrentRoom.initialize()

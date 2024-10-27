@@ -13,6 +13,7 @@ class EnterRoom(BaseModel):
     ainame: str
     is_uncensored: str
     is_live_char: bool
+    is_memory_mode: bool
     clientID: str
     language: str
     language_Data: str

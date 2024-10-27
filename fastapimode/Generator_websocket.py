@@ -1,13 +1,14 @@
 from fastapimode.sys_path import project_root
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi
-import os, tiktoken, yaml, httpx, aiofiles, asyncio, re, httpx, copy
+import os, tiktoken, yaml, httpx, aiofiles, asyncio, re, httpx, copy, json
+from datetime import datetime
 from modules.global_sets_async import (
     logger,
     config_data,
-    timeout,
     prompt_params,
     getGlobalConfig,
     convert_to_webpbase64,
+    init_memory,
 )
 from modules.payload_state import completions_data
 
@@ -75,6 +76,8 @@ class CoreGenerator:
     ):
         self.send_msg_websocket = send_msg_websocket
         self.state = state
+        self.ai_is_memory_mode = state["ai_is_memory_mode"]
+        logger.info(f"is memory mode: {self.ai_is_memory_mode}")
         self.pattern_task = re.compile(r"<Task>(.*?)</Task>", re.DOTALL)
         self.pattern_plot = re.compile(
             r"<Plot_of_the_RolePlay>(.*?)</Plot_of_the_RolePlay>", re.DOTALL
@@ -105,6 +108,10 @@ class CoreGenerator:
         self.restruct_prompt = self.restruct_prompt.replace(
             "<|default_bg|>", self.state["env_setting"]
         )
+        if self.ai_is_memory_mode is True:
+            self.cyberchat_memory = await init_memory()
+        else:
+            self.cyberchat_memory = None
 
     def get_rephrase_template(self):
         chat_template_name = self.state["prompt_template"].split("_")
@@ -148,9 +155,9 @@ class CoreGenerator:
             match = self.pattern_task.search(system_prompt)
             if match:
                 system_task_prompt = match.group(1).strip()
-                messages = self.pattern_task.sub('', system_prompt).strip()
-                logger.info(f"system_task_prompt: {system_task_prompt}")
-                logger.info(f"messages: {messages}")
+                messages = self.pattern_task.sub("", system_prompt).strip()
+                # logger.info(f"system_task_prompt: {system_task_prompt}")
+                # logger.info(f"messages: {messages}")
             else:
                 system_task_prompt = None
                 messages = system_prompt
@@ -259,7 +266,7 @@ class CoreGenerator:
             response_text,
             re.DOTALL,
         )
-        if match_bg and match_outfit and match_emotion:
+        if match_bg and match_outfit and match_emotion and match_behavior:
             result_bg = match_bg.group(1).strip()
             result_outfit = match_outfit.group(1).strip()
             result_emotion = match_emotion.group(1).strip()
@@ -338,7 +345,7 @@ class CoreGenerator:
                 async with httpx.AsyncClient(timeout=80) as client:
                     response = await client.post(url=apiurl, json=payloads)
                     if response.status_code == 200:
-                        logger.info(f"BG analysis result: > {response.text}")
+                        # logger.info(f"BG analysis result: > {response.text}")
                         bg_result = response.text
                         task = asyncio.create_task(self.create_live_bgbase64(bg_result))
             except Exception as e:
@@ -348,7 +355,11 @@ class CoreGenerator:
                 r"<|system_prompt|>", sysprompt
             ).replace(r"<|user_prompt|>", userprompt)
             payloads = self.update_completion_data(
-                system_prompt= system_prompt, temperature = temperature, stream=stream, max_tokens=max_tokens, using_remoteapi=using_remoteapi
+                system_prompt=system_prompt,
+                temperature=temperature,
+                stream=stream,
+                max_tokens=max_tokens,
+                using_remoteapi=using_remoteapi,
             )
             bg_result = await self.tabby_server.inference(payloads=payloads)
             task = asyncio.create_task(self.create_live_bgbase64(bg_result))
@@ -460,27 +471,17 @@ class CoreGenerator:
         return image
 
     # Process for chat message
-    async def message_process(self, system_prompt: str):
-        content_task_removed = self.pattern_task.sub("", system_prompt)
-        match = self.pattern_plot.search(content_task_removed)
-        if match:
-            plot_content = match.group(1).strip()
-        else:
-            plot_content = ""
-
-        match = self.pattern_firstword.search(content_task_removed)
-        if match:
-            first_sentence = match.group(1).strip()
-        else:
-            first_sentence = ""
-
+    async def message_process(
+        self, full_prompt: str, plot_content: str, first_sentence: str
+    ):
         # Here is generate streaming chat response from LLM
         response_text = await self.get_chat_response(
-            system_prompt=system_prompt, stream=True, temperature=0.9
+            system_prompt=full_prompt, stream=True, temperature=0.9
         )
 
         if response_text is None:
             return None
+        
         last_ai_sentence = f"{self.state['char_name']}: {response_text}"
         self.last_context.append(last_ai_sentence)
         cliped_context = "\n".join(self.last_context[-10:])
@@ -494,7 +495,23 @@ class CoreGenerator:
             + "\n"
         )
         # create task to check background and outfits
-        task = asyncio.create_task(self.generate_bg_outfit(last_full_talk))
+        task_generate_bg_outfit = asyncio.create_task(
+            self.generate_bg_outfit(last_full_talk)
+        )
+        
+        # if memory mode is on, then create task to save memory and generate previous summary
+        if self.ai_is_memory_mode is True:
+            task_memory_saving = asyncio.create_task(
+                self.memory_saving_process(response_text)
+            )
+            task_memory_previous_summary = asyncio.create_task(
+                self.memory_previous_summary(
+                    owner=self.state["char_name"],
+                    user_name=self.state["user_name"],
+                    plot_description=plot_content,
+                    dialog=self.last_context,
+                )
+            )
 
         if self.state["generate_dynamic_picture"] and self.iscreatedynimage:
             user_msg = f"\nUser provided input: \n<context>{cliped_context}</context><for_char>{self.state['char_name']}</for_char>\nOutput:"
@@ -517,17 +534,150 @@ class CoreGenerator:
 
         return response_text, False
 
+    async def memory_saving_process(self, response_text: str):
+        # if memory has been exsited, then add memory to the context
+        dialog = [
+            {"role": "user", "content": self.user_last_msg},
+            {"role": "assistant", "content": response_text},
+        ]
+        if_memory_exist = await self.cyberchat_memory.judge_if_memory_has_exsited(
+            char_uid=self.state["char_uid"],
+            user_uid=self.state["user_uid"],
+            owner=self.state["char_name"],
+            user_name=self.state["user_name"],
+            vector_name="memory_vector",
+            dialog=dialog,
+        )
+        logger.info(f"If_memory_exist: {json.loads(if_memory_exist)}")
+        if json.loads(if_memory_exist)["has_existed"] is not True:
+            memory_judge = await self.cyberchat_memory.judge_dialog_if_need_add_memory(
+                owner=self.state["char_name"],
+                user_name=self.state["user_name"],
+                dialog=dialog,
+            )
+            # print(memory_judge)
+            memory_data = json.loads(memory_judge)
+            logger.info(f"Is_worthy_to_add_to_memory_database: {memory_data}")
+            if memory_data["is_worthy_to_add_to_memory_database"] is True:
+                S_value_of_retention = (
+                    await self.cyberchat_memory.evaluate_memory_retention(
+                        description=memory_data["description"]
+                    )
+                )
+                S_value = round(float(json.loads(S_value_of_retention)["S_value"]), 4)
+                await self.cyberchat_memory.add_memory(
+                    vector_name="memory_vector",
+                    description=memory_data["description"],
+                    S_value_of_retention=S_value,
+                    char_uid=self.state["char_uid"],
+                    owner=self.state["char_name"],
+                    user_uid=self.state["user_uid"],
+                    user_name=self.state["user_name"],
+                    memory_level="user-level",
+                    memory_type=memory_data["memory_type"],
+                    memory_category=memory_data["memory_category"],
+                    memory_date=datetime.now().strftime("%Y-%m-%d"),
+                )
+                
+    async def memory_previous_summary(self, owner: str, user_name: str, plot_description: str, dialog: list):
+        previous_summary = await self.cyberchat_memory.memory_previous_summary(
+            owner=owner,
+            user_name=user_name,
+            plot_description=plot_description,
+            dialog=dialog,
+        )
+        previous_summary = json.loads(previous_summary)
+        narrator_summary = previous_summary["previous_summary_narrator"]
+        owner_summary = previous_summary["previous_summary_owner"]
+        the_latest_words_user = previous_summary["the_latest_words_1"]
+        the_latest_words_owner = previous_summary["the_latest_words_2"]
+        memory_json = {
+            "previous_summary_narrator": narrator_summary,
+            "previous_summary_owner": owner_summary,
+            "the_latest_words_user": the_latest_words_user,
+            "the_latest_words_owner": the_latest_words_owner,
+        }
+        # logger.info(f"memory_json: {memory_json}")
+        memory_json_str = json.dumps(memory_json)
+        await self.cyberchat_memory.add_memory(
+            vector_name="memory_vector",
+            description=memory_json_str,
+            char_uid=self.state["char_uid"],
+            owner=owner,
+            user_uid=self.state["user_uid"],
+            user_name=user_name,
+            is_previous_summary=True,
+            memory_date=datetime.now().strftime("%Y-%m-%d")
+        )
+        
+
     async def fetch_results(
         self, prompt: str, user_last_msg: str, iscreatedynimage: bool = True
     ):
         self.user_last_msg = user_last_msg.replace("'", "\\'").replace('"', '\\"')
-        self.last_context.append(f"{self.state['user_name']}: {self.user_last_msg}")
+
         self.iscreatedynimage = iscreatedynimage
         self.image_bg_size = {
             "width": self.image_payload["width"],
             "height": self.image_payload["height"],
         }
-        result = await self.message_process(system_prompt=prompt)
+        # deassemble the prompt
+        content_task_removed = self.pattern_task.sub("", prompt)
+        match = self.pattern_plot.search(content_task_removed)
+        if match:
+            plot_content = match.group(1).strip()
+        else:
+            plot_content = ""
+
+        match = self.pattern_firstword.search(content_task_removed)
+        if match:
+            first_sentence = match.group(1).strip()
+        else:
+            first_sentence = ""
+        if len(self.last_context) == 0:
+            self.last_context.append(first_sentence)
+        self.last_context.append(f"{self.state['user_name']}: {self.user_last_msg}")
+        if self.ai_is_memory_mode is True:
+            dialog = [
+                {
+                    "role": "assistant",
+                    "content": self.last_context[-2].split(
+                        f"{self.state['char_name']}: "
+                    )[1],
+                },
+                {"role": "user", "content": self.user_last_msg},
+            ]
+            if_search_memory = (
+                await self.cyberchat_memory.judge_dialog_if_need_search_memory(
+                    owner=self.state["char_name"],
+                    user_name=self.state["user_name"],
+                    dialog=dialog,
+                )
+            )
+            if_search_memory = json.loads(if_search_memory)
+            logger.info(f"if_search_memory: {if_search_memory}")
+            if if_search_memory["if_need_search_memory"] is True:
+                search_result = await self.cyberchat_memory.search_memory(
+                    dialog=dialog,
+                    vector_name="memory_vector",
+                    limit=10,
+                    char_uid=self.state["char_uid"],
+                    user_uid=self.state["user_uid"],
+                    owner=self.state["char_name"],
+                    user_name=self.state["user_name"],
+                    memory_level="user-level",
+                    convert_dialog_to_query=True,
+                )
+                logger.info(f"search_result: {search_result}")
+                if search_result is not None:
+                    prompt = (
+                        prompt
+                        + f"\n[Memories of {self.state['char_name']} for reference to reply to {self.state['user_name']}, if there is no valuable information, please ignore it and reply directly as normal:\n {search_result}]"
+                    )
+
+        result = await self.message_process(
+            full_prompt=prompt, plot_content=plot_content, first_sentence=first_sentence
+        )
 
         if isinstance(result, tuple):
             return result

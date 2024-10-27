@@ -1,4 +1,6 @@
 from database.sqliteclass import SQLiteDB
+from memory.qdrant_memory import Memory as qdrant_memory_class
+from qdrant_client import models as qdrant_models
 import os, yaml, asyncio, aiofiles, base64, io, json
 from dotenv import load_dotenv
 from PIL import Image
@@ -23,10 +25,10 @@ prompt_param_path = os.path.join(dir_path, "config", "prompts", "prompts.yaml")
 suggestions_path = os.path.join(dir_path, "config", "prompts", "suggestions.yaml")
 language_path = os.path.join(dir_path, "config", "language", "lang.json")
 groq_api_key= os.getenv("groq_api_key", default="None")
-logger.info(f"groq_api_key: {groq_api_key}")
 languageClient = AsyncOpenAI(api_key=groq_api_key,base_url="https://api.groq.com/openai/v1",timeout=120)
 conn_ws_mgr = ConnectionManager()
 database = SQLiteDB(database_path)
+# cyberchat_memory = None
 chatRoomList = {}
 Remove_pending_roomlist = {}
 prompt_templates = None
@@ -35,8 +37,20 @@ suggestions_params = None
 config_data = None
 roleconf = None
 language_data = None
+api_key_for_qdrant = os.getenv("openrouter_api_key")
 # bulb = None
 
+async def init_memory():
+    cyberchat_memory = qdrant_memory_class(
+        qdrant_url=config_data["qdrant_server_url"],
+        embedding_model=config_data["qdrant_embedding_model"],
+        collection_name=config_data["qdrant_collection_name"],
+        oai_api_key=api_key_for_qdrant,
+        oai_base_url=config_data["qdrant_oai_base_url"],
+        oai_model=config_data["qdrant_oai_model"]
+    )
+    await cyberchat_memory.upsert_collection(vectors={"memory_vector": (384, qdrant_models.Distance.COSINE)})
+    return cyberchat_memory
 
 async def load_config():
     async with aiofiles.open(config_path, mode="r") as f:

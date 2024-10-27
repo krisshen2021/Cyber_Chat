@@ -509,6 +509,7 @@
     var Prologue = ''; 
     var ai_is_uncensored = '{{is_uncensored}}';
     var ai_is_live_char = JSON.parse('{{ is_live_char | tojson }}');
+    var ai_is_memory_mode = JSON.parse('{{ is_memory_mode | tojson }}');
     var conid = '{{clientID}}';
     var bkimg_path =
       '/static/images/avatar/' +
@@ -1752,6 +1753,7 @@
           conid: clientID,
           ai_is_uncensored: ai_is_uncensored,
           ai_is_live_char: ai_is_live_char,
+          ai_is_memory_mode: ai_is_memory_mode,
           language: languageSwitchUI.getValue(),
           windowRatio: windowSize.ratio,
         };

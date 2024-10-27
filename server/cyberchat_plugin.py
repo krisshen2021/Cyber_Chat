@@ -555,9 +555,7 @@ async def get_default_model():
         config_data["using_remoteapi"]
         and config_data["remoteapi_endpoint"] == "togetherai"
     ):
-        return JSONResponse(
-            content={"id": "Qwen/Qwen1.5-110B-Chat"}
-        )
+        return JSONResponse(content={"id": "Qwen/Qwen1.5-110B-Chat"})
     elif not config_data["using_remoteapi"]:
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -704,6 +702,7 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
         deepseek_dict = {
             key: params_json[key] for key in keys_to_keep if key in params_json
         }
+
         deepseek_dict["messages"] = [
             ChatMessage(role="user", content=deepseek_dict["messages"]),
         ]
@@ -877,6 +876,7 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
         keys_to_keep = [
             "system_prompt",
             "messages",
+            "base64_uri",
             "temperature",
             "max_tokens",
             "top_p",
@@ -894,9 +894,17 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
                 if len(openairouter_dict["stop"]) > 4:
                     openairouter_dict["stop"] = openairouter_dict["stop"][-4:]
                     # logger.info(f"openairouter stop: {openairouter_dict['stop']}")
-        openairouter_dict["messages"] = [
-            ChatMessage(role="user", content=openairouter_dict["messages"]),
-        ]
+        if "base64_uri" in openairouter_dict and openairouter_dict["base64_uri"] is not None:
+            openairouter_dict["messages"] = [
+                ChatMessage(role="user", content=[
+                    {"type": "text", "text": openairouter_dict["messages"]},
+                    {"type": "image_url", "image_url": {"url": openairouter_dict["base64_uri"]}}
+                ])
+            ]
+        else:
+            openairouter_dict["messages"] = [
+                ChatMessage(role="user", content=openairouter_dict["messages"]),
+            ]
         if (
             "system_prompt" in openairouter_dict
             and openairouter_dict["system_prompt"] is not None
@@ -906,6 +914,7 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
                 ChatMessage(role="system", content=openairouter_dict["system_prompt"]),
             )
         params = OAIParam(**openairouter_dict)
+        # logger.info(params)
         if params.stream is True:
             return StreamingResponse(
                 openairouter_stream(params), media_type="text/plain"

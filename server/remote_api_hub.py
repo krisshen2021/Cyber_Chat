@@ -2,7 +2,7 @@ import cohere, asyncio, json, os, boto3
 from modules.colorlogger import logger
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 from openai import AsyncOpenAI, OpenAI
 
 
@@ -30,16 +30,19 @@ aws_bedrock_config = {
 
 # create config json for all remote api
 remote_OAI_config = {
-    "mistral": {"api_key": mistral_api_key, "url":"https://api.mistral.ai/v1"},
-    "deepseek": {"api_key": deepseek_api_key, "url":"https://api.deepseek.com/v1"},
-    "yi": {"api_key": yi_api_key, "url":"https://api.01.ai/v1"},
-    "nvidia": {"api_key": nvidia_api_key, "url":"https://integrate.api.nvidia.com/v1"},
-    "xiaoai": {"api_key": xiaoai_api_key, "url":"https://api.xiaoai.plus/v1"},
-    "openrouter": {"api_key": openrouter_api_key, "url": "https://openrouter.ai/api/v1"},
+    "mistral": {"api_key": mistral_api_key, "url": "https://api.mistral.ai/v1"},
+    "deepseek": {"api_key": deepseek_api_key, "url": "https://api.deepseek.com/v1"},
+    "yi": {"api_key": yi_api_key, "url": "https://api.01.ai/v1"},
+    "nvidia": {"api_key": nvidia_api_key, "url": "https://integrate.api.nvidia.com/v1"},
+    "xiaoai": {"api_key": xiaoai_api_key, "url": "https://api.xiaoai.plus/v1"},
+    "openrouter": {
+        "api_key": openrouter_api_key,
+        "url": "https://openrouter.ai/api/v1",
+    },
     "groq": {"api_key": groq_api_key, "url": "https://api.groq.com/openai/v1"},
-    "ollama": {"api_key":"ollama","url": "http://localhost:11434/v1"},
-    "lmstudio": {"api_key":"lmstudio","url": "http://localhost:1234/v1"},
-    "tabby": {"api_key":tabby_api_key,"url": "http://localhost:5555/v1"},
+    "ollama": {"api_key": "ollama", "url": "http://localhost:11434/v1"},
+    "lmstudio": {"api_key": "lmstudio", "url": "http://localhost:1234/v1"},
+    "tabby": {"api_key": tabby_api_key, "url": "http://localhost:5555/v1"},
 }
 
 
@@ -71,10 +74,12 @@ openairouter_client = AsyncOpenAI(
 openairouter_sync_client = OpenAI(
     api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1", timeout=600
 )
+
+
 # Pydantic models for different remote api params
 class ChatMessage(BaseModel):
     role: str
-    content: str | List
+    content: str | List[Dict[str, str | Dict[str, str]]]
 
 
 class OAIParam(BaseModel):
@@ -86,9 +91,11 @@ class OAIParam(BaseModel):
     stop: Optional[List[str]] = None
     model: str
     stream: Optional[bool] = True
-    
+
+
 class XiaoaiParam(OAIParam):
     model: Optional[str] = "gpt-4o"
+
 
 class CohereParam(BaseModel):  # for cohere
     preamble: Optional[str] = None
@@ -483,6 +490,7 @@ async def xiaoai_invoke(params: XiaoaiParam):
     resp = await xiaoai_client.chat.completions.create(**data)
     return resp.choices[0].message.content
 
+
 async def openairouter_stream(params: OAIParam):
     final_text = ""
     data = params.model_dump(exclude_none=True)
@@ -517,5 +525,6 @@ async def openairouter_invoke(params: OAIParam):
     data = params.model_dump(exclude_none=True)
     resp = await openairouter_client.chat.completions.create(**data)
     return resp.choices[0].message.content
+
 
 logger.info("...Starting Remote Hub Server...")

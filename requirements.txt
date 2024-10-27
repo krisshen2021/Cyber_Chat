@@ -24,3 +24,4 @@ boto3
 mutagen
 json5
 uvicorn[standard]
+qdrant-client[fastembed]
