@@ -16,6 +16,7 @@
       href="https://fonts.googleapis.com/css?family=Philosopher&display=swap"
       rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <title></title>
   </head>
 
@@ -172,8 +173,6 @@
                 </svg>
               </div>
             </div>
-            <!--<input type="radio" class="roleRadios" id="ainame" name="ai_role_name" value="rolename in list"
-            data-uncensored="censoredmarker" data-story_name="storynamemarker" data-intro_text="introtextmarker" />-->
           </div>
         </div>
       </div>
@@ -332,6 +331,7 @@
         <div id="login_form">
           <div class="top_bar">
             <label class="title">${currentLanguage.Login}</label>
+            
             <div id="btn_login_form_close" class="btn_close">
               <svg width="24px" height="24px" viewBox="0 0 24 24" fill="#340768"
                 xmlns="http://www.w3.org/2000/svg"
@@ -343,6 +343,26 @@
             </div>
           </div>
           <div class="main_body">
+            <div id="g_id_onload"
+              data-client_id="1025328301199-83jvrdjuht35cp1a82pqti20nj8lpbv5.apps.googleusercontent.com"
+              data-callback="handleCredentialResponse"
+              data-auto_prompt="false"
+              data-context="signin"
+              data-ux_mode="popup"
+              data-use_fedcm_for_prompt="true"
+              >
+            </div>
+            <div class="g_id_signin"
+              data-type="standard"
+              data-size="large"
+              data-theme="outline"
+              data-text="sign_in_with"
+              data-shape="circle"
+              data-logo_alignment="left"
+              style="margin-right:auto;font-weight:500;"
+              >
+            </div>
+            <div class="form_hint_after_login">${currentLanguage.Hint_After_Login}</div>
             <div id="login_author" class="form_hint">
               Authorization feedback
             </div>
@@ -372,6 +392,7 @@
             <button type="button" class="submit_btn" id="btn_login_submit">
               ${currentLanguage.Login}
             </button>
+            
           </div>
         </div>
         <div id="edit_profile_form">
@@ -806,35 +827,7 @@
           </div>
         </div>
       </div>
-      <div id="roleholder_template" style="display: none"><!--
-      <div class="roleholder">
-        <div class="avatarbk">
-          <div class="info_NSFW">
-            <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path class="NSFW_icon"
-                d="M4.8 1.40006C4.54174 1.05572 4.09211 0.915267 3.68377 1.05138C3.27543 1.1875 3 1.56963 3 2.00006V10.0001C3 10.5523 3.44772 11.0001 4 11.0001C4.55228 11.0001 5 10.5523 5 10.0001V5.00006L9.2 10.6001C9.45826 10.9444 9.90789 11.0849 10.3162 10.9487C10.7246 10.8126 11 10.4305 11 10.0001V2.00006C11 1.44778 10.5523 1.00006 10 1.00006C9.44772 1.00006 9 1.44778 9 2.00006V7.00006L4.8 1.40006Z" />
-              <path class="NSFW_icon"
-                d="M15 1.00006C13.8954 1.00006 13 1.89549 13 3.00006V5.00006C13 6.10463 13.8954 7.00006 15 7.00006H19V9.00006H14C13.4477 9.00006 13 9.44778 13 10.0001C13 10.5523 13.4477 11.0001 14 11.0001H19C20.1046 11.0001 21 10.1046 21 9.00006V7.00006C21 5.89549 20.1046 5.00006 19 5.00006H15V3.00006H20C20.5523 3.00006 21 2.55235 21 2.00006C21 1.44778 20.5523 1.00006 20 1.00006H15Z" />
-              <path class="NSFW_icon"
-                d="M3 14.0001C3 13.4478 3.44772 13.0001 4 13.0001H10C10.5523 13.0001 11 13.4478 11 14.0001C11 14.5524 10.5523 15.0001 10 15.0001H5V17.0001H10C10.5523 17.0001 11 17.4478 11 18.0001C11 18.5523 10.5523 19.0001 10 19.0001H5V22.0001C5 22.5523 4.55228 23.0001 4 23.0001C3.44772 23.0001 3 22.5523 3 22.0001V14.0001Z" />
-              <path class="NSFW_icon"
-                d="M15 14.0001C15 13.4478 14.5523 13.0001 14 13.0001C13.4477 13.0001 13 13.4478 13 14.0001V22.0001C13 22.4495 13.2999 22.8438 13.7331 22.9638C14.1662 23.0838 14.6262 22.9 14.8575 22.5146L17 18.9437L19.1425 22.5146C19.3738 22.9 19.8338 23.0838 20.2669 22.9638C20.7001 22.8438 21 22.4495 21 22.0001V14.0001C21 13.4478 20.5523 13.0001 20 13.0001C19.4477 13.0001 19 13.4478 19 14.0001V18.3897L17.8575 16.4856C17.6768 16.1844 17.3513 16.0001 17 16.0001C16.6487 16.0001 16.3232 16.1844 16.1425 16.4856L15 18.3897V14.0001Z" />
-            </svg>
-          </div>
-        </div>
-        <div class="role_info_bar">
-          <div class="ainame_span">ainame</div>
-          <div class="info_button"><svg width="25px" height="25px" viewBox="0 0 20 20" fill="#ffffff"
-              xmlns="http://www.w3.org/2000/svg">
-              <path class="svg_info" ill-rule="evenodd" clip-rule="evenodd"
-                d="M10 18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10C18 14.4183 14.4183 18 10 18ZM10 8.92857C9.44772 8.92857 9 9.37629 9 9.92857V13.9286C9 14.4809 9.44772 14.9286 10 14.9286C10.5523 14.9286 11 14.4809 11 13.9286V9.92857C11 9.37629 10.5523 8.92857 10 8.92857ZM10 7.5C10.5523 7.5 11 7.05228 11 6.5C11 5.94772 10.5523 5.5 10 5.5C9.44772 5.5 9 5.94772 9 6.5C9 7.05228 9.44772 7.5 10 7.5Z" />
-            </svg>
-          </div>
-        </div>
-        <input type="radio" class="roleRadios" id="ainame" name="ai_role_name" value="rolename in list"
-          data-uncensored="censoredmarker" data-story_name="storynamemarker" data-intro_text="introtextmarker" />
-      </div>-->
-      </div>
+    
       <div id="bg_music_player" style="display: none;">
         <audio id="bg_music" src="/play_music/Relaxing_Moment" loop></audio>
       </div>
@@ -970,7 +963,17 @@
         const startChating = () => {
           window.start_chat()
         }
+        const google_login = async (response) => {
+          // console.log(response.credential)
+          toggleInputs(false);
+          let querydata = {
+            google_token: response.credential,
+          };
+          ws.send(wsData("client_google_login", querydata));
+        }
+        
         onMounted(() => {
+          
           Vue.nextTick(() => {
             gsap.from(".roleholder", {
               duration: 0.2,
@@ -992,11 +995,15 @@
           showRoleInfo,
           startChating,
           updateStoryIntro,
-          update_story_intro_translated
+          update_story_intro_translated,
+          google_login
         }
       }
     })
     const vm = app.mount('#app')
+    function handleCredentialResponse(response) {
+      vm.google_login(response);
+    }
   </script>
     <script type="text/javascript" charset="utf-8">
     //load roles

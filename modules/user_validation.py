@@ -18,10 +18,10 @@ class DataValidation(BaseModel):
             return v
         if len(v) < 3:
             raise ValueError('Minimum 3 characters required')
-        if len(v) > 20:
-            raise ValueError('Maximum 20 characters')
-        if not re.match(r"^[a-zA-Z0-9_]+$", v):
-            raise ValueError('Can only consist of alphanumeric characters and underscores')
+        if len(v) > 40:
+            raise ValueError('Maximum 40 characters')
+        if not re.match(r"^[a-zA-Z0-9_@.]+$", v):
+            raise ValueError('Can only consist of alphanumeric characters, underscores, @ and .')
         return v
     
     @field_validator('password')

@@ -641,7 +641,13 @@ textarea::-webkit-resizer {
   color: #c7660b;
   align-self: flex-start;
 }
-
+.form_hint_after_login{
+  font-size: 10px;
+  font-weight: 600;
+  font-style: italic;
+  color: #b8b8b8;
+  align-self: flex-start;
+}
 #createchar_profile .textarea_hint,
 #createchar_charlooks .textarea_hint {
   font-size: 10px;

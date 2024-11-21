@@ -660,7 +660,7 @@ class CoreGenerator:
                 search_result = await self.cyberchat_memory.search_memory(
                     dialog=dialog,
                     vector_name="memory_vector",
-                    limit=10,
+                    limit=3,
                     char_uid=self.state["char_uid"],
                     user_uid=self.state["user_uid"],
                     owner=self.state["char_name"],

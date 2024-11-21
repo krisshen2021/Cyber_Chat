@@ -1,4 +1,4 @@
-import uuid, math, json, asyncio
+import uuid, math, json, asyncio,logging
 from datetime import datetime
 from fastembed import TextEmbedding
 from openai import AsyncOpenAI
@@ -206,7 +206,7 @@ output format example:
         collection_name: str = None,
         filter_method: str = "must",
         vector_name: str = None,
-        limit: int = 10,
+        limit: int = 5,
         with_payload: Union[bool, list[str]] = [
             "memory_content.description",
             "memory_date",
@@ -240,6 +240,7 @@ output the query result only, no other words or explanation.
             message = await self.send_message(messages=messages, json_output=False)
             await asyncio.sleep(0.5)
             query = message.content
+            logging.info(f"The query is: {query}")
         else:
             query = dialog_str
         # print(f"The query is: {query}")
@@ -308,9 +309,9 @@ output the query result only, no other words or explanation.
                     description = point.payload.get("memory_content", {}).get(
                         "description", "unknown"
                     )
-                results.append(
-                    f'Reference-[{index+1}] in {owner}\'s memory: "{description}" - created date: {memory_date} - point score: {point.score}'
-                )
+                    results.append(
+                        f'Reference-[{index+1}] in {owner}\'s memory: "{description}" - created date: {memory_date} - point score: {point.score}'
+                    )
                 return "\n".join(results)
 
     async def delete_memory(
@@ -476,12 +477,12 @@ output your judgement in json object format:
         messages = [
             {
                 "role": "system",
-                "content": f"""You are an AI expert with advanced memory management capabilities. Your task is to analyze conversation(no matter the conversation is part of role-play or real life), determining is there any information worth remembering and add them to memory.
+                "content": f"""You are an AI expert with advanced memory management capabilities. Your task is to analyze conversation, the conversation can be both part of role-play or real life, determining is there any information worth remembering and add them to memory system.
 In the given conversation, there are two persons: {owner} and {user_name}.
 Criteria for worth-remembering information:
 1. Important events or stories that {owner} or {user_name} have, or have experienced, such as birthdays, holidays, or significant life changes, etc.
 2. Significant facts about {owner} or {user_name}, such as major achievements, awards, or recognitions, etc.
-3. Personal details (favorites, interests, habits, hobbies, hates, fears, marriage status, love status, etc.).
+3. Involved role-play or real life details such as name, favorites, interests, habits, hobbies, hates, fears, marriage status, love status, etc.
 4. Relationship information related to {owner} or {user_name}.
 5. Sexual information about {owner} or {user_name}, such as favorite sex position, favorite sexual activity, sexual preferences, sexual fantasies, sexual skills, etc.
 

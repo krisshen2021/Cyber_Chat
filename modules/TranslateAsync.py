@@ -12,7 +12,7 @@ def create_syspath():
 create_syspath()
 
 import re, json
-from modules.global_sets_async import getGlobalConfig, logger, languageClient
+from modules.global_sets_async import getGlobalConfig, logger, languageClient, model_for_translate
 from fastapimode.tabby_fastapi_websocket import tabby_fastapi as tabby
 
 
@@ -80,7 +80,7 @@ async def translate_ai_driven(translater_prompt, target, prompt_template):
         # result = await tabby.pure_inference(payloads=payloads)
         # logger.info(f"Translate result: {result}")
         result = await languageClient.chat.completions.create(
-            model="gemma2-9b-it",
+            model=model_for_translate,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}

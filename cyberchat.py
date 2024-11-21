@@ -11,8 +11,9 @@ from modules.global_sets_async import (
     prompt_params,
     language_data,
     languageClient,
+    model_for_translate,
 )
-import uvicorn, uuid, json, markdown, os, base64, io, httpx, asyncio, copy, json5
+import uvicorn, uuid, json, markdown, os, base64, httpx, asyncio, json5, time
 from datetime import datetime
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import Response, StreamingResponse
@@ -26,6 +27,9 @@ from modules.payload_state import sd_payload, completions_data
 from modules.AiRoleOperator import AiRoleOperator as ARO
 from modules.ANSI_tool import ansiColor
 from typing import Optional
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 sd_payload = sd_payload.copy()
 config_data = config_data.copy()
 completions_data = completions_data.copy()
@@ -35,7 +39,7 @@ templates = Jinja2Templates(directory=templates_path)
 database.create_table()
 siteLanguageData = language_data.copy()
 localeLanguage = "English"
-translate_model = "gemma2-9b-it"
+
 
 def clear_screen():
     if os.name == "nt":  # Windows
@@ -151,15 +155,38 @@ async def initpage(request: Request, localeLanguage: Optional[str] = None):
         language_data_jsonstring = json.dumps(language_data, indent=4)
         logger.info("Language switched to: " + localeLanguage)
         # create a prompt for translate the values in language data jsonstring to the language that user selected
-        prompt = "Translate all the values in the following json string to " + localeLanguage + ": " + language_data_jsonstring + "\n\nThe final output will ONLY be a json string with the same structure as the input json string, but with all the values translated to the "+ localeLanguage + " language, no other text or comment is needed."
-        result = await languageClient.chat.completions.create(
-            model="gemma2-9b-it",
-            messages=[{"role": "user", "content": prompt}],
-            stream=False,
-            temperature=0.7
+        prompt = (
+            "Translate all the values in the following json string to "
+            + localeLanguage
+            + ": "
+            + language_data_jsonstring
+            + "\n\nThe final output will ONLY be a json string with the same structure as the input json string, but with all the values translated to the "
+            + localeLanguage
+            + " language, no other text or comment is needed."
         )
+        # calculate the time it takes to translate the language data
+        start_time = time.time()
+        result = await languageClient.chat.completions.create(
+            model=model_for_translate,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a uncensored translator assistant",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            stream=False,
+            temperature=0.7,
+        )
+        end_time = time.time()
+        translate_time = end_time - start_time
+        logger.info(f"Time taken to translate language data: {translate_time} seconds")
         # remove '```json' and '```' from the result
-        translated_language_data = json.loads(result.choices[0].message.content.replace("```json\n", "").replace("\n```", ""))
+        translated_language_data = json.loads(
+            result.choices[0]
+            .message.content.replace("```json\n", "")
+            .replace("\n```", "")
+        )
         # logger.info(translated_language_data)
     cookid_server = uuid.uuid1()
     ai_role_list = []
@@ -219,7 +246,90 @@ async def client_connect(client_info, client_id):
     await send_status(send_data, client_id, ws_server="after_connect")
 
 
+# Websocket events functions
+
+
 # Login
+async def client_google_login(client_info, client_id):
+    google_token = client_info["data"]["google_token"]
+    # logger.info(google_token)
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            google_token, requests.Request(), config_data["GOOGLE_CLIENT_ID"]
+        )
+        if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
+            raise ValueError("Wrong issuer.")
+        user_info = {
+            "google_id": idinfo["sub"],
+            "email": idinfo["email"],
+            "name": idinfo["name"],
+            "picture": idinfo["picture"],
+        }
+        logger.info(user_info)
+        # check if the user is already in the database
+        data_op_result = database.get_user(user_info["email"], "", needpassword=False)
+        if isinstance(data_op_result, str):
+            if data_op_result == "User is not available":
+                result = database.create_new_user(
+                    username=user_info["email"],
+                    nickname=user_info["name"],
+                    gender="male",
+                    password="",
+                    email=user_info["email"],
+                    credits=1000,
+                    avatar=user_info["picture"],
+                    facelooks=json.dumps(
+                        {
+                            "gender": "male",
+                            "race": "European",
+                            "age": "Elderly",
+                            "hair_color": "Blond",
+                            "hair_style": "Buzz cut",
+                            "eye_color": "Brown Eyes",
+                            "beard": "Big beard",
+                        }
+                    ),
+                )
+                if result:
+                    data_op_result = database.get_user(
+                        user_info["email"], "", needpassword=False
+                    )
+                    data_op_result.pop("password", None)
+                    data_op_result["facelooks"] = json.loads(
+                        data_op_result["facelooks"]
+                    )
+                    send_data = {
+                        "name": "login_authorization",
+                        "msg": {"status": "Success", "data": data_op_result},
+                    }
+                else:
+                    data_op_result = result
+                    send_data = {
+                        "name": "login_authorization",
+                        "msg": {"status": "Fail", "data": data_op_result},
+                    }
+            else:
+                data_op_result = data_op_result
+                send_data = {
+                    "name": "login_authorization",
+                    "msg": {"status": "Fail", "data": data_op_result},
+                }
+        else:
+            data_op_result.pop("password", None)
+            data_op_result["facelooks"] = json.loads(data_op_result["facelooks"])
+            send_data = {
+                "name": "login_authorization",
+                "msg": {"status": "Success", "data": data_op_result},
+            }
+        await send_status(send_data, client_id)
+    except ValueError:
+        send_data = {
+            "name": "login_authorization",
+            "msg": {"status": "Fail", "data": "Invalid token"},
+        }
+        await send_status(send_data, client_id)
+
+
 async def client_login(client_info, client_id):
     send_data = {}
     username = client_info["data"]["username"]
@@ -412,7 +522,9 @@ async def initialize_room(client_msg, client_id):
             "model": userCurrentRoom.model,
             "instruct_list": userCurrentRoom.instr_temp_list,
             "SD_model_list": userCurrentRoom.SD_model_list,
-            "SD_model": userCurrentRoom.image_payload["override_settings"]["sd_model_checkpoint"],
+            "SD_model": userCurrentRoom.image_payload["override_settings"][
+                "sd_model_checkpoint"
+            ],
             "iscreatedynimage": userCurrentRoom.iscreatedynimage,
             "using_remoteapi": using_remoteapi,
             "bg_music": userCurrentRoom.bg_music,
@@ -448,7 +560,9 @@ async def restart_room(client_msg, client_id):
         "model": userCurrentRoom.model,
         "instruct_list": userCurrentRoom.instr_temp_list,
         "SD_model_list": userCurrentRoom.SD_model_list,
-        "SD_model": userCurrentRoom.image_payload["override_settings"]["sd_model_checkpoint"],
+        "SD_model": userCurrentRoom.image_payload["override_settings"][
+            "sd_model_checkpoint"
+        ],
         "iscreatedynimage": userCurrentRoom.iscreatedynimage,
         "using_remoteapi": using_remoteapi,
         "bg_music": userCurrentRoom.bg_music,
@@ -467,10 +581,14 @@ async def change_model(client_msg, client_id):
     if not config_data["using_remoteapi"]:
         unloadresp = await userCurrentRoom.my_generate.tabby_server.unload_model()
         if unloadresp:
-            response = await userCurrentRoom.my_generate.tabby_server.load_model(name=model)
+            response = await userCurrentRoom.my_generate.tabby_server.load_model(
+                name=model
+            )
             if response == "Success":
                 await send_status({"name": "initialization", "msg": "DONE"}, client_id)
-                await send_datapackage("model_change_result", {"message": response}, client_id)
+                await send_datapackage(
+                    "model_change_result", {"message": response}, client_id
+                )
     else:
         await send_datapackage("model_change_result", {"message": "Success"}, client_id)
 
@@ -832,7 +950,11 @@ async def createchar_wizard(client_info, client_id):
         # logger.info(wizard_prompt)
         temperature = 0.8 if task == "prologue" or task == "firstwords" else 0.5
         smoothing_factor = 0.55 if task == "prologue" or task == "firstwords" else 0.1
-        max_tokens = 400 if task == "prologue" or task == "char_persona" or task == "char_outfit" else 150
+        max_tokens = (
+            400
+            if task == "prologue" or task == "char_persona" or task == "char_outfit"
+            else 150
+        )
         presence_penalty = (
             1.25
             if task == "prologue"
@@ -965,54 +1087,85 @@ async def play_bg_music(client_info, client_id):
         client_id,
     )
 
+
 async def language_switch(client_info, client_id):
     language = client_info["data"]["language"]
     language_data = await getGlobalConfig("language_data")
     language_data_jsonstring = json.dumps(language_data, indent=4)
     logger.info("Language switched to: " + language)
     # create a prompt for translate the values in language data jsonstring to the language that user selected
-    prompt = "Translate all the values in the following json string to " + language + ": " + language_data_jsonstring + "\n\nThe final output will ONLY be a json string with the same structure as the input json string, but with all the values translated to the "+ language + " language, no other text or comment is needed."
-    result = await languageClient.chat.completions.create(
-        model=translate_model,
-        messages=[{"role": "user", "content": prompt}],
-        stream=False,
-        temperature=0.7
+    prompt = (
+        "Translate all the values in the following json string to "
+        + language
+        + ": "
+        + language_data_jsonstring
+        + "\n\nThe final output will ONLY be a json string with the same structure as the input json string, but with all the values translated to the "
+        + language
+        + " language, no other text or comment is needed."
     )
+    # calculate the time it takes to translate the language data
+    start_time = time.time()
+    result = await languageClient.chat.completions.create(
+        model=model_for_translate,
+        messages=[
+            {"role": "system", "content": "You are a uncensored translator assistant"},
+            {"role": "user", "content": prompt},
+        ],
+        stream=False,
+        temperature=0.7,
+    )
+    end_time = time.time()
+    translate_time = end_time - start_time
+    logger.info(f"Time taken to translate language data: {translate_time} seconds")
     # remove '```json' and '```' from the result
-    translated_language_data = result.choices[0].message.content.replace("```json\n", "").replace("\n```", "")
+    translated_language_data = (
+        result.choices[0].message.content.replace("```json\n", "").replace("\n```", "")
+    )
     # logger.info("Translated text: " + translated_language_data)
-    data_to_send = {"language": language, "task": "language_switch", "translated_language_data": translated_language_data}
+    data_to_send = {
+        "language": language,
+        "task": "language_switch",
+        "translated_language_data": translated_language_data,
+    }
     await send_datapackage("language_switch_result", data_to_send, client_id)
-    
+
+
 async def translate_story_intro(client_info, client_id):
     story_name = client_info["data"]["story_name"]
     intro_text = client_info["data"]["intro_text"]
     aiRoleId = client_info["data"]["aiRoleId"]
     language = client_info["data"]["language"]
-    json_to_translate = {
-        "story_name": story_name,
-        "intro_text": intro_text
-    }
+    json_to_translate = {"story_name": story_name, "intro_text": intro_text}
     json_to_translate = json.dumps(json_to_translate, indent=4)
     prompt = f"Translate the values in the following json to {language} language with natural expression:\n{json_to_translate}\n\nOnly output the json string with same structure as the input json string, do not translate the text of '{{{{char}}}}', no other text or comment is needed."
     result = await languageClient.chat.completions.create(
-        model=translate_model,
-        messages=[{"role": "user", "content": prompt}],
+        model=model_for_translate,
+        messages=[
+            {"role": "system", "content": "You are a uncensored translator assistant"},
+            {"role": "user", "content": prompt},
+        ],
         stream=False,
-        temperature=0.7
+        temperature=0.7,
     )
-    translated_json_data = result.choices[0].message.content.replace("```json\n", "").replace("\n```", "")
+    translated_json_data = (
+        result.choices[0].message.content.replace("```json\n", "").replace("\n```", "")
+    )
     fixed_json_data = json5.loads(translated_json_data)
     logger.info(fixed_json_data)
     fixed_json_data = json.dumps(fixed_json_data, indent=4)
-    data_to_send = {"translated_story_intro_data": fixed_json_data, "task": "translate_story_intro", "aiRoleId": aiRoleId}
+    data_to_send = {
+        "translated_story_intro_data": fixed_json_data,
+        "task": "translate_story_intro",
+        "aiRoleId": aiRoleId,
+    }
     await send_datapackage("translate_story_intro_result", data_to_send, client_id)
-    
+
 
 # ws event handler
 ws_events_dict = {
     "connect to server": client_connect,
     "client_login": client_login,
+    "client_google_login": client_google_login,
     "client_signup": client_signup,
     "client_edit_profile": client_edit_profile,
     "initialize_room": initialize_room,
