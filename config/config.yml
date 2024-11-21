@@ -34,5 +34,3 @@ server_port: 5500
 xtts_api_base: http://127.0.0.1:8020/tts_to_audio/
 
 ### optinal settings
-GOOGLE_CLIENT_ID: 1025328301199-83jvrdjuht35cp1a82pqti20nj8lpbv5.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET: 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

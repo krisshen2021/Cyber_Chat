@@ -29,7 +29,6 @@ language_path = os.path.join(dir_path, "config", "language", "lang.json")
 api_key_for_translate = None
 base_url_for_translate = None
 model_for_translate = None
-api_key_for_qdrant = os.getenv("openrouter_api_key", default="None")
 languageClient = None
 conn_ws_mgr = ConnectionManager()
 database = SQLiteDB(database_path)
@@ -51,7 +50,7 @@ async def init_memory():
         qdrant_url=config_data["qdrant_server_url"],
         embedding_model=config_data["qdrant_embedding_model"],
         collection_name=config_data["qdrant_collection_name"],
-        oai_api_key=api_key_for_qdrant,
+        oai_api_key=os.getenv(config_data["qdrant_oai_api_key"], default="None"),
         oai_base_url=config_data["qdrant_oai_base_url"],
         oai_model=config_data["qdrant_oai_model"],
     )
@@ -66,6 +65,14 @@ async def load_config():
         contents = await f.read()
     global config_data
     config_data = yaml.safe_load(contents)
+    
+async def load_Google_authorinfo():
+    config_data["GOOGLE_CLIENT_ID"] = os.getenv(
+        "GOOGLE_CLIENT_ID", default="None"
+    )
+    config_data["GOOGLE_CLIENT_SECRET"] = os.getenv(
+        "GOOGLE_CLIENT_SECRET", default="None"
+    )
 
 
 async def load_prompts_template():
@@ -170,6 +177,7 @@ async def multitask():
     func_suggestions = asyncio.create_task(load_suggestions())
     func_language = asyncio.create_task(load_language())
     func_language_client = asyncio.create_task(load_language_client())
+    func_Google_authorinfo = asyncio.create_task(load_Google_authorinfo())
     # bulbstatus = asyncio.create_task(conn_bulb(config_data["yeelight_url"]))
     await asyncio.gather(
         roles,
@@ -178,6 +186,7 @@ async def multitask():
         func_suggestions,
         func_language,
         func_language_client,
+        func_Google_authorinfo,
     )
 
 
