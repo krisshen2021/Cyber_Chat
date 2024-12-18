@@ -499,6 +499,7 @@ async def openairouter_stream(params: OAIParam):
     logger.info(openairouter_client.base_url)
     logger.info(data.get("model"))
     async for chunk in await openairouter_client.chat.completions.create(**data):
+        logger.info(chunk.choices[0])
         if not chunk.choices[0].finish_reason:
             if chunk.choices[0].delta.content:
                 msg = json.dumps(
@@ -512,7 +513,10 @@ async def openairouter_stream(params: OAIParam):
                 await asyncio.sleep(0.01)
             else:
                 continue
-        elif chunk.choices[0].finish_reason:
+        if chunk.choices[0].finish_reason or hasattr(chunk.choices[0], 'finishReason'):
+            if not hasattr(chunk.choices[0], 'finishReason'):
+                if chunk.choices[0].delta.content:
+                    final_text += chunk.choices[0].delta.content
             msg = json.dumps(
                 {
                     "event": "stream-end",

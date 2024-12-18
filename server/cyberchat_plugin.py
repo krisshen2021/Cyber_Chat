@@ -878,7 +878,7 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
             "messages",
             "base64_uri",
             "temperature",
-            "max_tokens",
+            # "max_tokens",
             "top_p",
             "stop",
             "model",
