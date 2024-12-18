@@ -117,20 +117,33 @@ def select_model():
                             router_details = picked_routers[selected_router]
                             api_key = router_details["api_key"]
                             base_url = router_details["url"]
+                            
                         # openairouter_sync_client.base_url = base_url
                         # openairouter_sync_client.api_key = api_key
                         openairouter_client.base_url = base_url
                         openairouter_client.api_key = api_key
                         # openairouter_modellist = openairouter_sync_client.models.list(timeout=timeout)
-                        headers = {
+                        
+                       
+                        if base_url == "https://generativelanguage.googleapis.com/v1beta/openai":
+                            url = "https://generativelanguage.googleapis.com/v1beta/models?key="+api_key
+                            headers = {}
+                        else:
+                            url = base_url+"/models"
+                            headers = {
                             "accept": "application/json",
-                            "Authorization": f"Bearer {api_key}",
-                        }
-                        url = base_url+"/models"
+                            "Authorization": f"Bearer {api_key}"
+                            }
                         print(url)
                         response = requests.get(url=url,headers=headers,timeout=300)
                         response.raise_for_status()
                         openairouter_modellist = response.json()
+                        # print(openairouter_modellist)
+                        if "models" in openairouter_modellist:
+                            openairouter_modellist["data"] = openairouter_modellist.pop("models")
+                            for item in openairouter_modellist["data"]:
+                                item["name"]=item["name"].replace("models/","")
+                                item["id"] = item.pop("name")
                         OAI_model_list = openairouter_modellist
                         if "data" in openairouter_modellist:
                             openairouter_modellist = openairouter_modellist["data"]

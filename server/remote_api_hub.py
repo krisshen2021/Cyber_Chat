@@ -10,6 +10,7 @@ load_dotenv()
 
 # api keys for different remote api
 cohere_api_key = os.getenv("cohere_api_key", default="None")
+google_api_key = os.getenv("google_api_key", default="None")
 mistral_api_key = os.getenv("mistral_api_key", default="None")
 deepseek_api_key = os.getenv("deepseek_api_key", default="None")
 togetherai_api_key = os.getenv("togetherai_api_key", default="None")
@@ -30,6 +31,7 @@ aws_bedrock_config = {
 
 # create config json for all remote api
 remote_OAI_config = {
+    "google" : {"api_key": google_api_key, "url":"https://generativelanguage.googleapis.com/v1beta/openai"},
     "mistral": {"api_key": mistral_api_key, "url": "https://api.mistral.ai/v1"},
     "deepseek": {"api_key": deepseek_api_key, "url": "https://api.deepseek.com/v1"},
     "yi": {"api_key": yi_api_key, "url": "https://api.01.ai/v1"},
@@ -497,7 +499,7 @@ async def openairouter_stream(params: OAIParam):
     logger.info(openairouter_client.base_url)
     logger.info(data.get("model"))
     async for chunk in await openairouter_client.chat.completions.create(**data):
-        if chunk.choices[0].finish_reason is None:
+        if not chunk.choices[0].finish_reason:
             if chunk.choices[0].delta.content:
                 msg = json.dumps(
                     {
@@ -510,7 +512,7 @@ async def openairouter_stream(params: OAIParam):
                 await asyncio.sleep(0.01)
             else:
                 continue
-        elif chunk.choices[0].finish_reason is not None:
+        elif chunk.choices[0].finish_reason:
             msg = json.dumps(
                 {
                     "event": "stream-end",

@@ -9,7 +9,6 @@ from modules.global_sets_async import init_memory
 from modules.AiRoleOperator import AiRoleOperator as ARO
 
 dir_path = project_root
-# dir_path = os.path.dirname(os.path.realpath(__file__))
 yaml_dir_path = os.path.join(dir_path, "config", "personas")
 
 
