@@ -31,7 +31,7 @@ endpoint_list = [
             "Authorization": f"Bearer {groq_api_key}"
         },
         "data":{
-            "model": "whisper-large-v3"
+            "model": "whisper-large-v3-turbo"
         }
     }
 ]

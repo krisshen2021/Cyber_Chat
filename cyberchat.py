@@ -754,8 +754,9 @@ async def xtts_audio_generate(client_msg, client_id):
                 "POST", url, json={"text": text, "speaker": speaker_wav}
             ) as response:
                 logger.info("Transfer audio to clients")
-                async for chunk in response.aiter_bytes():
+                async for chunk in response.aiter_bytes(chunk_size=16384):
                     if chunk:
+                        logger.info(f"Streaming chunk: {len(chunk)} bytes")
                         audio_data_base64 = base64.b64encode(chunk).decode("utf-8")
                         data_to_send = {
                             "audio_data": audio_data_base64,
@@ -764,15 +765,15 @@ async def xtts_audio_generate(client_msg, client_id):
                             "status": "transfer",
                         }
                         await send_datapackage("xtts_result", data_to_send, client_id)
-                        await asyncio.sleep(0.01)
+                        # await asyncio.sleep(0.01)
                     else:
                         logger.info("Failed to get audio data")
-        logger.info("Transfer ends")
-        await send_datapackage(
-            "xtts_result",
-            {"voice_uid": voice_uid, "mode": "stream", "status": "end"},
-            client_id,
-        )
+                logger.info("Transfer ends")
+                await send_datapackage(
+                    "xtts_result",
+                    {"audio_data": None, "voice_uid": voice_uid, "mode": "stream", "status": "end"},
+                    client_id,
+                )
     else:
         endpoint = "/xtts"
         url = config_data["openai_api_chat_base"] + endpoint

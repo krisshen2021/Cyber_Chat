@@ -467,15 +467,24 @@ async def remotetts_to_audio_stream(payload: RestAPI_TTSPayload):
                 async with client.stream(
                     "POST", server_url, json=payload_tts, headers=headers
                 ) as response:
-                    logger.info("Start to streaming audio")
-                    async for chunk in response.aiter_bytes():
-                        if chunk:
+                    if response.status_code != 200:
+                        raise HTTPException(
+                            status_code=response.status_code,
+                            detail="Failed to fetch audio stream",
+                        )
+                    logger.info("Start streaming audio")
+                    async for chunk in response.aiter_bytes(chunk_size=16384):
+                        if chunk:  # 只在有数据时才yield
+                            logger.info(f"Streaming chunk: {len(chunk)} bytes")
                             yield chunk
-                            await asyncio.sleep(0.01)
-            logger.info("Streaming ends")
+                    logger.info("Streaming ends")
 
-        return StreamingResponse(stream_audio(), media_type="audio/mpeg")
+        return StreamingResponse(
+            stream_audio(), media_type="audio/mpeg", headers={"Accept-Ranges": "bytes"}
+        )
 
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -894,12 +903,21 @@ async def remote_ai_stream(ai_type: str, params_json: dict):
                 if len(openairouter_dict["stop"]) > 4:
                     openairouter_dict["stop"] = openairouter_dict["stop"][-4:]
                     # logger.info(f"openairouter stop: {openairouter_dict['stop']}")
-        if "base64_uri" in openairouter_dict and openairouter_dict["base64_uri"] is not None:
+        if (
+            "base64_uri" in openairouter_dict
+            and openairouter_dict["base64_uri"] is not None
+        ):
             openairouter_dict["messages"] = [
-                ChatMessage(role="user", content=[
-                    {"type": "text", "text": openairouter_dict["messages"]},
-                    {"type": "image_url", "image_url": {"url": openairouter_dict["base64_uri"]}}
-                ])
+                ChatMessage(
+                    role="user",
+                    content=[
+                        {"type": "text", "text": openairouter_dict["messages"]},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": openairouter_dict["base64_uri"]},
+                        },
+                    ],
+                )
             ]
         else:
             openairouter_dict["messages"] = [

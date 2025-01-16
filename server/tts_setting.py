@@ -66,8 +66,8 @@ endpoint_list = [
             "voice_engine": "PlayHT2.0-turbo",
             "quality": "medium",
             "sample_rate": 16000,
-            "speed": 1,
-            "temperature": 0.65,
+            "speed": 1.0,
+            "temperature": 0.75,
         },
     },
 ]

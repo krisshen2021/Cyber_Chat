@@ -280,7 +280,7 @@
     })
     const vm = app.mount('#chatroom')
 
-//set up UI components
+    //set up UI components
     import { msTTS } from '/static/js/tts.js';
     const msttser = new msTTS();
     import { CommandInputHandler } from '/static/js/input_control.js';
@@ -493,7 +493,7 @@
       mangle: false,
       headerIds: false,
     });
-//set up global variables
+    //set up global variables
     var ws = Object;
     const clientID = '{{clientID}}';
     const timestamp = '{{ timestamp }}';
@@ -506,7 +506,7 @@
     var credits = '{{credits}}';
     var ai_role_name = '{{ai_role_name}}';
     var ainame = '{{ainame}}';
-    var Prologue = ''; 
+    var Prologue = '';
     var ai_is_uncensored = '{{is_uncensored}}';
     var ai_is_live_char = JSON.parse('{{ is_live_char | tojson }}');
     var ai_is_memory_mode = JSON.parse('{{ is_memory_mode | tojson }}');
@@ -737,12 +737,12 @@
 
     function base64ToBlob(base64, mimeType) {
       const byteCharacters = atob(base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      const len = byteCharacters.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = byteCharacters.charCodeAt(i);
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      return new Blob([byteArray], { type: mimeType });
+      return new Blob([bytes], { type: mimeType });
     }
 
 
@@ -803,22 +803,61 @@
       let voicePlayerid = msg.data['voice_uid'];
       let audiomode = msg.data['mode'];
       let audiostatus = msg.data['status'];
-      if (audiomode == 'normal') {
+  // 检测是否为Firefox或移动设备
+      const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const shouldUseBuffering = isFirefox || isMobile;  // 合并条件
+      if (!window.audioDataBuffer) {
+        window.audioDataBuffer = [];
+      }
+      if (audiomode == 'stream' && shouldUseBuffering) {
         if (audioData) {
-          const audioBlob = base64ToBlob(audioData, 'audio/wav');
-          const audioUrl = URL.createObjectURL(audioBlob);
-          $('#' + voicePlayerid).attr('src', audioUrl);
-          $('#' + voicePlayerid).attr('preload', 'auto');
-          $('#controller' + voicePlayerid).fadeIn(200);
-          $('#controller' + voicePlayerid).css('display', 'flex');
-          $('#controller' + voicePlayerid).trigger('click');
-          $('#voiceController_comic').css('display', 'flex');
-          updateScroll();
-        } else {
-          console.error('Audio data is not available.');
+          // 将新的chunk添加到缓存
+          try {
+            // 将base64转换为ArrayBuffer并存储
+            const chunk = new Uint8Array(base64ToArrayBuffer(audioData));
+            window.audioDataBuffer.push(chunk);
+          } catch (e) {
+            console.error('Error processing chunk:', e);
+          }
         }
 
-      } else if (audiomode == 'stream') {
+        // 当收到结束信号时处理完整音频
+        if (audiostatus === 'end' && window.audioDataBuffer.length > 0) {
+          try {
+            // 计算总长度
+            const totalLength = window.audioDataBuffer.reduce((acc, chunk) => acc + chunk.length, 0);
+            // 创建一个新的 Uint8Array 来存储所有数据
+            const completeAudioData = new Uint8Array(totalLength);
+            
+            // 复制所有chunk数据
+            let offset = 0;
+            window.audioDataBuffer.forEach(chunk => {
+              completeAudioData.set(chunk, offset);
+              offset += chunk.length;
+            });
+            
+            // 创建Blob
+            const audioBlob = new Blob([completeAudioData], { type: 'audio/mp3' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            // 设置音频元素
+            $('#' + voicePlayerid).attr('src', audioUrl);
+            $('#' + voicePlayerid).attr('preload', 'auto');
+            $('#controller' + voicePlayerid).fadeIn(200);
+            $('#controller' + voicePlayerid).css('display', 'flex');
+            $('#controller' + voicePlayerid).trigger('click');
+            $('#voiceController_comic').css('display', 'flex');
+            updateScroll();
+    
+          } catch (error) {
+            console.error('Error creating final audio blob:', error);
+          } finally {
+            // 清空缓存
+            window.audioDataBuffer = [];
+          }
+        }
+      } else if (audiomode == 'stream' && !shouldUseBuffering) {
         if (!mediaSourceList[voicePlayerid]) {
           mediaSourceList[voicePlayerid] = new MediaSource();
           mediaSourceList[voicePlayerid].addEventListener('sourceopen', () => {
@@ -833,8 +872,6 @@
           isLastChunkReceived[voicePlayerid] = false;
           addAudioEndedListener(voicePlayerid);
         }
-
-
         if (audioData) {
           audio_buffer.push(audioData);
           if (sourceBufferList[voicePlayerid] && !isBuffering) {
@@ -846,6 +883,20 @@
           console.log('Last audio chunk received');
           isLastChunkReceived[voicePlayerid] = true;
           checkStreamEnd(voicePlayerid);
+        }
+      } else if (audiomode == 'normal') {
+        if (audioData) {
+          const audioBlob = base64ToBlob(audioData, 'audio/wav');
+          const audioUrl = URL.createObjectURL(audioBlob);
+          $('#' + voicePlayerid).attr('src', audioUrl);
+          $('#' + voicePlayerid).attr('preload', 'auto');
+          $('#controller' + voicePlayerid).fadeIn(200);
+          $('#controller' + voicePlayerid).css('display', 'flex');
+          $('#controller' + voicePlayerid).trigger('click');
+          $('#voiceController_comic').css('display', 'flex');
+          updateScroll();
+        } else {
+          console.error('Audio data is not available.');
         }
       }
     }

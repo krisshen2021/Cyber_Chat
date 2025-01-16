@@ -21,9 +21,9 @@ qdrant_oai_model: anthropic/claude-3.5-sonnet
 qdrant_collection_name: cyberchat_memory
 
 ### translator settings
-translate_api_key: groq_api_key
-translate_base_url: https://api.groq.com/openai/v1
-translate_model: gemma2-9b-it
+translate_api_key: deepseek_api_key
+translate_base_url: https://api.deepseek.com/v1
+translate_model: deepseek-chat
 
 ### server settings
 debug_mode: true
